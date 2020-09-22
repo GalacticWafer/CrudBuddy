@@ -6,7 +6,7 @@ import javax.mail.Session;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.InternetAddress;
 
-public class JavaMailUtil {
+public class EmailWriter {
 
     public static void sendMail(String email) throws MessagingException {
         Properties properties = new Properties();
@@ -41,7 +41,7 @@ public class JavaMailUtil {
             message.setText("Testing Content");
             return message;
         } catch (Exception ex){
-            Logger.getLogger(JavaMailUtil.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(EmailWriter.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
 

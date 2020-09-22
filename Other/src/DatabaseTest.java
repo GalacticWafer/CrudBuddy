@@ -21,7 +21,7 @@ class DatabaseTest {
 
 		Table table2 = new Table("test1.csv", "table2");
 		db.addTable(table2);
-		assertNotNull(db.createEmptyTable("test2.csv", "table2"));
+		Assertions.assertNotNull(db.createEmptyTable("test2.csv", "table2"));
 
 		Table table3 = new Table("test3.csv", "table3");
 		db.addTable(table3);
@@ -34,8 +34,8 @@ class DatabaseTest {
 
 		assertEquals(5, db.size());
 
-		assertEquals(table4, table5);
-		assertNotEquals(table3, table4);
+		Assertions.assertEquals(table4, table5);
+		Assertions.assertNotEquals(table3, table4);
 
 		// first test row
 		String[] row1 = "HR30BB21WKZW,4933,402.08,703.64,SSLDGFIO".split(",");

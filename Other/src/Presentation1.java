@@ -1,3 +1,5 @@
+import org.junit.jupiter.api.Assertions;
+
 import java.io.FileNotFoundException;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -17,7 +19,7 @@ public class Presentation1
 
         Table table2 = new Table("test1.csv", "table2");
         db.addTable(table2);
-        assertNotNull(db.createEmptyTable("test2.csv", "table2"));
+        Assertions.assertNotNull(db.createEmptyTable("test2.csv", "table2"));
 
         Table table3 = new Table("test3.csv", "table3");
         db.addTable(table3);

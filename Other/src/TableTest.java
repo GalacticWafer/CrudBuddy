@@ -1,4 +1,5 @@
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assertions;
+import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -35,15 +36,15 @@ class TableTest {
 	@Test public void assertDataEntryEqualsTest() {
 		TABLE.create(entry1.getProductId(), entry2);
 		TABLE.create(entry2.getProductId(), entry2);
-		assertNotEquals(entry1, entry2);
-		assertEquals(entry3, entry2);
+		Assertions.assertNotEquals(entry1, entry2);
+		Assertions.assertEquals(entry3, entry2);
 	}
 	//fixme
 	
 	@Test public void assertDeltionTest() {
 		TABLE.create(entry2.getProductId(), entry1);
-		assertEquals(entry3, TABLE.delete(entry2.getProductId()));
-		assertNull(TABLE.delete(entry3.getProductId()));
+		Assertions.assertEquals(entry3, TABLE.delete(entry2.getProductId()));
+		Assertions.assertNull(TABLE.delete(entry3.getProductId()));
 	}
 	
 	@Test public void assertDeletionTest() {
@@ -51,7 +52,7 @@ class TableTest {
 		TABLE.create(entry2.getProductId(), entry2);
 		TABLE.create(entry1.getProductId(), entry3);
 		TABLE.delete(entry2.getProductId());
-		assertEquals(TABLE.size(), 2);
+		Assertions.assertEquals(TABLE.size(), 2);
 	}
 	
 	@Test public void assertDataEntryToString() throws FileNotFoundException {

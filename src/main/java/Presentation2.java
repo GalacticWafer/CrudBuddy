@@ -1,8 +1,8 @@
 import javax.mail.MessagingException;
 
-public class Driver {
+public class Presentation2 {
     public static void main(String[] args) throws MessagingException {
-        //JavaMailUtil.sendMail("mycrowsawftburner@gmail.com");
+        EmailWriter.sendMail("dmart315@msudenver.edu");
 
 
 
