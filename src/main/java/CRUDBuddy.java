@@ -2,8 +2,6 @@ import com.mysql.cj.MysqlType;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -468,8 +466,8 @@ class CRUDBuddy {
 			if(scanner.hasNextLine()) {
 				scanner.nextLine();
 				int MAX_LOOPS = 100000;
-				
-				for(int i = 1; i < MAX_LOOPS && scanner.hasNextLine(); i++) {
+				int i = 1;
+				for(; i < MAX_LOOPS && scanner.hasNextLine(); i++) {
 					
 					String[] line = scanner.nextLine().split(",");
 					String nextInsertion = getInsertionString(line);
@@ -490,9 +488,10 @@ class CRUDBuddy {
 						sf.append(sqlDeclaration);
 					}
 				}
-				
-				sf.replace(sf.length() - 1, sf.length(), ";");
-				statement.executeUpdate(sf.toString());
+				if(i > 1) {
+					sf.replace(sf.length() - 1, sf.length(), ";");
+					statement.executeUpdate(sf.toString());
+				}
 			}
 			scanner.close();
 			
@@ -511,13 +510,13 @@ class CRUDBuddy {
 	 * @param columns
 	 *  String[] of column names to be used, from the first line of
 	 *  a .csv file
-	 * @param scanner
 	 *  The Scanner passed on to this method has already read te
 	 *  first line and crated <code>columns</code> from it.
 	 */
-	private void guiUpload(String[] columns, Scanner scanner) {
+	private void guiUpload(String[] columns, String fileName) {
 		
 		GridBagConstraints constraints = new GridBagConstraints();
+		int gridy = 0;
 		GridBagLayout layout = new GridBagLayout();
 		
 		JFrame frame = new JFrame();
@@ -532,30 +531,35 @@ class CRUDBuddy {
 		JComboBox[] boxes = new JComboBox[columns.length];
 		JLabel[] labels = new JLabel[columns.length];
 		
-		JLabel nameLabel = new JLabel("Table Name:");
-		JTextField nameField = new JTextField();
-		nameField.setColumns(20);
-		
-		JTextField fileField = new JTextField();
-		//Todo: actually place the label in the gui
-		JLabel fileLabel = new JLabel("Table Name:");
+		JTextField fileField = new JTextField(fileName);
+		JLabel fileLabel = new JLabel("File Name:");
 		fileField.setColumns(30);
 		constraints.gridx = 0;
 		panel.add(fileLabel, constraints);
-		
-		constraints.gridy++;
-		panel.add(nameLabel, constraints);
 		constraints.gridx = 1;
+		panel.add(fileField, constraints);
+		constraints.gridy = ++gridy;
+		
+		constraints.gridx = 0;
+		JLabel nameLabel = new JLabel("Table Name:");
+		panel.add(nameLabel, constraints);
+		JTextField nameField = new JTextField();
+		nameField.setColumns(20);
+		constraints.gridx = 1;
+		panel.add(nameField, constraints);
+		
+		constraints.gridy = ++gridy;
 		constraints.gridx = 3;
 		panel.add(primaryColumnLabel, constraints);
 		constraints.gridx = 1;
 		constraints.gridwidth = 2;
-		panel.add(nameField, constraints);
+		constraints.gridy = ++gridy;
+		++gridy;
 		constraints.gridwidth = 1;
 		ButtonGroup buttonGroup = new ButtonGroup();
 		int i = 0;
 		for(; i < boxes.length; i++) {
-			constraints.gridy = i + 2;
+			constraints.gridy = ++gridy;
 			constraints.gridx = 0;
 			
 			labels[i] = new JLabel(columns[i]);
@@ -577,7 +581,8 @@ class CRUDBuddy {
 		
 		radioButtons[i] = new JRadioButton("Add index column", true);
 		buttonGroup.add(radioButtons[i]);
-		constraints.gridy = i + 2;
+		constraints.gridy = i + ++gridy;
+		;
 		panel.add(radioButtons[i], constraints);
 		
 		JButton ok = new JButton("Ok");
@@ -588,7 +593,7 @@ class CRUDBuddy {
 				//Todo: create fileField to get fileName
 				
 				String tableName = nameField.getText().trim();
-				String fileName = fileField.getText().trim();
+				final String finalFileName = fileField.getText().trim();
 				Enumeration<AbstractButton> bs = buttonGroup.getElements();
 				boolean foundButton = false;
 				for(int j = 0; j < radioButtons.length - 1; j++) {
@@ -607,17 +612,17 @@ class CRUDBuddy {
 					typeMap.put(j, (boxes[j].getSelectedItem() + "").trim());
 				}
 				try {
-					upLoadTable(tableName, columns, fileName,
-					 scanner);
+					upLoadTable(tableName, columns, finalFileName,
+					 new Scanner(new File(finalFileName)));
 				}
-				catch(SQLException throwables) {
+				catch(SQLException | FileNotFoundException throwables) {
 					throwables.printStackTrace();
 				}
 				frame.setVisible(false);
 			}
 		});
 		constraints.gridx = 0;
-		constraints.gridy = i + 1;
+		constraints.gridy = ++gridy;
 		panel.add(ok, constraints);
 		constraints.gridx = 1;
 		JButton cancel = new JButton("Cancel");
@@ -694,14 +699,11 @@ class CRUDBuddy {
 	
 	/**
 	 * public method invokes te internal call to <code>createBlankTable</code>.
-	 *
-	 * @param fileName
-	 *  the .csv file to load into the database.
 	 */
-	public void upLoadTable(String fileName) {
+	public void upLoadTable() {
 		
 		try {
-			createBlankTable(fileName);
+			createBlankTable();
 		}
 		catch(Exception e) {
 			e.printStackTrace();
@@ -712,14 +714,14 @@ class CRUDBuddy {
 	 * Starts the process of getting user input for information about the table to
 	 * be created and uploaded. Summons a gui to collect the input.
 	 *
-	 * @param filePath
-	 *  the .csv file to make a table from.
+	 * the .csv file to make a table from.
 	 *
 	 * @throws Exception
 	 *  if the file type is not supported or found.
 	 */
-	private void createBlankTable(String filePath) throws Exception {
+	private void createBlankTable() throws Exception {
 		
+		String filePath = JOptionPane.showInputDialog(null, "Open file:");
 		int[] count = null;
 		if(!filePath.endsWith(".csv")) {
 			//Todo: throw new FileNotSupportedException
@@ -729,7 +731,7 @@ class CRUDBuddy {
 		scanner = new Scanner(new File(filePath));
 		String[] columns = scanner.nextLine().split(",");
 		columns[0] = removeUTF8BOM(columns[0]);
-		guiUpload(columns, scanner);
+		guiUpload(columns, filePath);
 	}
 	
 	/**
@@ -1019,15 +1021,12 @@ class CRUDBuddy {
 		CRUDBuddy.tableName = tableName;
 	}
 	
-	public void recordOrder(EmailOrder order) throws SQLException {
+	public void recordOrder(Order order) throws SQLException {
 		
 		String sql =
-		 new StringFormat(
-		  "INSERT INTO `sales` (quantity, date, customer_email, customer_location, product_id) " +
-		  "VALUES (%s, '%s', '%s', '%s', '%s');",
-		  order.getQuantity(), order.getSqlDate(), order.getEmail(), order.getLocation(),
-		  order.getProductId()) + "";
-		
+		 "INSERT INTO `sales` (quantity, date, customer_email, customer_location, " +
+		 "product_id, order_id) VALUES" +
+		 order.getSalesTuple();
 		connection.createStatement().executeUpdate(sql);
 	}
 }

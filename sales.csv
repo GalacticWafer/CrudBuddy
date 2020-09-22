@@ -1,1 +1,1 @@
-date,customer_email,customer_location,product_id,quantity
+date,customer_email,customer_location,product_id,quantity,order_id

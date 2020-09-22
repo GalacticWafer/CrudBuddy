@@ -151,7 +151,7 @@ class CRUDBuddyTest extends JPanel {
 		 ipAddress,
 		 portNumber,
 		 databaseName);
-		crud.upLoadTable("inventory_team4.csv");
+		crud.upLoadTable();
 	}
 	
 	@Test public static void assertTableViewerGiuTest()

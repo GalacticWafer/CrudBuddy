@@ -5,14 +5,14 @@ import javax.mail.*;
 import javax.mail.internet.MimeMultipart;
 
 public class EmailReader {
-	public static LinkedList<EmailOrder> readAllEmails() {
+	public static LinkedList<Order[]> readEmailOrders() {
 		
 		Properties pro = System.getProperties();
 		pro.setProperty("mail.store.protocol", "imaps");
 		try {
 			Session session = Session.getDefaultInstance(pro, null);
 			Store store = session.getStore("imaps");
-			store.connect("imap.gmail.com", "mycrowsawftburner@gmail.com", 
+			store.connect("imap.gmail.com", "mycrowsawftburner@gmail.com",
 			 "CS3250TEAM4");
 			System.out.println(store);
 			
@@ -20,21 +20,31 @@ public class EmailReader {
 			inbox.open(Folder.READ_WRITE);
 			
 			Message[] messages = inbox.getMessages();
-			LinkedList<EmailOrder> list = new LinkedList<>();
+			LinkedList<Order[]> list = new LinkedList<>();
 			for(Message message: messages) {
-				String content = getTextFromMessage(message).trim();
-				if(content.split(",").length == 4) {
-					EmailOrder parser = new EmailOrder(content.trim());
-					parser.setEmail(message.getFrom()[0].toString()); //Todo: store email address
-					parser.setDate(message.getSentDate());
-					list.add(parser);
-				} else {
+				String[] stingOfOrders = getTextFromMessage(message).trim().split("\n");
+				if(stingOfOrders.length == 1) {
+					continue;
+				}
+				if(stingOfOrders[0].split(",").length == 4) {
+					Order[] orders = new Order[stingOfOrders.length];
+					String orderId = Order.generateId();
+					int i = 0;
+					for(String item: stingOfOrders) {
+						Order order = new Order(item.trim(), orderId);
+						order.setEmail(message.getFrom()[0].toString());
+						order.setDate(message.getSentDate());
+						orders[i++] = order;
+					}
+					list.add(orders);
+				}
+				else {
 					message.setFlag(Flags.Flag.DELETED, true);
 				}
 			}
 			return list;
 		}
-		catch(MessagingException e) {
+		catch(MessagingException | IOException e) {
 			e.printStackTrace();
 			System.exit(2);
 		}
