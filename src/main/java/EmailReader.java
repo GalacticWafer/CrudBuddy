@@ -21,8 +21,10 @@ public class EmailReader {
 
         Message messages[] = inbox.getMessages();
             for(Message message : messages) {
-                System.out.println(getTextFromMessage(message));
-                System.out.println(message.getSentDate());
+                String content = getTextFromMessage(message);
+                EmailParser parser = new EmailParser(content);
+                parser.setEmail();
+                parser.setDate(message.getSentDate());
             }
 
 
