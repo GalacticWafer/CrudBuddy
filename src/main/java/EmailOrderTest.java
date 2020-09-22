@@ -2,11 +2,11 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class EmailParserTest {
+public class EmailOrderTest {
 	@Test public void assertEmailFormat() {
-		String test = "END392ATO82E,400,true";
+		String test = "END392ATO82E,400,true,38756";
 		String[] array = test.split(",");
-		EmailParser ep = new EmailParser(test);
+		EmailOrder ep = new EmailOrder(test);
 		assertEquals(ep.getProductId(), array[0]);
 		assertEquals(ep.getQuantity() + "", array[1]);
 		assertEquals(ep.isSale() + "", array[2]);
