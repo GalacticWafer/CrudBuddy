@@ -23,14 +23,14 @@ class CRUDBuddyTest extends JPanel {
 	static String ipAddress = "45.79.55.190";
 	static String portNumber = "3306";
 	static String databaseName = "cs3250_project";
-	static String tableName = "inventory_team4";
+	static String tableName = "inventory";
 	private CRUDBuddy crud =
 	 new CRUDBuddy(userName, password, ipAddress, portNumber, databaseName);
 	
 	public static void main(String[] args)
 	throws SQLException, ClassNotFoundException {
-
-		assertTableViewerGiuTest();
+		
+		//assertTableViewerGiuTest();
 		
 	}
 	
@@ -38,16 +38,14 @@ class CRUDBuddyTest extends JPanel {
 	throws SQLException, ClassNotFoundException {
 		
 	}
-
+	
 	@Test void assertTables() throws SQLException {
-
+		
 		ArrayList<String> list = new ArrayList<>();
 		list.add("customers");
 		list.add("inventory");
 		list.add("sales");
 		assertEquals(list, crud.getTables());
-
-
 	}
 	
 	@Test void assertTableCreatedTest()
@@ -123,10 +121,11 @@ class CRUDBuddyTest extends JPanel {
 		
 		// random new values to updateRow
 		DecimalFormat df = new DecimalFormat("0.00");
-		String[] newValues = {(new Random().nextInt() % 10000) + "", 
-							  (df.format(new Random().nextDouble())),
-							  (df.format(new Random().nextDouble()))};
-		
+		String[] newValues = {
+		 (new Random().nextInt() % 10000) + "",
+		 (df.format(new Random().nextDouble())),
+		 (df.format(new Random().nextDouble()))
+		};
 		
 		// because "product_id" is a string, but this may not be the thing we identify in
 		// every case in the future
@@ -136,7 +135,7 @@ class CRUDBuddyTest extends JPanel {
 		boolean[] valueIsString = {false, false, false};
 		
 		crud.updateRow(tableName, columnNames, newValues, identifierValue,
-		  identifierColumn, valueIsString, idIsString);
+		 identifierColumn, valueIsString, idIsString);
 		
 		System.out.println(
 		 "After updateRow: " + crud.readColumnValues(
@@ -146,7 +145,8 @@ class CRUDBuddyTest extends JPanel {
 	@Test void assertUploadTableGuiTest()
 	throws SQLException, ClassNotFoundException {
 		
-		CRUDBuddy crud = new CRUDBuddy(userName,
+		CRUDBuddy crud = new CRUDBuddy(
+		 userName,
 		 password,
 		 ipAddress,
 		 portNumber,
@@ -154,15 +154,16 @@ class CRUDBuddyTest extends JPanel {
 		crud.upLoadTable();
 	}
 	
-	@Test public static void assertTableViewerGiuTest()
+	@Test public static void assertTableViewerGiuTest(String tb, CRUDBuddy crud)
 	throws SQLException, ClassNotFoundException {
 		
+		tableName = tb;
 		CRUDBuddyTest t = new CRUDBuddyTest();
-		CRUDBuddy crud = new CRUDBuddy(userName,
-		 password,
-		 ipAddress,
-		 portNumber,
-		 databaseName);
+		//CRUDBuddy crud = new CRUDBuddy(userName,
+		// password,
+		// ipAddress,
+		// portNumber,
+		// databaseName);
 		ArrayList<String> temp = crud.readColumnNames(databaseName, tableName);
 		String columnNames = (temp + "").substring(1, (temp + "").length() - 1);
 		ResultSet rs = crud.query("Select " + columnNames + " from " + tableName);
@@ -172,19 +173,16 @@ class CRUDBuddyTest extends JPanel {
 		ArrayList<Object[]> rows = new ArrayList<>();
 		while(rs.next()) {
 			i++;
-			Object idx = rs.getObject("idx");
-			Object product_id = rs.getObject("product_id");
-			Object quantity = rs.getInt("quantity");
-			Object wholesale_cost = rs.getDouble("wholesale_cost");
-			Object sale_price = rs.getDouble("sale_price");
-			String supplier_id = rs.getString("supplier_id");
+			var colItr = temp.iterator();
 			
-			rows.add(new Object[] {
-			 idx, product_id, quantity, wholesale_cost, sale_price, supplier_id
-			});
+			Object[] objects = new Object[temp.size()];
+			for(int j = 0; colItr.hasNext(); j++) {
+				objects[j] = rs.getObject(colItr.next());
+			}
+			rows.add(objects);
 		}
 		Iterator<Object[]> row_it = rows.iterator();
-		Object[][] data = new Object[i][6];
+		Object[][] data = new Object[i][temp.size()];
 		for(int i1 = 0; i1 < data.length; i1++) {
 			data[i1] = row_it.next();
 		}
@@ -239,7 +237,8 @@ class CRUDBuddyTest extends JPanel {
 													   int column) {
 			
 			Component cell =
-			 super.getTableCellRendererComponent(table,
+			 super.getTableCellRendererComponent(
+			  table,
 			  value,
 			  isSelected,
 			  hasFocus,
