@@ -6,7 +6,7 @@ public class OrderTest {
 	@Test public void assertEmailFormat() {
 		String test = "END392ATO82E,400,true,38756";
 		String[] array = test.split(",");
-		Order ep = new Order(test,"1234567890");
+		Order ep = new Order(test,"1234567890","\"Malcolm Johnson\" <mjohn@somewhere.e>");
 		assertEquals(ep.getProductId(), array[0]);
 		assertEquals(ep.getQuantity() + "", array[1]);
 		assertEquals(ep.isSale() + "", array[2]);
