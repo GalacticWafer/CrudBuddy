@@ -514,7 +514,7 @@ class CRUDBuddy {
 	public String format(String format, Object... args) {
 		return String.format(format, args);
 	}
-	
+		
 	public ResultSet queryF(String format, Object... args) throws SQLException {
 		return query(format(format, args));
 	}
