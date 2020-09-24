@@ -511,11 +511,11 @@ class CRUDBuddy {
 		return connection.createStatement().executeUpdate(sql);
 	}
 	
-	private String format(String format, Object... args) {
+	public String format(String format, Object... args) {
 		return String.format(format, args);
 	}
 	
-	private ResultSet queryF(String format, Object... args) throws SQLException {
+	public ResultSet queryF(String format, Object... args) throws SQLException {
 		return query(format(format, args));
 	}
 	
