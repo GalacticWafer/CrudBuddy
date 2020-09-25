@@ -1,4 +1,5 @@
-/*
+import com.sun.mail.smtp.SMTPOutputStream;
+
 import javax.swing.*;
 import javax.swing.BorderFactory;
 import javax.swing.border.LineBorder;
@@ -10,13 +11,14 @@ import java.awt.event.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import javax.swing.border.MatteBorder;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.table.DefaultTableModel;
 
 
-public class invgui extends Crud {
+public class invgui {
 
     static JFrame frame;
     static JTable inv;
@@ -24,28 +26,21 @@ public class invgui extends Crud {
     static Boolean closed = false;
     static String connection;
     static String tmptest;
+    private DefaultListCellRenderer listRenderer;
     final static boolean shouldFill = true;
     final static boolean shouldWeightX = true;
 
     public invgui() throws SQLException, ClassNotFoundException {
-        //UIManager.put("ScrollBar.thumb", new Color(200, 110, 110));
-        // UIManager.put("scrollbar", (new Color(255,57,57)));
-        //UIManager.put("ScrollBar.thumb", new ColorUIResource(new Color(57,57,57)));
 
-       */
-/* UIManager.put("ScrollBar.thumbShadow", new Color(255, 110, 110));
-        UIManager.put("ScrollBar.thumbHighlight", new Color(110, 255, 110));
-        UIManager.put("ScrollBar.darkShadow", new Color(110, 110, 255)); *//*
-
-        //UIManager.put("ScrollBar.minimumThumbSize", 40);
-        //UIManager.put("ScrollBar.thumbHeight", 100);
         UIManager.put("ScrollBar.thumb", new ColorUIResource(new Color(110,110,110)));
         UIManager.put("ScrollBar.thumbDarkShadow", new ColorUIResource(new Color(50,50,50)));
         UIManager.put("ScrollBar.thumbShadow", new ColorUIResource(new Color(50,50,50)));
         UIManager.put("ScrollBar.thumbHighlight", new ColorUIResource(new Color(50,50,50)));
         UIManager.put("ScrollBar.track", new ColorUIResource(new Color(50,50,50)));
+        Crud crud = Credentials.databaseLogin();
 
-
+        String [] array = crud.getTableNames();
+        System.out.println(Arrays.toString(array));
 
 
         frame = new JFrame("Inventory");
@@ -71,7 +66,19 @@ public class invgui extends Crud {
         east.setLayout(new GridBagLayout());
         center.setLayout(new GridBagLayout());
         GridBagConstraints middle = new GridBagConstraints();
-        JLabel tname = new JLabel(tableName);
+        JComboBox tables = new JComboBox(crud.getTableNames());
+        listRenderer = new DefaultListCellRenderer();
+        listRenderer.setHorizontalAlignment(DefaultListCellRenderer.CENTER); // center-aligned items
+        tables.setBackground(new Color(110, 110, 110));
+        tables.setForeground(new Color(125, 211, 224));
+        tables.setFont(new Font("Aharoni", Font.BOLD, 22));
+        middle.weightx = 0.5;
+        middle.ipady = 70;
+        middle.gridx = 0;
+        middle.gridy = 0;
+        middle.insets = new Insets(13,0,-1,0);  //top padding
+        center.add(tables, middle);
+       /* JLabel tname = new JLabel(crud.getWorkingTable());
         tname.setForeground(new Color(125, 211, 224));
         tname.setFont(new Font("Aharoni", Font.BOLD, 22));
         middle.weightx = 0.5;
@@ -80,13 +87,13 @@ public class invgui extends Crud {
         middle.gridx = 0;
         middle.gridy = 0;
         middle.insets = new Insets(5,40,0,50);  //top padding
-        center.add(tname, middle);
+        center.add(tname, middle); */
 
-        CRUDBuddy crud = new CRUDBuddy(userName, password, ipAddress, portNumber, databaseName);
+        crud.setWorkingTable("inventory");
+        System.out.println(crud.getWorkingTable());
         closed = crud.isClosed();
-        ArrayList<String> temp = crud.readColumnNames(databaseName, tableName);
-        String columnNames = (temp + "").substring(1, (temp + "").length() - 1);
-        ResultSet rs = crud.query("Select " + columnNames + " from " + tableName);
+        String[] columnNames = crud.getColumnNames();
+        ResultSet rs = crud.getAllRecords();
 
         //JTable jt;
         int i = 0;
@@ -109,9 +116,9 @@ public class invgui extends Crud {
         for(int i1 = 0; i1 < data.length; i1++) {
             data[i1] = row_it.next();
         }
-        TableFormatter tf = new TableFormatter(data, columnNames.split(","), crud);
+        TableFormatter tf = new TableFormatter(data, columnNames, crud);
         inv = tf.getTable();
-        inv.setModel(new DefaultTableModel(data, columnNames.split(",")));
+        inv.setModel(new DefaultTableModel(data, columnNames));
         tf.setData();
 
         middle.fill = GridBagConstraints.HORIZONTAL;
@@ -128,7 +135,6 @@ public class invgui extends Crud {
 
         scrollPane = new JScrollPane(inv);
         scrollPane.setVisible(true);
-        //scrollPane.getVerticalScrollBar().setBackground(new Color(50,50,50));
         scrollPane.setBorder(new LineBorder(new Color(110, 110, 110),2));
         scrollPane.getVerticalScrollBar().setUI(new BasicScrollBarUI() );
         scrollPane.getHorizontalScrollBar().setUI(new BasicScrollBarUI());
@@ -260,4 +266,4 @@ public class invgui extends Crud {
     }
 
 
-}*/
+}

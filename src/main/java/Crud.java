@@ -399,4 +399,20 @@ class Crud {
 		pw.close();
 		return file;
 	}
+
+	/**Get a ResultSet of an entire table */
+	public ResultSet getRecord(String columnVal, String columnName)
+			throws SQLException
+	{
+		return query("SELECT * FROM " + tableName + " where " + columnName +
+				" equals " + columnVal);
+	} // End getRecord
+
+	protected Boolean isClosed() throws SQLException {
+		return Crud.connection.isClosed();
+	}
+
+	protected String getWorkingTable() {
+		return this.tableName;
+	}
 }
