@@ -12,7 +12,7 @@ class TableFormatter extends JTable {
 	public static final int NUMBER_OF_ROWS_TO_DISPLAY = 25;
 	public static int MINIMUM_COLUMN_WIDTH;
 	public static int maximumGuiWidth = 600;
-	private CRUDBuddy crud;
+	private Crud crud;
 	private String tableName;
 	private String databaseName;
 	
@@ -36,7 +36,7 @@ class TableFormatter extends JTable {
 	 * of all content is too wide to be fully accommodated here, the remaining width after minimal
 	 * width columns have been subtracted will be evenly split among remaining columns.
 	 */
-	public TableFormatter(Object[][] tableData, String[] columnNames, CRUDBuddy crud) {
+	public TableFormatter(Object[][] tableData, String[] columnNames, Crud crud) {
 		this.crud = crud;
 		this.columnNames = columnNames;
 		isHeaderMinimalArray = getMinimalHeaderBooleans();
