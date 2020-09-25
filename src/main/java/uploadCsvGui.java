@@ -13,9 +13,21 @@ import static java.util.Map.entry;
 class uploadCsvGui {
 	private String[] columns;
 	private String fileName;
-	private Crud crud;
+	private final Crud crud;
 	private static final Pair<String, String> PRIMARY_KEY = new Pair("idx", "int(16)");
 	private static HashMap<Integer, String> typeMap;
+	
+	public void setColumns(String[] columns) {
+		this.columns = columns;
+	}
+	
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
+	
+	public static void setTypeMap(HashMap<Integer, String> typeMap) {
+		uploadCsvGui.typeMap = typeMap;
+	}
 	
 	public uploadCsvGui(String[] columns, String fileName, Crud crud) {
 		this.columns = columns;

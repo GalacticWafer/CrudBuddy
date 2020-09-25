@@ -9,6 +9,63 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
 public class Emailer {
+	/** Extract the text content from a message */
+	private static String getTextFromMessage(Message message)
+	throws MessagingException, IOException {
+		String result = "";
+		if(message.isMimeType("text/plain")) {
+			result = message.getContent().toString();
+		}
+		else if(message.isMimeType("multipart/*")) {
+			MimeMultipart mimeMultipart = (MimeMultipart)message.getContent();
+			result = getTextFromMimeMultipart(mimeMultipart);
+		}
+		return result;
+	}
+	
+	/** Recurse into email content until message is reached, and return it */
+	private static String getTextFromMimeMultipart(
+	 MimeMultipart mimeMultipart) throws MessagingException, IOException {
+		StringBuilder result = new StringBuilder();
+		int count = mimeMultipart.getCount();
+		for(int i = 0; i < count; i++) {
+			BodyPart bodyPart = mimeMultipart.getBodyPart(i);
+			if(bodyPart.isMimeType("text/plain")) {
+				result.append("\n").append(bodyPart.getContent());
+				break;
+			}
+			else if(bodyPart.isMimeType("text/html")) {
+				System.out.println("It happens");
+			}
+			else if(bodyPart.getContent() instanceof MimeMultipart) {
+				result.append(getTextFromMimeMultipart((MimeMultipart)bodyPart.getContent()));
+			}
+		}
+		return result.toString();
+	}
+	
+	/** Prepare a message to be sent */
+	private static Message prepareMessage(String subject, String content, Session session,
+										  String myAccountEmail, String recipient) {
+		try {
+			Message message = new MimeMessage(session);
+			message.setFrom(new InternetAddress(myAccountEmail));
+			message.setRecipient(Message.RecipientType.TO, new InternetAddress(recipient));
+			message.setSubject(subject);
+			message.setText(content);
+			return message;
+		}
+		catch(Exception ex) {
+			Logger.getLogger(Emailer.class.getName()).log(Level.SEVERE, null, ex);
+		}
+		return null;
+	}
+	
+	/**
+	 * Process all orders in the inbox, and return a LinkedList<int[]> where each int[] represents
+	 * a an array of product that we attempt to sell. Each integer inside the array indicates the
+	 * reason for success or failure of that product's order fulfillment.
+	 */
 	public static LinkedList<int[]> processEmailOrders(Crud crud)
 	throws MessagingException, IOException, SQLException {
 		Folder inbox = Credentials.getInbox();
@@ -66,41 +123,7 @@ public class Emailer {
 		return list;
 	}
 	
-	// extract the content from a message
-	private static String getTextFromMessage(Message message)
-	throws MessagingException, IOException {
-		String result = "";
-		if(message.isMimeType("text/plain")) {
-			result = message.getContent().toString();
-		}
-		else if(message.isMimeType("multipart/*")) {
-			MimeMultipart mimeMultipart = (MimeMultipart)message.getContent();
-			result = getTextFromMimeMultipart(mimeMultipart);
-		}
-		return result;
-	}
-	
-	// recurse into content until message is reached, and return it
-	private static String getTextFromMimeMultipart(
-	 MimeMultipart mimeMultipart) throws MessagingException, IOException {
-		StringBuilder result = new StringBuilder();
-		int count = mimeMultipart.getCount();
-		for(int i = 0; i < count; i++) {
-			BodyPart bodyPart = mimeMultipart.getBodyPart(i);
-			if(bodyPart.isMimeType("text/plain")) {
-				result.append("\n").append(bodyPart.getContent());
-				break;
-			}
-			else if(bodyPart.isMimeType("text/html")) {
-				System.out.println("It happens");
-			}
-			else if(bodyPart.getContent() instanceof MimeMultipart) {
-				result.append(getTextFromMimeMultipart((MimeMultipart)bodyPart.getContent()));
-			}
-		}
-		return result.toString();
-	}
-	
+	/**Send an email to a customer to indicate order confirmation or cancellation*/
 	public static void sendMail(String recipient, String subject, String content)
 	throws MessagingException {
 		Message message = prepareMessage(subject, content, Credentials.getSession(), Credentials
@@ -108,21 +131,5 @@ public class Emailer {
 		assert message != null;
 		Transport.send(message);
 		System.out.println();
-	}
-	
-	private static Message prepareMessage(String subject, String content, Session session,
-										  String myAccountEmail, String recipient) {
-		try {
-			Message message = new MimeMessage(session);
-			message.setFrom(new InternetAddress(myAccountEmail));
-			message.setRecipient(Message.RecipientType.TO, new InternetAddress(recipient));
-			message.setSubject(subject);
-			message.setText(content);
-			return message;
-		}
-		catch(Exception ex) {
-			Logger.getLogger(Emailer.class.getName()).log(Level.SEVERE, null, ex);
-		}
-		return null;
 	}
 }

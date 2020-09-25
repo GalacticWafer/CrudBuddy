@@ -33,26 +33,26 @@ class Crud {
 		//JOptionPane.showMessageDialog(null, "Connection OK with " + getURL());
 	}
 	
-	/** creates a .csv-compatible line from an ArrayList<String> */
+	/**Creates a .csv-compatible line from an ArrayList<String> */
 	public String arrayToCSV
 	(String[] array) {
 		String a = Arrays.toString(array);
 		return a.substring(1, a.length() - 1);
 	}
 	
-	/** Creates a gui to get user input on a new table to be uploaded to MySQL database. */
+	/**Creates a gui to get user input on a new table to be uploaded to MySQL database. */
 	uploadCsvGui csvGuiLoad(String[] columns, String fileName) {
 		uploadCsvGui gui = new uploadCsvGui(columns, fileName, this);
 		gui.invoke();
 		return gui;
 	}
 	
-	/** Deletes all records from a table, but the table remains */
+	/**Deletes all records from a table, but the table remains */
 	public int deleteAllRecords(String table) throws SQLException {
 		return update("DELETE FROM " + table);
 	}
 	
-	/** Delete the record in the specified table */
+	/**Delete the record in the specified table */
 	public int deleteRecord
 	(String table, String idColumn, Object idValue)
 	throws SQLException {
@@ -60,12 +60,12 @@ class Crud {
 		 table, idColumn, idValue);
 	}
 	
-	/** deletes an entire table */
+	/**Deletes an entire table */
 	public void deleteTable(String tableName) throws SQLException {
 		update("DROP TABLE IF EXISTS " + tableName);
 	}
 	
-	/** find a specific record */
+	/**Find a specific record */
 	public Object[] find(String idValue, String idColumnName) throws SQLException {
 		String sql = format("select * from %s where %s = '%s';",
 		 tableName, idColumnName, idValue);
@@ -79,18 +79,18 @@ class Crud {
 		return record;
 	}
 	
-	/** format a string for sql statement */
+	/**Format a string for sql statement */
 	public String format(String format, Object... args) {
 		return String.format(format, args);
 	}
 	
-	/** get a ResultSet of an entire table */
+	/**Get a ResultSet of an entire table */
 	public ResultSet getAllRecords()
 	throws SQLException {
 		return query("SELECT * FROM " + tableName);
 	}
 	
-	/** Gets the number of columns in a table */
+	/**Gets the number of columns in a table */
 	public int getColumnCount(String tableName) throws SQLException {
 		setWorkingTable(tableName);
 		String sql =
@@ -103,7 +103,7 @@ class Crud {
 		return - 1;
 	}
 	
-	/** Gets an arraylist of the column names of a specific table */
+	/**Gets an arraylist of the column names of a specific table */
 	public String[] getColumnNames() throws SQLException {
 		// Gets an arraylist of the column names of a specific table
 		String sql = format(
@@ -123,7 +123,7 @@ class Crud {
 		return columnNames;
 	}
 	
-	/** Gets an arrayList of column types from a table */
+	/**Gets an arrayList of column types from a table */
 	public String[] getColumnTypes(String tableName)
 	throws SQLException {
 		ResultSet rs = query("select * from " + tableName + " where 1<0");
@@ -136,7 +136,7 @@ class Crud {
 		return list;
 	}
 	
-	/** create the tuple of column names as a String to be sent as sql code. */
+	/**Create the tuple of column names as a String to be sent as sql code. */
 	public String getColumnsTuple(String[] columnNames) {
 		if(columnNames.length == 0) {return null;}
 		StringBuilder sb = new StringBuilder("(");
@@ -147,18 +147,18 @@ class Crud {
 		return sb.append(columnNames[i]).append(")").toString();
 	}
 	
-	/** helper method to clean up code when concatenating commas for sql code. */
+	/**Helper method to clean up code when concatenating commas for sql code. */
 	private static String getComma(int length, int i, String lastChar) {
 		if(i < length - 1) {return ", ";}
 		return lastChar + "";
 	}
 	
-	/** return the database name */
+	/**Return the database name */
 	public Object getDatabaseName() {
 		return DB_NAME;
 	}
 	
-	/** get an array with all the table names */
+	/**Get an array with all the table names */
 	public String[] getTableNames() throws SQLException {
 		ResultSet rs = query("SHOW tables");
 		int count = 0;
@@ -175,28 +175,28 @@ class Crud {
 		return tableNames;
 	}
 	
-	/** get the sql string representing the name of a java data type */
+	/**Get the sql string representing the name of a java data type */
 	public String getType(String name) { return uploadCsvGui.J_TO_SQL2.get(name); }
 	
-	/** get the URL by joining static variable together. */
+	/**Get the URL by joining static variable together. */
 	private static String getURL() {
 		return "jdbc:mysql://" + HOST_IP + ":" + PORT + "/" + DB_NAME;
 	}
 	
-	/** Insert one or more new records into a table */
-	public int insertRecords(String[] columnNames, String[][] values)
+	/**Insert one or more new records into a table */
+	public int insertRecords(String[] columnNames, String[][] tableValues)
 	throws SQLException {
 		StringBuilder sb = new StringBuilder(format(
 		 "INSERT INTO %s %s VALUES",
 		 tableName, getColumnsTuple(columnNames)));
-		for(int i = 0; i < values.length; i++) {
-			sb.append(toValueTuple(values[i], null));
-			sb.append(i == values.length - 1 ? ";" : ",");
+		for(int i = 0; i < tableValues.length; i++) {
+			sb.append(toValueTuple(tableValues[i], null));
+			sb.append(i == tableValues.length - 1 ? ";" : ",");
 		}
 		return update(sb + "");
 	}
 	
-	/** Creates a blank Table */
+	/**Creates a blank Table */
 	public void insertTable
 	(String tableName, String[] columnNames, HashMap<Integer, String> typeMap)
 	throws SQLException {
@@ -232,7 +232,7 @@ class Crud {
 		csvGuiLoad(columns, filePath);
 	}
 	
-	/** Return an integer indicating if the order can be processed, and if not, why */
+	/**Return an integer indicating if the order can be processed, and if not, why */
 	public int isProcessableOrder(Order order) throws SQLException, MessagingException {
 		String productId = order.getProductId();
 		ResultSet rs = queryF("select quantity from %s where product_id = '%s';",
@@ -252,23 +252,23 @@ class Crud {
 		return currentQuantity;
 	}
 	
-	/** Sends a sql query string */
+	/**Sends a sql query string */
 	public ResultSet query(String query) throws SQLException {
 		return connection.createStatement().executeQuery(query);
 	}
 	
-	/** Formats, then sends a sql query string */
+	/**Formats, then sends a sql query string */
 	public ResultSet queryF(String format, Object... args) throws SQLException {
 		return query(format(format, args));
 	}
 	
-	/** wraps the given object in quotes if it is a string */
+	/**Wraps the given object in quotes if it is a string */
 	private static String quoteWrap(Object columnValue) {
 		if(columnValue instanceof String) {return "'" + columnValue + "'";}
 		return columnValue.toString();
 	}
 	
-	/** Removes the (BOM byte-order mark) from the beginning of the string. */
+	/**Removes the (BOM byte-order mark) from the beginning of the string. */
 	private static String removeUTF8BOM(String s) {
 		if(s.startsWith("\uFEFF")) {
 			s = s.substring(1);
@@ -276,17 +276,17 @@ class Crud {
 		return s;
 	}
 	
-	/** Updates a product's quantity from an order */
+	/**Updates a product's quantity from an order */
 	public void setQuantityFromOrder(Order order) throws SQLException {
 		int newQuantity = order.getCurrentQuantity() - order.getQuantity();
 		updateF("UPDATE %s SET quantity = %s WHERE product_id = '%s';",
 		 tableName, newQuantity, order.getProductId());
 	}
 	
-	/** Sets the static variable <code>tableName</code> as the table to make statements against. */
+	/**Sets the static variable <code>tableName</code> as the table to make statements against. */
 	public void setWorkingTable(String tableName) { this.tableName = tableName; }
 	
-	/** Makes a tuple of values from an array for sql statements */
+	/**Makes a tuple of values from an array for sql statements */
 	public String toValueTuple(String[] array, HashMap<Integer, String> typeMap) {
 		Object[] values = new Object[array.length];
 		StringBuilder sb = new StringBuilder("(");
@@ -303,17 +303,17 @@ class Crud {
 		return sb.toString();
 	}
 	
-	/**send an sql executeUpdate() statement*/
+	/**Send an sql executeUpdate() statement*/
 	public int update(String sql) throws SQLException {
 		return connection.createStatement().executeUpdate(sql);
 	}
 	
-	/**format an sql executeUpdate() statement*/
+	/**Format an sql executeUpdate() statement*/
 	public int updateF(String format, Object... args) throws SQLException {
 		return update(format(format, args));
 	}
 	
-	/**update a row where some column name = some value*/
+	/**Update a row where some column name = some value*/
 	public void updateRow
 	(String[] columns, Object[] values, Object columnName, String columnValue, String tableName)
 	throws SQLException {
@@ -329,7 +329,7 @@ class Crud {
 		update(sf + "");
 	}
 	
-	/** Write a table from the database to a file */
+	/**Write a table from the database to a file */
 	public File writeToFile
 	(String path, String[] columns, ResultSet results)
 	throws FileNotFoundException, SQLException {

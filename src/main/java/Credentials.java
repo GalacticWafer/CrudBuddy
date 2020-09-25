@@ -13,6 +13,12 @@ public class Credentials {
 		return new Crud(userName, password, ipAddress, portNumber, databaseName);
 	}
 	
+	/**Return our burner email address*/
+	public static String getEmail() {
+		return "mycrowsawftburner@gmail.com";
+	}
+	
+	/**Return our burner email's inbox*/
 	public static Folder getInbox() throws MessagingException {
 		Properties pro = System.getProperties();
 		pro.setProperty("mail.store.protocol", "imaps");
@@ -24,7 +30,8 @@ public class Credentials {
 		}
 		catch(MessagingException e) { throw new MessagingException(); }
 	}
-	
+
+	/**Return a new email session*/
 	public static Session getSession() {
 		Properties properties = new Properties();
 		
@@ -42,9 +49,5 @@ public class Credentials {
 				return new PasswordAuthentication(myAccountEmail, password);
 			}
 		});
-	}
-	
-	public static String getEmail() {
-		return "mycrowsawftburner@gmail.com";
 	}
 }
