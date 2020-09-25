@@ -1,16 +1,19 @@
-import java.sql.ResultSet;
+import javax.mail.MessagingException;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
 
-public class CrudDriver {
+public class Main {
 		public static final String[] COLUMN_NAMES =
 	 new String[] {"product_id", "quantity", "wholesale_cost", "sale_price", "supplier_id"};
 
 	
 	public static void main(String[] args)
-	throws SQLException, ClassNotFoundException {
-		Crud crud = Credentials.signIn();
-		crud.getColumnNames("sales");
+	throws SQLException, ClassNotFoundException, FileNotFoundException {
+		Crud crud = Credentials.databaseLogin();
+		crud.setWorkingTable("inventory");
+		crud.writeToFile("new_test.csv", crud.getColumnNames(), crud.getAllRecords());
 	}
 	
 	private static void insertNewRecord(Crud crud, String tableName) throws SQLException {
@@ -26,9 +29,10 @@ public class CrudDriver {
 		}
 	}
 	
-	private static void dailyOrderCheck(Crud crud) {
+	private static void dailyOrderCheck(Crud crud)
+	throws MessagingException, IOException, SQLException {
 		
-		LinkedList<int[]> list = EmailReader.processEmailOrders(crud);
+		LinkedList<int[]> list = Emailer.processEmailOrders(crud);
 		System.out.println(list);
 	}
 	

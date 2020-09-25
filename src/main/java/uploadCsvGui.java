@@ -10,14 +10,14 @@ import java.util.Scanner;
 
 import static java.util.Map.entry;
 
-class CSVUploader {
+class uploadCsvGui {
 	private String[] columns;
 	private String fileName;
 	private Crud crud;
 	private static final Pair<String, String> PRIMARY_KEY = new Pair("idx", "int(16)");
 	private static HashMap<Integer, String> typeMap;
 	
-	public CSVUploader(String[] columns, String fileName, Crud crud) {
+	public uploadCsvGui(String[] columns, String fileName, Crud crud) {
 		this.columns = columns;
 		this.fileName = fileName;
 		this.crud = crud;
@@ -27,19 +27,14 @@ class CSVUploader {
 		GridBagConstraints constraints = new GridBagConstraints();
 		int gridy = 0;
 		GridBagLayout layout = new GridBagLayout();
-		
 		JFrame frame = new JFrame();
 		JScrollPane scrollPane = new JScrollPane();
 		JPanel panel = new JPanel(layout);
-		
 		Object[] boxOptions = J_TO_SQL.values().toArray();
-		
 		JRadioButton[] radioButtons = new JRadioButton[columns.length + 1];
 		JLabel primaryColumnLabel = new JLabel("Primary Column:");
-		
 		JComboBox[] boxes = new JComboBox[columns.length];
 		JLabel[] labels = new JLabel[columns.length];
-		
 		JTextField fileField = new JTextField(fileName);
 		JLabel fileLabel = new JLabel("File Name:");
 		fileField.setColumns(30);
@@ -48,7 +43,6 @@ class CSVUploader {
 		constraints.gridx = 1;
 		panel.add(fileField, constraints);
 		constraints.gridy = ++ gridy;
-		
 		constraints.gridx = 0;
 		JLabel nameLabel = new JLabel("Table Name:");
 		panel.add(nameLabel, constraints);
@@ -56,7 +50,6 @@ class CSVUploader {
 		nameField.setColumns(20);
 		constraints.gridx = 1;
 		panel.add(nameField, constraints);
-		
 		constraints.gridy = ++ gridy;
 		constraints.gridx = 3;
 		panel.add(primaryColumnLabel, constraints);
@@ -70,30 +63,22 @@ class CSVUploader {
 		for(; i < boxes.length; i++) {
 			constraints.gridy = ++ gridy;
 			constraints.gridx = 0;
-			
 			labels[i] = new JLabel(columns[i]);
 			panel.add(labels[i], constraints);
-			
 			constraints.gridx = 1;
-			
 			boxes[i] = new JComboBox(boxOptions);
 			boxes[i].setEditable(true);
 			boxes[i].setSelectedItem("VARCHAR(16)");
 			panel.add(boxes[i], constraints);
-			
 			constraints.gridx = 3;
-			
 			radioButtons[i] = new JRadioButton("", false);
 			buttonGroup.add(radioButtons[i]);
 			panel.add(radioButtons[i], constraints);
 		}
-		
 		radioButtons[i] = new JRadioButton("Add index column", true);
 		buttonGroup.add(radioButtons[i]);
 		constraints.gridy = i + ++ gridy;
-		
 		panel.add(radioButtons[i], constraints);
-		
 		JButton ok = new JButton("Ok");
 		ok.addActionListener(e -> {
 			
@@ -157,25 +142,20 @@ class CSVUploader {
 	throws SQLException {
 		if(typeMap != null) {
 			crud.insertTable(tableName, columns, typeMap);
-			
-			StringFormat sf = new StringFormat("INSERT INTO %s %s"
-			 , tableName, crud.getColumnsTuple(columns));
+			StringBuilder sf = new StringBuilder(String.format("INSERT INTO %s %s"
+			 , tableName, crud.getColumnsTuple(columns)));
 			String sqlDeclaration = sf.toString();
-			
 			if(scanner.hasNextLine()) {
 				scanner.nextLine();
 				int MAX_LOOPS = 100000;
 				int i = 1;
 				for(; i < MAX_LOOPS && scanner.hasNextLine(); i++) {
-					
 					String[] line = scanner.nextLine().split(",");
-					String nextInsertion = crud.getValuesTuple(line);
+					String nextInsertion = crud.toValueTuple(line, typeMap);
 					boolean isLastIteration = i == MAX_LOOPS - 1;
 					sf.append(nextInsertion);
-					
 					if(i == MAX_LOOPS - 1) {sf.append(";");}
 					else {sf.append(",");}
-					
 					if(isLastIteration) {
 						crud.update(sf.toString());
 						i = 0;
@@ -189,13 +169,11 @@ class CSVUploader {
 				}
 			}
 			scanner.close();
-			
 			JOptionPane.showMessageDialog(null, crud.format(
 			 "The csv file has been exported to %s in the %s database.",
 			 tableName, crud.getDatabaseName()));
 		}
 	}
-	
 	public static final Map<String, String> J_TO_SQL2 = Map
 	 .ofEntries(
 	  entry("VARCHAR", "VARCHAR(16)"),

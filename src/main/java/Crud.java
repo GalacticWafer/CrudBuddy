@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.sql.*;
-import java.util.List;
 import java.util.*;
 
 class Crud {
@@ -18,7 +17,6 @@ class Crud {
 	private static String DB_NAME;
 	private static Connection connection;
 	private String tableName = "inventory";
-	private static HashMap<Integer, String> typeMap;
 	
 	/**
 	 * Class that facilitates a connection to a database, and carries out CRUD
@@ -43,8 +41,8 @@ class Crud {
 	}
 	
 	/** Creates a gui to get user input on a new table to be uploaded to MySQL database. */
-	CSVUploader csvGuiLoad(String[] columns, String fileName) {
-		CSVUploader gui = new CSVUploader(columns, fileName, this);
+	uploadCsvGui csvGuiLoad(String[] columns, String fileName) {
+		uploadCsvGui gui = new uploadCsvGui(columns, fileName, this);
 		gui.invoke();
 		return gui;
 	}
@@ -87,9 +85,9 @@ class Crud {
 	}
 	
 	/** get a ResultSet of an entire table */
-	public ResultSet getAllRecords(String table)
+	public ResultSet getAllRecords()
 	throws SQLException {
-		return query("SELECT * FROM " + table);
+		return query("SELECT * FROM " + tableName);
 	}
 	
 	/** Gets the number of columns in a table */
@@ -106,21 +104,23 @@ class Crud {
 	}
 	
 	/** Gets an arraylist of the column names of a specific table */
-	public String[] getColumnNames(String tableName)
-	throws SQLException {
-		StringFormat sf = new StringFormat(
+	public String[] getColumnNames() throws SQLException {
+		// Gets an arraylist of the column names of a specific table
+		String sql = format(
 		 "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS`" +
 		 " WHERE `TABLE_SCHEMA`='%s' AND `TABLE_NAME`='%s'", DB_NAME, tableName);
-		ResultSet rs = query(sf.toString());
-		while(rs.next()) {
-		String[] columnNames = new String[rs.getMetaData().getColumnCount()];
-		for(int i = 0; rs.next() && i < columnNames.length ; i++) {
-			System.out.println(rs.getMetaData().getColumnName(1));
-			columnNames[i] = rs.getString(1);
+		ResultSet rs = query(sql);
+		ArrayList<String> temp = new ArrayList<>();
+		int i = 0;
+		for(; rs.next(); i++) {
+			temp.add(rs.getString(1));
+		}
+		String[] columnNames = new String[i];
+		Iterator<String> it = temp.iterator();
+		for(int i1 = 0; i1 < columnNames.length; i1++) {
+			columnNames[i1] = it.next();
 		}
 		return columnNames;
-		}
-		return null;
 	}
 	
 	/** Gets an arrayList of column types from a table */
@@ -139,12 +139,12 @@ class Crud {
 	/** create the tuple of column names as a String to be sent as sql code. */
 	public String getColumnsTuple(String[] columnNames) {
 		if(columnNames.length == 0) {return null;}
-		StringFormat sf = new StringFormat("(");
+		StringBuilder sb = new StringBuilder("(");
 		int i = 0;
 		for(; i < columnNames.length - 1; i++) {
-			sf.append(columnNames[i]).append(",");
+			sb.append(columnNames[i]).append(",");
 		}
-		return sf.append(columnNames[i]).append(")").toString();
+		return sb.append(columnNames[i]).append(")").toString();
 	}
 	
 	/** helper method to clean up code when concatenating commas for sql code. */
@@ -161,69 +161,39 @@ class Crud {
 	/** get an array with all the table names */
 	public String[] getTableNames() throws SQLException {
 		ResultSet rs = query("SHOW tables");
-		String[] tables = new String[rs.getMetaData().getColumnCount()];
-		for(int i = 0; rs.next() && i < tables.length; i++) {
-			tables[i] = rs.getString(1);
+		int count = 0;
+		ArrayList<String> temp = new ArrayList<>();
+		while(rs.next()){
+			count++;
+			temp.add(rs.getString(1));
 		}
-		return tables;
+		String[] tableNames = new String[count];
+		count = 0;
+		for(String s: temp) {
+			tableNames[count++] = s;
+		}
+		return tableNames;
 	}
 	
 	/** get the sql string representing the name of a java data type */
-	public String getType(String name) { return CSVUploader.J_TO_SQL2.get(name); }
+	public String getType(String name) { return uploadCsvGui.J_TO_SQL2.get(name); }
 	
 	/** get the URL by joining static variable together. */
 	private static String getURL() {
 		return "jdbc:mysql://" + HOST_IP + ":" + PORT + "/" + DB_NAME;
 	}
 	
-	/**
-	 * Queries a table for the specified criteria. The key is a column name (String), and the value
-	 * is the value from that cell in the table.
-	 */
-	public HashMap<String, Object> getValues
-	(String tableName, String[] columnNames, String idValue, String idColumnName)
-	throws SQLException {
-		if(columnNames.length == 0) {return null;}
-		StringFormat sf = new StringFormat("SELECT %s FROM %s WHERE %s = '%s'",
-		 arrayToCSV(columnNames), tableName,
-		 idColumnName, idValue);
-		ResultSet rs = query(sf.toString());
-		HashMap<String, Object> objectMap = new HashMap<>();
-		while(rs.next()) {
-			for(int i = 0; i < columnNames.length; i++) {
-				objectMap.put(columnNames[i], rs.getObject(columnNames[i]));
-			}
-		}
-		return objectMap;
-	}
-	
-	/** Makes a tuple of values from an array for sql statements */
-	public String getValuesTuple(String[] array) {
-		Object[] values = new Object[array.length];
-		StringFormat sf = new StringFormat("(");
-		for(int i = 0; i < values.length; i++) {
-			if(typeMap.get(i).contains("CHAR")) {
-				array[i] = "'" + array[i] + "'";
-			}
-			sf.append(array[i]);
-			if(i == values.length - 1) {
-				sf.append(")");
-			}
-			else {sf.append(",");}
-		}
-		return sf.toString();
-	}
-	
 	/** Insert one or more new records into a table */
 	public int insertRecords(String[] columnNames, String[][] values)
 	throws SQLException {
-		StringFormat sf = new StringFormat("INSERT INTO %s %s VALUES",
-		 tableName, getColumnsTuple(columnNames));
+		StringBuilder sb = new StringBuilder(format(
+		 "INSERT INTO %s %s VALUES",
+		 tableName, getColumnsTuple(columnNames)));
 		for(int i = 0; i < values.length; i++) {
-			sf.append(getValuesTuple(values[i]));
-			sf.append(i == values.length - 1 ? ";" : ",");
+			sb.append(toValueTuple(values[i], null));
+			sb.append(i == values.length - 1 ? ";" : ",");
 		}
-		return update(sf + "");
+		return update(sb + "");
 	}
 	
 	/** Creates a blank Table */
@@ -231,16 +201,16 @@ class Crud {
 	(String tableName, String[] columnNames, HashMap<Integer, String> typeMap)
 	throws SQLException {
 		deleteTable(tableName);
-		StringFormat sb = new StringFormat(
+		StringBuilder sb = new StringBuilder(format(
 		 "CREATE TABLE %s(%s %s NOT NULL AUTO_INCREMENT,",
 		 tableName, PRIMARY_KEY.getKey(),
-		 PRIMARY_KEY.getValue());
+		 PRIMARY_KEY.getValue()));
 		int i = 0;
 		for(; i < typeMap.size(); i++) {
-			sb.appendf("%s %s,",
-			 columnNames[i].trim(), typeMap.get(i));
+			sb.append(format("%s %s,",
+			 columnNames[i].trim(), typeMap.get(i)));
 		}
-		sb.appendf(" PRIMARY KEY (%s));", PRIMARY_KEY.getKey());
+		sb.append(format(" PRIMARY KEY (%s));", PRIMARY_KEY.getKey()));
 		update(sb.toString());
 	}
 	
@@ -316,51 +286,61 @@ class Crud {
 	/** Sets the static variable <code>tableName</code> as the table to make statements against. */
 	public void setWorkingTable(String tableName) { this.tableName = tableName; }
 	
-	/***/
+	/** Makes a tuple of values from an array for sql statements */
+	public String toValueTuple(String[] array, HashMap<Integer, String> typeMap) {
+		Object[] values = new Object[array.length];
+		StringBuilder sb = new StringBuilder("(");
+		for(int i = 0; i < values.length; i++) {
+			if(typeMap != null && typeMap.get(i).contains("CHAR")) {
+				array[i] = "'" + array[i] + "'";
+			}
+			sb.append(array[i]);
+			if(i == values.length - 1) {
+				sb.append(")");
+			}
+			else {sb.append(",");}
+		}
+		return sb.toString();
+	}
+	
+	/**send an sql executeUpdate() statement*/
 	public int update(String sql) throws SQLException {
 		return connection.createStatement().executeUpdate(sql);
 	}
 	
-	/***/
+	/**format an sql executeUpdate() statement*/
 	public int updateF(String format, Object... args) throws SQLException {
 		return update(format(format, args));
 	}
 	
-	/** overloaded version of above takes different parameters */
+	/**update a row where some column name = some value*/
 	public void updateRow
-	(String[] columns, Object[] values, Object id, String idValue, String tableName)
+	(String[] columns, Object[] values, Object columnName, String columnValue, String tableName)
 	throws SQLException {
 		setWorkingTable(tableName);
-		StringFormat sf = new StringFormat("UPDATE %s SET ", tableName);
+		StringBuilder sf = new StringBuilder(format("UPDATE %s SET ", tableName));
 		for(int i = 0; i < columns.length; i++) {
 			String column = columns[i];
 			String value = quoteWrap(values[i]);
 			String comma = getComma(columns.length, i, "");
-			sf.appendf("%s = %s%s", column, value, comma);
+			sf.append(format("%s = %s%s", column, value, comma));
 		}
-		String idx = quoteWrap(id);
-		sf.appendf(" where %s=%s", id, quoteWrap(idValue));
+		sf.append(format(" where %s=%s", columnName, quoteWrap(columnValue)));
 		update(sf + "");
 	}
 	
 	/** Write a table from the database to a file */
 	public File writeToFile
-	(String path, ArrayList<String> columns, ResultSet results)
+	(String path, String[] columns, ResultSet results)
 	throws FileNotFoundException, SQLException {
-		boolean isIndexed = PRIMARY_KEY.getKey().equals("idx");
-		List<String> newColumns;
-		int start;
-		if(columns.size() == 0) {throw new InputMismatchException();}
-		start = isIndexed ? 1 : 0;
-		newColumns = columns.subList(start, columns.size());
+		if(columns.length == 0) {throw new InputMismatchException();}
 		File file = new File(path);
 		PrintWriter pw = new PrintWriter(file);
-		pw.println(String.join(",", newColumns));
+		pw.println(String.join(",", columns));
 		while(results.next()) {
-			Iterator<String> it = newColumns.iterator();
-			while(it.hasNext()) {
-				pw.print(results.getObject(it.next()));
-				if(it.hasNext()) {pw.print(",");}
+			for(int i = 0; i < columns.length; i++) {
+				pw.print(results.getObject(columns[i]));
+				if(i < columns.length - 1) {pw.print(",");}
 			}
 			pw.println();
 		}
