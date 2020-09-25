@@ -579,4 +579,8 @@ class CRUDBuddy {
 	  entry("DATE", "DATE"),
 	  entry("TIME", "TIME"),
 	  entry("TIMESTAMP", "TIMESTAMP"));
+
+	public Boolean isClosed() throws SQLException {
+		return connection.isClosed();
+	}
 }

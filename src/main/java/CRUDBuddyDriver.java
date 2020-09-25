@@ -5,7 +5,7 @@ import java.util.Random;
 public class CRUDBuddyDriver {
 	public static void main(String[] args)
 	throws SQLException, ClassNotFoundException {
-		
+		invgui GUI = new invgui();
 		CRUDBuddy crud = Credentials.signIn();
 		
 		// restocks a select group of products with random quantities
