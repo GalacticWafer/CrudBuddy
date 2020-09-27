@@ -19,7 +19,8 @@ class RandomSim extends Random {
 		this.crud = crud;
 		ResultSet rs;
 		rs = crud.query("select product_id from inventory;");
-		productIds = new String[crud.size("inventory")];
+		crud.setWorkingTable("inventory");
+		productIds = new String[crud.size()];
 		while(true) {
 			for(int i = 0; rs.next(); i++) {
 				productIds[i] = rs.getString(1);
@@ -45,7 +46,7 @@ class RandomSim extends Random {
 	}
 	
 	private int nextQuantity() {
-		return Math.abs((int)(nextGaussian() * 500));
+		return Math.abs((int)(nextGaussian() * 500)) + 1;
 	}
 	
 	private Date nextDate() {
@@ -75,7 +76,8 @@ class RandomSim extends Random {
 	
 	// use CRUDBuddy to get a randomly chosen existing entry from sales table
 	private Object[] nextOldCustomer() throws SQLException, FileNotFoundException {
-		int size = crud.size("customers");
+		crud.setWorkingTable("customers");
+		int size = crud.size();
 		if(size == 0) { return nextNewCustomer(); }
 		ResultSet rs = crud.query("select * from customers where idx = " + size);
 		rs.next();
@@ -87,7 +89,8 @@ class RandomSim extends Random {
 	}
 	
 	private String nextProduct() throws SQLException {
-		return productIds[nextInt(crud.size("inventory"))];
+		crud.setWorkingTable("inventory");
+		return productIds[nextInt(crud.size())];
 	}
 	
 	private String nextEmail() throws FileNotFoundException {

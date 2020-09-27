@@ -12,10 +12,11 @@ public class Main {
 	
 	public static void main(String[] args)
 	throws SQLException, ClassNotFoundException, FileNotFoundException {
+		Crud crud = Credentials.databaseLogin();
 		//Crud crud = Credentials.databaseLogin();
 		//crud.setWorkingTable("inventory");
 		//crud.writeToFile("new_test.csv", crud.getColumnNames(), crud.getAllRecords());
-		invgui GUI = new invgui();
+		invgui GUI = new invgui(crud);
 	}
 	
 	private static void insertNewRecord(Crud crud, String tableName) throws SQLException {

@@ -322,7 +322,7 @@ class Crud {
 	}
 	
 	/** retrieve the number of rows of a column. */
-	int size(String tableName) throws SQLException {
+	int size() throws SQLException {
 		ResultSet rs = query("SELECT COUNT(*) FROM " + tableName);
 		rs.next();
 		return rs.getInt(1);
