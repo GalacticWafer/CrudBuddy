@@ -1,101 +1,101 @@
+import javax.mail.MessagingException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Random;
 import java.util.Scanner;
 
 class RandomSim extends Random {
 	private final Crud crud;
-	private String[] productIds;
-	private int size;
-	private Scanner emailScanner;
-	private Scanner dates;
+	private final String[] productIds;
+	private Scanner emails;
+	private final Scanner dates;
 	public static final String emailFileName = "emails.csv";
 	public static final String dateFileName = "dates.csv";
 	
-	public RandomSim(Crud crud) throws SQLException {
+	public RandomSim(Crud crud) throws SQLException, FileNotFoundException {
 		this.crud = crud;
-		size = 0;
-		ResultSet rs = crud.query("select product_id from inventory;");
-		productIds = new String[rs.getMetaData().getColumnCount()];
-		for(int i = 0; i < productIds.length && rs.next(); i++) {
-			productIds[i] = rs.getString(1);
-			size++;
+		ResultSet rs;
+		rs = crud.query("select product_id from inventory;");
+		productIds = new String[crud.size("inventory")];
+		while(true) {
+			for(int i = 0; rs.next(); i++) {
+				productIds[i] = rs.getString(1);
+			}
+			break;
 		}
-		emailScanner = new Scanner(emailFileName);
-		dates = new Scanner(dateFileName);
+		emails = new Scanner(new File(emailFileName));
+		dates = new Scanner(new File(dateFileName));
 	}
 	
-	public void simulateOrders(String dateQuantityFile) throws FileNotFoundException,
-															   SQLException {
-		Scanner scanner = new Scanner(new File(dateQuantityFile));
-		
-		while(scanner.hasNextLine()) {
+	public void simulateOrders() throws SQLException, FileNotFoundException, MessagingException {
+		crud.setWorkingTable("customers");
+		for(int i = 0; i < 2000000; i++) {
 			Order order = new Order();
 			order.setFields(nextCustomer(), nextProduct(), nextQuantity(), nextDate(), true);
-			//TODO: make sure it doesn't try to send emails for this part specifically lol
+			if(!(crud.isProcessableOrder(order) >= 0)) {
+				crud.restock(order.getProductId());
+			} else {
+				crud.setQuantityFromOrder(order);
+			}
+			crud.insertFromOrder(order, Crud.CUSTOMERS);
 		}
 	}
 	
-
-	
 	private int nextQuantity() {
-		int gaussian = (int)nextGaussian() * 500;
-		int quantity = gaussian < 1 ? - 1 * gaussian : gaussian;
-		return quantity;
+		return Math.abs((int)(nextGaussian() * 500));
 	}
 	
 	private Date nextDate() {
 		return new Date(dates.nextLine());
 	}
+	
 	@org.jetbrains.annotations.NotNull
 	private Object[] nextCustomer()
-	throws SQLException {
-		int chance = (int)Math.round(nextGaussian()) * 10;
-		if(chance > 3 || chance < - 3) {
+	throws SQLException, FileNotFoundException {
+		int chance = (int)(Math.round(nextGaussian() * (Integer.MAX_VALUE - 1)) % 10);
+		if(firstCustomer || chance > 3 || chance < - 3) {
+			firstCustomer = false;
 			return nextNewCustomer();
 		} else {
 			return nextOldCustomer();
 		}
-	}	
-
-	private Object[] nextNewCustomer() {
+	}
+	
+	private Object[] nextNewCustomer() throws FileNotFoundException {
 		String email = nextEmail();
 		String parts = (email.substring(0, email.indexOf("@")));
-		String firstName = parts.substring(0,parts.length() / 2); 
-		String lastName = parts.substring(parts.length()/2+1);
-		String location = ((nextInt() + 100000) % 10000) + "";
+		String firstName = parts.substring(0, parts.length() / 2);
+		String lastName = parts.substring(parts.length() / 2 + 1);
+		String location = Math.abs((nextInt() + 1000000) % 100000) + "";
 		return new Object[] {email, firstName, lastName, location};
 	}
+	
 	// use CRUDBuddy to get a randomly chosen existing entry from sales table
-	private Object[] nextOldCustomer() throws SQLException {
-		int index = nextInt(crud.query("select email from customers;").getMetaData()
-		 .getColumnCount() + 1);
-		ResultSet rs = crud.query("select * from customers where idx = " + index);
+	private Object[] nextOldCustomer() throws SQLException, FileNotFoundException {
+		int size = crud.size("customers");
+		if(size == 0) { return nextNewCustomer(); }
+		ResultSet rs = crud.query("select * from customers where idx = " + size);
 		rs.next();
-		return new Object[] {rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4)};
-	}
-	
-	
-	public boolean shouldCreateNewCustomer(int i) {
-		int number = nextInt(1000000);
-		return (number >= 2 && i < 1000000)
-			   || (number >= 5 && i < 5000000)
-			   || (number >= 8 && i < 7500000);
-	}
-	
-	public String nextProduct() {
-		return productIds[nextInt(size)];
-	}
-	
-	public String nextEmail() {
-		if(! emailScanner.hasNextLine()) {
-			emailScanner = new Scanner("emails.csv");
+		try {
+		return new Object[] { rs.getString(2), rs.getString(3), rs.getString(4),rs.getString(5)};
+		} catch(Exception e){
+			return nextNewCustomer();
 		}
-		return emailScanner.nextLine();
 	}
+	
+	private String nextProduct() throws SQLException {
+		return productIds[nextInt(crud.size("inventory"))];
+	}
+	
+	private String nextEmail() throws FileNotFoundException {
+		if(! emails.hasNextLine()) {
+			emails = new Scanner(new File("emails.csv"));
+		}
+		return emails.nextLine();
+	}
+	
+	private boolean firstCustomer = true;
 }
