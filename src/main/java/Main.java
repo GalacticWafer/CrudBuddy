@@ -1,3 +1,4 @@
+/*
 import javax.mail.MessagingException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -25,7 +26,9 @@ public class Main {
 		System.out.println(columnCount);
 		Object[] newRecord = new Object[columnCount];
 		for(int i = 0; i < newRecord.length; i++) {
-			newRecord[i] = null/*fixme, insertRecord all the names of your JtextFields and such variables*/;
+			newRecord[i] = null*/
+/*fixme, insertRecord all the names of your JtextFields and such variables*//*
+;
 		}
 	}
 	
@@ -71,3 +74,4 @@ public class Main {
 		}
 	}
 }
+*/

@@ -1,3 +1,4 @@
+/*
 import javax.swing.*;
 import javax.swing.BorderFactory;
 import javax.swing.border.LineBorder;
@@ -15,7 +16,7 @@ import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.table.DefaultTableModel;
 
 
-public class invgui extends CRUDBuddyTest {
+public class invgui extends Crud {
 
     static JFrame frame;
     static JTable inv;
@@ -31,9 +32,11 @@ public class invgui extends CRUDBuddyTest {
         // UIManager.put("scrollbar", (new Color(255,57,57)));
         //UIManager.put("ScrollBar.thumb", new ColorUIResource(new Color(57,57,57)));
 
-       /* UIManager.put("ScrollBar.thumbShadow", new Color(255, 110, 110));
+       */
+/* UIManager.put("ScrollBar.thumbShadow", new Color(255, 110, 110));
         UIManager.put("ScrollBar.thumbHighlight", new Color(110, 255, 110));
-        UIManager.put("ScrollBar.darkShadow", new Color(110, 110, 255)); */
+        UIManager.put("ScrollBar.darkShadow", new Color(110, 110, 255)); *//*
+
         //UIManager.put("ScrollBar.minimumThumbSize", 40);
         //UIManager.put("ScrollBar.thumbHeight", 100);
         UIManager.put("ScrollBar.thumb", new ColorUIResource(new Color(110,110,110)));
@@ -257,4 +260,4 @@ public class invgui extends CRUDBuddyTest {
     }
 
 
-}
+}*/

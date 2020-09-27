@@ -38,6 +38,8 @@ public class Order {
 		this.d = d;
 	}
 	
+	public Order()	{}
+	
 	public static String generateId() {
 		if(ORDER_ID_LENGTH < 1) {
 			throw new IllegalArgumentException();
@@ -113,4 +115,13 @@ public class Order {
 	public String getResultString() {return resultString;}
 	
 	public void setCurrentQuantity(int currentQuantity) {this.currentQuantity = currentQuantity;}
+	
+	public void setFields(Object[] customer, String productId, int quantity, Date date, boolean b)
+	{
+		setEmail((String)customer[0]);
+		setQuantity(quantity);
+		setDate( date);
+		setProductId(productId);
+		isSale = b;
+	}
 }
