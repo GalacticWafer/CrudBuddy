@@ -19,8 +19,8 @@ public class Main {
 	
 	private static void insertNewRecord(Crud crud, String tableName) throws SQLException {
 		crud.setWorkingTable(tableName);
-		Object[] record = crud.find("VBEUS2ETCKA4","product_id");
-		System.out.println(Arrays.toString(record));
+		Object[] insertFromOrder = crud.find("VBEUS2ETCKA4","product_id");
+		System.out.println(Arrays.toString(insertFromOrder));
 		String someTextField = "sales";
 		int columnCount = crud.getColumnCount(someTextField);
 		System.out.println(columnCount);

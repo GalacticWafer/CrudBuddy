@@ -2,6 +2,7 @@ import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.InputMismatchException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -128,7 +129,28 @@ public class Order {
 	
 	public void setSale(boolean sale) {isSale = sale;}
 	
-	public Object[] toArray() {
+	public Object[] toCustomerArray() {
 		return new Object[] {getEmail(), getFirstName(), getLastName(), getLocation()};
+	}
+	
+	public Object[] toOrderArray() {
+		return new Object[] {
+		 getEmail(), getLocation(), getDate(), getOrderId(), getProductId(), getQuantity()
+		};
+	}
+	
+	public Object[] toArray(int table) {
+		switch(table){
+			case Crud.SALES: { return toOrderArray(); }
+			case Crud.CUSTOMERS: { return toCustomerArray(); }
+		}
+		throw new InputMismatchException();
+	}
+	public Object getMatchValue(int table) {
+		switch(table){
+			case Crud.SALES: { return getOrderId(); }
+			case Crud.CUSTOMERS: { return getEmail(); }
+		}
+		throw new InputMismatchException();
 	}
 }

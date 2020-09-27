@@ -17,6 +17,14 @@ class Crud {
 	private static String DB_NAME;
 	private static Connection connection;
 	private String tableName = "inventory";
+	public static final int SALES = 0;
+	public static final int INVENTORY = 1;
+	public static final int CUSTOMERS = 2;
+	public static final Map<Integer, String[]> RECORD_STRINGS = Map.ofEntries(
+	 Map.entry(SALES, new String[] {"sales", "order_id"}),
+	 Map.entry(INVENTORY, new String[] {"inventory", "product_id"}),
+	 Map.entry(CUSTOMERS, new String[] {"customers", "email"})
+	);
 	
 	/**
 	 * Class that facilitates a connection to a database, and carries out CRUD
@@ -105,16 +113,14 @@ class Crud {
 	
 	/** Gets an arraylist of the column names of a specific table */
 	public String[] getColumnNames() throws SQLException {
-		// Gets an arraylist of the column names of a specific table
 		String sql = format(
 		 "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS`" +
 		 " WHERE `TABLE_SCHEMA`='%s' AND `TABLE_NAME`='%s'", DB_NAME, tableName);
 		ResultSet rs = query(sql);
 		ArrayList<String> temp = new ArrayList<>();
-		int i = 0;
 		int size = 0;
-		for(; rs.next(); i++) {
-			if(!rs.getString(1).equals("idx")) {
+		while(rs.next()) {
+			if(! rs.getString(1).equals("idx")) {
 				temp.add(rs.getString(1));
 				size++;
 			}
@@ -187,7 +193,16 @@ class Crud {
 		return "jdbc:mysql://" + HOST_IP + ":" + PORT + "/" + DB_NAME;
 	}
 	
-	/** Insert one or more new records into a table */
+	/** Create a new record in the specified table from order information. */
+	public void insertFromOrder(Order od, int table) throws SQLException {
+		String[] recordStrings = RECORD_STRINGS.get(table);
+		setWorkingTable(recordStrings[0]);
+		if(!exists(recordStrings[1], od.getMatchValue(table))) {
+			insertRecords(getColumnNames(), new Object[][] {od.toArray(table)});
+		}
+	}
+	
+	/** Insert one or more new records into a table from a 2d array. */
 	public int insertRecords(String[] columnNames, Object[][] tableValues)
 	throws InputMismatchException {
 		if(tableValues.length == 0 || columnNames.length == 0) {
@@ -205,9 +220,10 @@ class Crud {
 		}
 		try {
 			return update(sb + "");
-		} catch(Exception e) {
+		}
+		catch(Exception e) {
 			System.out.println(sb + " must have a huge email address...");
-			return -1;
+			return - 1;
 		}
 	}
 	
@@ -284,24 +300,16 @@ class Crud {
 		return columnValue.toString();
 	}
 	
-	/** Record the customer information from an order if the customer is unknown. */
-	public void recordCustomer(Order od) throws SQLException {
-		setWorkingTable("customers");
-		if(!exists("email", od.getEmail())) {
-			insertRecords(getColumnNames(), new Object[][] {od.toArray()});
-		}
-	}
-	
 	private boolean exists(String columnName, Object columnValue) throws SQLException {
 		ResultSet rs = queryF(
-		 "SELECT EXISTS(SELECT * FROM %s WHERE %s = %s);",tableName,
+		 "SELECT EXISTS(SELECT * FROM %s WHERE %s = %s);", tableName,
 		 columnName, quoteWrap(columnValue));
 		return rs.getFetchSize() > 0;
 	}
 	
 	/** Restock a given product. */
 	public void restock(String productId) throws SQLException {
-		updateRow(new String[] {"quantity"}, new Object[] {500}, "product_id", productId, 
+		updateRow(new String[] {"quantity"}, new Object[] {500}, "product_id", productId,
 		 "inventory");
 	}
 	
@@ -342,8 +350,7 @@ class Crud {
 			sb.append(array[i]);
 			if(i == values.length - 1) {
 				sb.append(")");
-			}
-			else {sb.append(",");}
+			} else {sb.append(",");}
 		}
 		return sb.toString();
 	}
