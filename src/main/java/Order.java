@@ -38,7 +38,7 @@ public class Order {
 		this.d = d;
 	}
 	
-	public Order()	{}
+	public Order() {}
 	
 	public static String generateId() {
 		if(ORDER_ID_LENGTH < 1) {
@@ -53,6 +53,40 @@ public class Order {
 		return sb.toString();
 	}
 	
+	public String[] getCustomerInfo() {return new String[] {firstName, lastName, email};}
+	
+	public int getCurrentQuantity() {return currentQuantity;}
+	
+	public Date getDate() {return date;}
+	
+	public String getEmail() {return email;}
+	
+	public String getFirstName() {return firstName;}
+	
+	public String getLastName() {return lastName;}
+	
+	public String getLocation() {return location;}
+	
+	public String getOrderId() {return d;}
+	
+	public String getProductId() {return productId;}
+	
+	public int getQuantity() {return quantity;}
+	
+	public String getResultString() {return resultString;}
+	
+	public String getSalesTuple() {
+		return String.format("(%s,'%s','%s','%s','%s','%s')",
+		 getQuantity(), getSqlDate(), Arrays.toString(getCustomerInfo()),
+		 getLocation(), getProductId(), getOrderId());
+	}
+	
+	public String getSqlDate() {return DATE_FORMAT.format(date);}
+	
+	public boolean isSale() {return isSale;}
+	
+	public void setCurrentQuantity(int currentQuantity) {this.currentQuantity = currentQuantity;}
+	
 	public void setCustomerInfo(String customerInfo) {
 		Matcher m = PATTERN.matcher(customerInfo);
 		if(m.find()) {
@@ -62,66 +96,39 @@ public class Order {
 		}
 	}
 	
-	public String getSalesTuple() {
-		return String.format("(%s,'%s','%s','%s','%s','%s')",
-		 getQuantity(), getSqlDate(), Arrays.toString(getCustomerInfo()),
-		 getLocation(), getProductId(), getOrderId());
-	}
-	
-	public String getProductId() {return productId;}
-	
-	public void setProductId(String productId) {this.productId = productId;}
-	
-	public int getQuantity() {return quantity;}
-	
-	public void setQuantity(int quantity) {this.quantity = quantity;}
-	
-	public boolean isSale() {return isSale;}
-	
-	public void setSale(boolean sale) {isSale = sale;}
-	
-	public String getLocation() {return location;}
-	
-	public void setLocation(String location) {this.location = location;}
-	
-	public Date getDate() {return date;}
-	
-	public String getSqlDate() {return DATE_FORMAT.format(date);}
-	
 	public void setDate(Date date) {this.date = date;}
-	
-	public String[] getCustomerInfo() {return new String[] {firstName, lastName, email};}
-	
-	public String getOrderId() {return d;}
-	
-	public void setOrderId(String d) {this.d = d;}
-	
-	public int getCurrentQuantity() {return currentQuantity;}
-	
-	public String getEmail() {return email;}
 	
 	public void setEmail(String email) {this.email = email;}
 	
-	public String getFirstName() {return firstName;}
+	public void setFields(Object[] customer, String productId, int quantity, Date date,
+						  boolean b) {
+		setEmail((String)customer[0]);
+		setFirstName((String)customer[1]);
+		setLastName((String)customer[2]);
+		setLocation((String)customer[3]);
+		setQuantity(quantity);
+		setDate(date);
+		setProductId(productId);
+		isSale = b;
+	}
 	
 	public void setFirstName(String firstName) {this.firstName = firstName;}
 	
-	public String getLastName() {return lastName;}
-	
 	public void setLastName(String lastName) {this.lastName = lastName;}
+	
+	public void setLocation(String location) {this.location = location;}
+	
+	public void setOrderId(String d) {this.d = d;}
+	
+	public void setProductId(String productId) {this.productId = productId;}
+	
+	public void setQuantity(int quantity) {this.quantity = quantity;}
 	
 	public void setResultString(String resultString) {this.resultString = resultString;}
 	
-	public String getResultString() {return resultString;}
+	public void setSale(boolean sale) {isSale = sale;}
 	
-	public void setCurrentQuantity(int currentQuantity) {this.currentQuantity = currentQuantity;}
-	
-	public void setFields(Object[] customer, String productId, int quantity, Date date, boolean b)
-	{
-		setEmail((String)customer[0]);
-		setQuantity(quantity);
-		setDate( date);
-		setProductId(productId);
-		isSale = b;
+	public Object[] toArray() {
+		return new Object[] {getEmail(), getFirstName(), getLastName(), getLocation()};
 	}
 }

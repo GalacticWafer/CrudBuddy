@@ -10,7 +10,7 @@ import java.util.Scanner;
 
 import static java.util.Map.entry;
 
-class uploadCsvGui {
+class 	uploadCsvGui {
 	private String[] columns;
 	private String fileName;
 	private final Crud crud;
