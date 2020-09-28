@@ -4,8 +4,12 @@ import javax.swing.UIManager;
 import javax.swing.plaf.ColorUIResource;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.table.DefaultTableModel;
 
@@ -32,7 +36,7 @@ public class GUI {
 	private static String tmptest;
 	private final Crud crud;
 	private DefaultTableModel model;
-	private Object[][] data;
+	private static Object[][] data;
 	private String tableName;
 	
 	public GUI(Crud crud) throws SQLException {
@@ -216,7 +220,21 @@ public class GUI {
 		c.gridx = 1;
 		c.gridy = 4;
 		east.add(wsamount, c);
-		
+		JButton exportButton = new JButton("Exprt to CSV...");
+		east.add(exportButton);
+		exportButton.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e)
+			{
+				try
+				{
+					sendEmail("gui.csv");
+				}
+				catch(FileNotFoundException | SQLException fileNotFoundException)
+				{
+					fileNotFoundException.printStackTrace();
+				}
+			}
+		});
 		JLabel sale = new JLabel("Set Sale Price ");
 		sale.setForeground(GREY_110x3);
 		sale.setFont(FONT);
@@ -287,4 +305,42 @@ public class GUI {
 		model.fireTableDataChanged();
 		table.repaint();
 	}
+	
+	private void sendEmail(String fileName) throws FileNotFoundException, SQLException
+	{
+		/*
+		* PSUEDO CODE
+		* 
+		* HIGHER LEVEL
+		* 1. Take data
+		* 2. write to a csv
+		* 3. export csv
+		* 
+		* Next Level
+		* 1.Loop through data
+		* 2. Put data in Object[][] dat 
+		* */
+		
+		
+		File report = new File(fileName);
+		
+		
+		PrintWriter dataWriter = new PrintWriter(report);
+		dataWriter.println(crud.arrayToCSV(crud.getColumnNames()));
+		for(int i = 0; i < data.length; i++)
+		{
+			Object[] row = data[i];
+			for(int j = 0; j < row.length; j++)
+			{
+				dataWriter.print(row[j]);
+				if(j < row.length - 1) {
+					dataWriter.print(",");
+				}
+			}
+			
+			dataWriter.println();
+		}
+		
+		dataWriter.close();
+	}  // End sendFile
 }

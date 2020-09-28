@@ -42,11 +42,11 @@ class Crud {
 		//JOptionPane.showMessageDialog(null, "Connection OK with " + getURL());
 	}
 	
-	/** Creates a .csv-compatible line from an ArrayList<String> */
+	/** Creates a .csv-compatible line from an String[] */
 	public String arrayToCSV
 	(String[] array) {
 		String a = Arrays.toString(array);
-		return a.substring(1, a.length() - 1);
+		return a.substring(1, a.length() - 1).replace(" ", "");
 	}
 	
 	/** Creates a gui to get user input on a new table to be uploaded to MySQL database. */
