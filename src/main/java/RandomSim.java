@@ -41,7 +41,11 @@ class RandomSim extends Random {
 			} else {
 				crud.setQuantityFromOrder(order);
 			}
+			crud.setWorkingTable("customers");
 			crud.insertFromOrder(order, Crud.CUSTOMERS);
+			//crud.insertFromOrder(order, Crud.SALES);
+			crud.setWorkingTable("sales");
+			crud.insertRecords(crud.getColumnNames(), new Object [][] {order.toOrderArray()});
 		}
 	}
 	
