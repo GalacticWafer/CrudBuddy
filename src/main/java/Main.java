@@ -1,4 +1,3 @@
-/*
 import javax.mail.MessagingException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -6,31 +5,27 @@ import java.sql.SQLException;
 import java.util.*;
 
 public class Main {
-		public static final String[] COLUMN_NAMES =
-	 new String[] {"product_id", "quantity", "wholesale_cost", "sale_price", "supplier_id"};
-
+	 
 	
 	public static void main(String[] args)
 	throws SQLException, ClassNotFoundException, FileNotFoundException {
 		Crud crud = Credentials.databaseLogin();
-		//Crud crud = Credentials.databaseLogin();
-		//crud.setWorkingTable("inventory");
-		//crud.writeToFile("new_test.csv", crud.getColumnNames(), crud.getAllRecords());
-		invgui GUI = new invgui(crud);
+		GUI GUI = new GUI(crud);
+		//new RandomSimTest();
 	}
 	
 	private static void insertNewRecord(Crud crud, String tableName) throws SQLException {
 		crud.setWorkingTable(tableName);
-		Object[] insertFromOrder = crud.find("VBEUS2ETCKA4","product_id");
+		Object[] insertFromOrder = crud.find("VBEUS2ETCKA4", "product_id");
 		System.out.println(Arrays.toString(insertFromOrder));
 		String someTextField = "sales";
 		int columnCount = crud.getColumnCount(someTextField);
 		System.out.println(columnCount);
 		Object[] newRecord = new Object[columnCount];
 		for(int i = 0; i < newRecord.length; i++) {
-			newRecord[i] = null*/
-/*fixme, insertRecord all the names of your JtextFields and such variables*//*
-;
+			newRecord[i] = null
+			//fixme, insertRecord all the names of your JtextFields and such variables
+			;
 		}
 	}
 	
@@ -76,4 +71,3 @@ public class Main {
 		}
 	}
 }
-*/

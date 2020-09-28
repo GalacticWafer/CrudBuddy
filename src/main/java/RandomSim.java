@@ -38,14 +38,14 @@ class RandomSim extends Random {
 			order.setFields(nextCustomer(), nextProduct(), nextQuantity(), nextDate(), true);
 			if(!(crud.isProcessableOrder(order) >= 0)) {
 				crud.restock(order.getProductId());
+				continue;
 			} else {
 				crud.setQuantityFromOrder(order);
 			}
 			crud.setWorkingTable("customers");
 			crud.insertFromOrder(order, Crud.CUSTOMERS);
-			//crud.insertFromOrder(order, Crud.SALES);
+			crud.insertFromOrder(order, Crud.SALES);
 			crud.setWorkingTable("sales");
-			crud.insertRecords(crud.getColumnNames(), new Object [][] {order.toOrderArray()});
 		}
 	}
 	
