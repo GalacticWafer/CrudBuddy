@@ -71,16 +71,6 @@ public class GUI {
 		MIDDLE_CONSTRAINTS.gridy = 0;
 		MIDDLE_CONSTRAINTS.insets = new Insets(13, 0, - 1, 0);  //top padding
 		CENTER_PANEL.add(tableSelections, MIDDLE_CONSTRAINTS);
-       /* JLabel tname = new JLabel(crud.getWorkingTable());
-        tname.setForeground(TABLE_FOREGROUND);
-        tname.setFont(FONT);
-        middle.weightx = 0.5;
-        middle.fill = GridBagConstraints.HORIZONTAL;
-        middle.ipady = 70;
-        middle.gridx = 0;
-        middle.gridy = 0;
-        middle.insets = new Insets(5,40,0,50);  //top padding
-        center.add(tname, middle); */
 		crud.setWorkingTable("inventory");
 		System.out.println(crud.getWorkingTable());
 		createTable();
@@ -103,7 +93,7 @@ public class GUI {
 	private void setFrameStyle(JLabel status) {
 		status.setFont(FONT);
 		CENTER_PANEL.setBackground(centerBackground);
-		NORTH_PANEL.setBackground(GREY_50x3);
+		NORTH_PANEL.setBackground(DARK_GREY);
 		SOUTH_PANEL.setBackground(GREY_50x3);
 		EAST_PANEL.setBackground(GREY_50x3);
 		WEST_PANEL.setBackground(GREY_50x3);
@@ -150,6 +140,7 @@ public class GUI {
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 0;
 		c.gridy = 0;
+		c.insets = new Insets(3, 15, 0, 10);
 		east.add(pid, c);
 		JTextField productid = new JTextField(10); //creates textfield with 10 columns
 		productid.setBackground(GREY_110x3);
@@ -158,7 +149,6 @@ public class GUI {
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 0;
-		c.insets = new Insets(0, 0, 0, 20);  //top padding
 		east.add(productid, c);
 		
 		productid.addActionListener(
@@ -274,7 +264,7 @@ public class GUI {
 		}
 	}
 	
-	public void setFromArray(Object[][] newData, String[] columnNames) throws {
+	public void setFromArray(Object[][] newData, String[] columnNames) throws SQLException {
 		this.data = newData;
 		setNewModel(columnNames);
 	}
