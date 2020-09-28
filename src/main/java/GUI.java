@@ -274,7 +274,7 @@ public class GUI {
 		}
 	}
 	
-	public void setFromArray(Object[][] newData, String[] columnNames) throws {
+	public void setFromArray(Object[][] newData, String[] columnNames) {
 		this.data = newData;
 		setNewModel(columnNames);
 	}
