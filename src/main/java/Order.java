@@ -111,6 +111,10 @@ public class Order {
 		setDate(date);
 		setProductId(productId);
 		isSale = b;
+		if (getOrderId() == null){
+			setOrderId(generateId());
+		}
+
 	}
 	
 	public void setFirstName(String firstName) {this.firstName = firstName;}
