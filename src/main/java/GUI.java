@@ -111,7 +111,7 @@ public class GUI {
 	}
 	
 	private void refresh() throws SQLException {
-		setData(crud.getColumnNames());
+		setFromDatabase(crud.getColumnNames());
 		DefaultTableModel dm = (DefaultTableModel)table.getModel();
 		dm.setDataVector(data, crud.getColumnNames());
 		dm.fireTableDataChanged();
@@ -119,13 +119,8 @@ public class GUI {
 	
 	private void createTable() throws SQLException {
 		String[] columnNames = crud.getColumnNames();
-		setData(columnNames);
-		model = new DefaultTableModel(data, columnNames);
-		model.setDataVector(data, columnNames);
-		table.setModel(model);
-		scrollPane.add(table);
-		model.fireTableDataChanged();
-		table.repaint();
+		setFromDatabase(columnNames);
+		setNewModel(columnNames);
 	}
 	
 	private void makeComponents(JPanel east, JPanel center, GridBagConstraints middle) {
@@ -268,7 +263,7 @@ public class GUI {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
 	
-	private void setData(String[] columnNames) throws SQLException {
+	private void setFromDatabase(String[] columnNames) throws SQLException {
 		ResultSet rs = crud.getAllRecords();
 		data = new Object[crud.size()][columnNames.length];
 		for(int i = 0; rs.next() && i < data.length; i++) {
@@ -277,5 +272,19 @@ public class GUI {
 				data[i][j] = rs.getObject(columnNames[j]);
 			}
 		}
+	}
+	
+	public void setFromArray(Object[][] newData, String[] columnNames) throws {
+		this.data = newData;
+		setNewModel(columnNames);
+	}
+	
+	private void setNewModel(String[] columnNames) {
+		model = new DefaultTableModel(data, columnNames);
+		model.setDataVector(data, columnNames);
+		table.setModel(model);
+		scrollPane.add(table);
+		model.fireTableDataChanged();
+		table.repaint();
 	}
 }

@@ -50,7 +50,7 @@ class Crud {
 	}
 	
 	/** Creates a gui to get user input on a new table to be uploaded to MySQL database. */
-	uploadCsvGui csvGuiLoad(String[] columns, String fileName) {
+	private uploadCsvGui csvGuiLoad(String[] columns, String fileName) {
 		uploadCsvGui gui = new uploadCsvGui(columns, fileName, this);
 		gui.invoke();
 		return gui;
