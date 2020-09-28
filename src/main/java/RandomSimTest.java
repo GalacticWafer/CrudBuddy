@@ -26,6 +26,7 @@ class RandomSimTest {
 	throws SQLException, ClassNotFoundException, FileNotFoundException, MessagingException {
 		Crud crud = Credentials.databaseLogin();
 		RandomSim rs = new RandomSim(crud);
+		new GUI(crud);
 		rs.simulateOrders();
 	}
 }

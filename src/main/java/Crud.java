@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.sql.*;
 import java.util.*;
+import java.util.Date;
 
 class Crud {
 	public static final int QUANTITY_SHORTAGE = - 2;
@@ -215,7 +216,7 @@ class Crud {
 			if(tableValues[i].length != columnNames.length) {
 				throw new InputMismatchException();
 			}
-			sb.append(toValueTuple(tableValues[i], null));
+			sb.append(toValueTuple(tableValues[i]));
 			sb.append(i == tableValues.length - 1 ? ";" : ",");
 		}
 		try {
@@ -265,12 +266,13 @@ class Crud {
 	
 	/** Return an integer indicating if the order can be processed, and if not, why */
 	public int isProcessableOrder(Order order) throws SQLException, MessagingException {
-		setWorkingTable("sales");
+		setWorkingTable("inventory");
 		String productId = order.getProductId();
 		ResultSet rs = queryF("select quantity from %s where product_id = '%s';",
 		 tableName, productId);
 		if(! rs.next()) {
 			order.setResultString(order.getProductId() + " : unknown product id");
+			System.out.println(order.getProductId() + " : unknown product id");
 			return UNKNOWN_PRODUCT;
 		}
 		int currentQuantity = rs.getInt(1);
@@ -296,7 +298,10 @@ class Crud {
 	
 	/** Wraps the given object in quotes if it is a string */
 	private static String quoteWrap(Object columnValue) {
-		if(columnValue instanceof String) {return "'" + columnValue + "'";}
+		if(columnValue instanceof String 
+		   || columnValue instanceof Date) {
+			return "'" + columnValue + "'";
+		}
 		return columnValue.toString();
 	}
 	
@@ -340,14 +345,34 @@ class Crud {
 	
 	/** Makes a tuple of values from an array for sql statements */
 	public String toValueTuple(Object[] array, HashMap<Integer, String> typeMap) {
+		if(typeMap == null) {
+			throw new NullPointerException();
+		}
 		Object[] values = new Object[array.length];
 		StringBuilder sb = new StringBuilder("(");
 		for(int i = 0; i < values.length; i++) {
-			if(typeMap != null && typeMap.get(i).contains("CHAR")
-			   || array[i] instanceof String) {
+			if(shouldQuote(typeMap.get(i))){
 				array[i] = "'" + array[i] + "'";
 			}
 			sb.append(array[i]);
+			if(i == values.length - 1) {
+				sb.append(")");
+			} else {sb.append(",");}
+		}
+		return sb.toString();
+	}
+	
+	private boolean shouldQuote(String s) {
+		return s.contains("VARCHAR")
+		|| s.contains("DATE");
+	}
+	
+	/** Makes a tuple of values from an array for sql statements */
+	public String toValueTuple(Object[] array) {
+		Object[] values = new Object[array.length];
+		StringBuilder sb = new StringBuilder("(");
+		for(int i = 0; i < values.length; i++) {
+			sb.append(quoteWrap(array[i]));
 			if(i == values.length - 1) {
 				sb.append(")");
 			} else {sb.append(",");}
@@ -415,4 +440,8 @@ class Crud {
 	protected String getWorkingTable() {
 		return this.tableName;
 	}
+	
+	public static final String[] INVENTORY_COLUMNS = new String[] {"product_id", "quantity", "wholesale_cost", "sale_price", "supplier_id"};;
+	//public static final String[] SALES_COLUMNS = new String[] {"product_id", "quantity", "wholesale_cost", "sale_price", "supplier_id"};;
+	//public static final String[] CUSTOMERS_COLUMNS = new String[] {"product_id", "quantity", "wholesale_cost", "sale_price", "supplier_id"};;
 }

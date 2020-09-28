@@ -139,7 +139,7 @@ public class Order {
 	
 	public Object[] toOrderArray() {
 		return new Object[] {
-		 getEmail(), getLocation(), getDate(), getOrderId(), getProductId(), getQuantity()
+		 getEmail(), getLocation(), getSqlDate(), getOrderId(), getProductId(), getQuantity()
 		};
 	}
 	

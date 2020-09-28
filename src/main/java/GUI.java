@@ -6,74 +6,71 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.table.DefaultTableModel;
 
-public class invgui {
-	static JFrame frame;
-	static JTable inv;
-	static JScrollPane scrollPane;
-	static Boolean closed = false;
-	static String connection;
-	static String tmptest;
-	private DefaultListCellRenderer listRenderer;
-	final static boolean shouldFill = true;
-	final static boolean shouldWeightX = true;
-	private Crud crud;
+public class GUI {
+	private static final Color CLOSED_STATUS_FOREGROUND = new Color(217, 85, 80);
+	private static final Color DARK_GREY = new Color(20, 20, 20);
+	private static final Font FONT = new Font("Aharoni", Font.BOLD, 15);
+	private static final Color GREY_110x3 = new Color(110, 110, 110);
+	private static final Color GREY_50x3 = new Color(50, 50, 50);
+	private static final Color OPEN_STATUS_FOREGROUND = new Color(131, 224, 158);
+	private static final Color PURE_WHITE = new Color(255, 255, 255);
+	private static final Color TABLE_FOREGROUND = new Color(125, 211, 224);
+	private static final Color centerBackground = GREY_50x3;
+	private static GridBagLayout BAG_LAYOUT = new GridBagLayout();
+	private static JPanel CENTER_PANEL = new JPanel();
+	private static JPanel EAST_PANEL = new JPanel();
+	private static GridBagConstraints MIDDLE_CONSTRAINTS = new GridBagConstraints();
+	private static JPanel NORTH_PANEL = new JPanel();
+	private static JPanel SOUTH_PANEL = new JPanel();
+	private static JPanel WEST_PANEL = new JPanel();
+	private static JFrame frame;
+	private static JScrollPane scrollPane;
+	private static JTable table;
+	private static String tmptest;
+	private final Crud crud;
+	private DefaultTableModel model;
+	private Object[][] data;
+	private String tableName;
 	
-	private final Color openStatusForeground = new Color(131, 224, 158);
-	private final Color closedStatusForeground = new Color(217, 85, 80);
-	
-	public invgui(Crud crud) throws SQLException, ClassNotFoundException {
-		
-		
-		UIManager.put("ScrollBar.thumb", new ColorUIResource(GREY_110x3));
-		UIManager.put("ScrollBar.thumbDarkShadow", new ColorUIResource(GREY_50x3));
-		UIManager.put("ScrollBar.thumbShadow", new ColorUIResource(GREY_50x3));
-		UIManager.put("ScrollBar.thumbHighlight", new ColorUIResource(GREY_50x3));
-		UIManager.put("ScrollBar.track", new ColorUIResource(GREY_50x3));
+	public GUI(Crud crud) throws SQLException {
 		this.crud = crud;
+		setUIManager();
+		scrollPane = new JScrollPane();
+		table = new JTable();
+		frame = new JFrame("CRUD Buddy");
+		JLabel status = new JLabel("Status: " + checkConnection());
+		status.setForeground(crud.isClosed() ? CLOSED_STATUS_FOREGROUND : OPEN_STATUS_FOREGROUND);
+		setFrameStyle(status);
 		
-		String[] array = crud.getTableNames();
-		System.out.println(Arrays.toString(array));
+		EAST_PANEL.setLayout(BAG_LAYOUT);
+		CENTER_PANEL.setLayout(BAG_LAYOUT);
+		JComboBox tableSelections = new JComboBox(crud.getTableNames());
 		
-		frame = new JFrame("Inventory");
-		JPanel north = new JPanel();
-		JPanel east = new JPanel();
-		JPanel west = new JPanel();
-		JPanel south = new JPanel();
-		JPanel center = new JPanel();
-		if(! closed) { connection = "Connected"; } else { connection = "No Connection"; }
-		JLabel status = new JLabel("Status: " + connection);
-		if(closed == true) {
-			status.setForeground(closedStatusForeground);
-		} else { status.setForeground(openStatusForeground); }
-		status.setFont(FONT);
-		
-		center.setBackground(centerBackground);
-		north.setBackground(GREY_50x3);
-		south.setBackground(GREY_50x3);
-		east.setBackground(GREY_50x3);
-		west.setBackground(GREY_50x3);
-		frame.getContentPane().setBackground(GREY_50x3);
-		
-		east.setLayout(new GridBagLayout());
-		center.setLayout(new GridBagLayout());
-		GridBagConstraints middle = new GridBagConstraints();
-		JComboBox tables = new JComboBox(crud.getTableNames());
-		listRenderer = new DefaultListCellRenderer();
+		tableSelections.addActionListener(e -> {
+			tableName = tableSelections.getSelectedItem() + "";
+			crud.setWorkingTable(tableName);
+			try {
+				refresh();
+			}
+			catch(SQLException throwables) {
+				throwables.printStackTrace();
+			}
+		});
+		DefaultListCellRenderer listRenderer = new DefaultListCellRenderer();
 		listRenderer.setHorizontalAlignment(DefaultListCellRenderer.CENTER); // center-aligned 
 		// items
-		tables.setBackground(GREY_110x3);
-		tables.setForeground(TABLE_FOREGROUND);
-		tables.setFont(FONT);
-		middle.weightx = 0.5;
-		middle.ipady = 70;
-		middle.gridx = 0;
-		middle.gridy = 0;
-		middle.insets = new Insets(13, 0, - 1, 0);  //top padding
-		center.add(tables, middle);
+		tableSelections.setBackground(GREY_110x3);
+		tableSelections.setForeground(TABLE_FOREGROUND);
+		tableSelections.setFont(FONT);
+		MIDDLE_CONSTRAINTS.weightx = 0.5;
+		MIDDLE_CONSTRAINTS.ipady = 70;
+		MIDDLE_CONSTRAINTS.gridx = 0;
+		MIDDLE_CONSTRAINTS.gridy = 0;
+		MIDDLE_CONSTRAINTS.insets = new Insets(13, 0, - 1, 0);  //top padding
+		CENTER_PANEL.add(tableSelections, MIDDLE_CONSTRAINTS);
        /* JLabel tname = new JLabel(crud.getWorkingTable());
         tname.setForeground(TABLE_FOREGROUND);
         tname.setFont(FONT);
@@ -84,50 +81,67 @@ public class invgui {
         middle.gridy = 0;
         middle.insets = new Insets(5,40,0,50);  //top padding
         center.add(tname, middle); */
-		
 		crud.setWorkingTable("inventory");
 		System.out.println(crud.getWorkingTable());
-		closed = crud.isClosed();
+		createTable();
+		makeComponents(EAST_PANEL, CENTER_PANEL, MIDDLE_CONSTRAINTS);
+		createFrame(NORTH_PANEL, EAST_PANEL, WEST_PANEL, SOUTH_PANEL, CENTER_PANEL, status);
+	}
+	
+	private void setUIManager() {
+		UIManager.put("ScrollBar.thumb", new ColorUIResource(GREY_110x3));
+		UIManager.put("ScrollBar.thumbDarkShadow", new ColorUIResource(GREY_50x3));
+		UIManager.put("ScrollBar.thumbShadow", new ColorUIResource(GREY_50x3));
+		UIManager.put("ScrollBar.thumbHighlight", new ColorUIResource(GREY_50x3));
+		UIManager.put("ScrollBar.track", new ColorUIResource(GREY_50x3));
+	}
+	
+	private String checkConnection() throws SQLException {
+		return crud.isClosed() ? "No Connection" : "Connected";
+	}
+	
+	private void setFrameStyle(JLabel status) {
+		status.setFont(FONT);
+		CENTER_PANEL.setBackground(centerBackground);
+		NORTH_PANEL.setBackground(GREY_50x3);
+		SOUTH_PANEL.setBackground(GREY_50x3);
+		EAST_PANEL.setBackground(GREY_50x3);
+		WEST_PANEL.setBackground(GREY_50x3);
+		frame.getContentPane().setBackground(GREY_50x3);
+	}
+	
+	private void refresh() throws SQLException {
+		setData(crud.getColumnNames());
+		DefaultTableModel dm = (DefaultTableModel)table.getModel();
+		dm.setDataVector(data, crud.getColumnNames());
+		dm.fireTableDataChanged();
+	}
+	
+	private void createTable() throws SQLException {
 		String[] columnNames = crud.getColumnNames();
-		ResultSet rs = crud.getAllRecords();
-		
-		//JTable jt;
-		int i = 0;
-		int count = 0;
-		Object[][] data = new Object[crud.size()][columnNames.length + 1];
-		while(rs.next()) {
-			i++;
-			Object idx = rs.getObject("idx");
-			Object product_id = rs.getObject("product_id");
-			Object quantity = rs.getInt("quantity");
-			Object wholesale_cost = rs.getDouble("wholesale_cost");
-			Object sale_price = rs.getDouble("sale_price");
-			String supplier_id = rs.getString("supplier_id");
-			
-			data[count++] = new Object[] {
-			 idx, product_id, quantity, wholesale_cost, sale_price, supplier_id
-			};
-			count++;
-		}
-
-		TableFormatter tf = new TableFormatter(data, columnNames, crud);
-		inv = tf.getTable();
-		inv.setModel(new DefaultTableModel(data, columnNames));
-		tf.setData();
-		
+		setData(columnNames);
+		model = new DefaultTableModel(data, columnNames);
+		model.setDataVector(data, columnNames);
+		table.setModel(model);
+		scrollPane.add(table);
+		model.fireTableDataChanged();
+		table.repaint();
+	}
+	
+	private void makeComponents(JPanel east, JPanel center, GridBagConstraints middle) {
 		middle.fill = GridBagConstraints.HORIZONTAL;
 		middle.ipady = 380;      //make this component tall
 		middle.weightx = 0.0;
 		middle.gridwidth = 6;
 		middle.gridx = 0;
 		middle.gridy = 1;
-		inv.setBackground(GREY_50x3);
-		inv.setGridColor(GREY_110x3);
-		inv.setForeground(TABLE_FOREGROUND);
-		inv.setFont(FONT);
-		center.add(inv, middle);
+		table.setBackground(GREY_50x3);
+		table.setGridColor(GREY_110x3);
+		table.setForeground(TABLE_FOREGROUND);
+		table.setFont(FONT);
+		center.add(table, middle);
 		
-		scrollPane = new JScrollPane(inv);
+		scrollPane = new JScrollPane(table);
 		scrollPane.setVisible(true);
 		scrollPane.setBorder(new LineBorder(GREY_110x3, 2));
 		scrollPane.getVerticalScrollBar().setUI(new BasicScrollBarUI());
@@ -239,7 +253,10 @@ public class invgui {
 		c.gridx = 1;
 		c.gridy = 6;
 		east.add(orderinv, c);
-		
+	}
+	
+	private void createFrame(JPanel north, JPanel east, JPanel west, JPanel south, JPanel center,
+							 JLabel status) {
 		frame.setBounds(200, 400, 1300, 620);
 		north.add(status);
 		frame.add(north, BorderLayout.NORTH);
@@ -251,15 +268,14 @@ public class invgui {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
 	
-	public void paintComponent(Graphics g) {
-		
+	private void setData(String[] columnNames) throws SQLException {
+		ResultSet rs = crud.getAllRecords();
+		data = new Object[crud.size()][columnNames.length];
+		for(int i = 0; rs.next() && i < data.length; i++) {
+			data[i] = new Object[columnNames.length];
+			for(int j = 0; j < columnNames.length; j++) {
+				data[i][j] = rs.getObject(columnNames[j]);
+			}
+		}
 	}
-	
-	private final Color centerBackground = GREY_50x3;
-	private final Color  DARK_GREY = new Color(20, 20, 20);
-	private final Color TABLE_FOREGROUND = new Color(125, 211, 224);
-	public static final Font FONT = new Font("Aharoni", Font.BOLD, 15);
-	public static final Color GREY_110x3 = new Color(110, 110, 110);
-	public static final Color GREY_50x3 = new Color(50, 50, 50);
-	public static final Color PURE_WHITE = new Color(255, 255, 255);
 }
