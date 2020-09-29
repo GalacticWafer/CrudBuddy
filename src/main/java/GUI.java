@@ -6,6 +6,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.plaf.ColorUIResource;
 import java.awt.*;
 import java.awt.event.*;
+import java.net.URL;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.swing.plaf.basic.BasicScrollBarUI;
@@ -35,7 +36,6 @@ public class GUI {
 	private static JScrollPane scrollPane;
 	private JTable table;
 	private TableRowSorter sorter;
-	private static String tmptest;
 	private final Crud crud;
 	private DefaultTableModel model;
 	private Object[][] data;
@@ -101,10 +101,15 @@ public class GUI {
 	private void setFrameStyle(JLabel status) {
 		status.setFont(FONT);
 		CENTER_PANEL.setBackground(centerBackground);
+		CENTER_PANEL.setOpaque(true);
 		NORTH_PANEL.setBackground(DARK_GREY);
-		SOUTH_PANEL.setBackground(GREY_50x3);
+		NORTH_PANEL.setOpaque(true);
 		EAST_PANEL.setBackground(GREY_50x3);
+		EAST_PANEL.setOpaque(true);
 		WEST_PANEL.setBackground(GREY_50x3);
+		WEST_PANEL.setOpaque(true);
+		SOUTH_PANEL.setBackground(GREY_50x3);
+		SOUTH_PANEL.setOpaque(true);
 		frame.getContentPane().setBackground(GREY_50x3);
 	}
 	
@@ -129,12 +134,14 @@ public class GUI {
 		middle.gridx = 0;
 		middle.gridy = 1;
 		table.setBackground(GREY_50x3);
+		table.setForeground(TABLE_FOREGROUND);
 		table.setGridColor(GREY_110x3);
+		table.setFont(FONT);
+		table.setSelectionBackground(GREY_110x3);
+		table.setSelectionForeground(OPEN_STATUS_FOREGROUND);
 		JTableHeader header = table.getTableHeader();
 		header.setBackground(GREY_110x3);
 		header.setBorder(new LineBorder(GREY_110x3));
-		table.setForeground(TABLE_FOREGROUND);
-		table.setFont(FONT);
 		center.add(table, middle);
 		
 		scrollPane = new JScrollPane(table);
@@ -145,35 +152,45 @@ public class GUI {
 		center.add(scrollPane, middle);
 		
 		GridBagConstraints c = new GridBagConstraints();
-		JLabel pid = new JLabel("Product ID ");
-		pid.setForeground(GREY_110x3);
-		pid.setFont(FONT);
+		JLabel srch = new JLabel("Search:");
+		srch.setForeground(GREY_110x3);
+		srch.setFont(FONT);
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 0;
 		c.gridy = 0;
 		c.insets = new Insets(3, 15, 0, 10);
-		east.add(pid, c);
-		JTextField productid = new JTextField(10); //creates textfield with 10 columns
-		productid.setBackground(GREY_110x3);
-		productid.setForeground(PURE_WHITE);
-		productid.setBorder(new LineBorder(DARK_GREY, 2));
+		east.add(srch, c);
+		JTextField  search = new JTextField(10); //creates textfield with 10 columns
+		search.setBackground(GREY_110x3);
+		search.setForeground(PURE_WHITE);
+		search.setBorder(new LineBorder(DARK_GREY, 2));
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 0;
-		east.add(productid, c);
+		east.add(search, c);
 
-		productid.getDocument().addDocumentListener(new DocumentListener() {
+		JButton addTable = new JButton("Add Table"); //creates textfield with 10 columns
+		addTable.setBackground(GREY_110x3);
+		addTable.setFont(FONT);
+		addTable.setForeground(TABLE_FOREGROUND);
+		addTable.setBorder(new LineBorder(DARK_GREY, 2));
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 1;
+		east.add(addTable, c);
+
+		search.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void insertUpdate(DocumentEvent e) {
-				search(productid.getText());
+				search(search.getText());
 			}
 			@Override
 			public void removeUpdate(DocumentEvent e) {
-				search(productid.getText());
+				search(search.getText());
 			}
 			@Override
 			public void changedUpdate(DocumentEvent e) {
-				search(productid.getText());
+				search(search.getText());
 			}
 			public void search(String str) {
 				if (str.length() == 0) {
@@ -182,86 +199,7 @@ public class GUI {
 					sorter.setRowFilter(RowFilter.regexFilter(str));
 				}
 			}
-		});
-		
-		JLabel sid = new JLabel("Supplier ID ");
-		sid.setForeground(GREY_110x3);
-		sid.setFont(FONT);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 2;
-		east.add(sid, c);
-		JTextField supplierid = new JTextField(10); //creates textfield with 10 columns
-		supplierid.setBackground(GREY_110x3);
-		supplierid.setForeground(PURE_WHITE);
-		supplierid.setBorder(new LineBorder(DARK_GREY, 2));
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridy = 2;
-		east.add(supplierid, c);
-		
-		JLabel qty = new JLabel("Quantity ");
-		qty.setForeground(GREY_110x3);
-		qty.setFont(FONT);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 3;
-		east.add(qty, c);
-		JTextField quantity = new JTextField(10); //creates textfield with 10 columns
-		quantity.setBackground(GREY_110x3);
-		quantity.setForeground(PURE_WHITE);
-		quantity.setBorder(new LineBorder(DARK_GREY, 2));
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridy = 3;
-		east.add(quantity, c);
-		
-		JLabel wholesale = new JLabel("Wholesale ");
-		wholesale.setForeground(GREY_110x3);
-		wholesale.setFont(FONT);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 4;
-		east.add(wholesale, c);
-		JLabel wsamount = new JLabel("temp");
-		wsamount.setForeground(TABLE_FOREGROUND);
-		wsamount.setFont(FONT);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridy = 4;
-		east.add(wsamount, c);
-		
-		JLabel sale = new JLabel("Set Sale Price ");
-		sale.setForeground(GREY_110x3);
-		sale.setFont(FONT);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 5;
-		east.add(sale, c);
-		JTextField saleprice = new JTextField(10); //creates textfield with 10 columns
-		saleprice.setBackground(GREY_110x3);
-		saleprice.setForeground(PURE_WHITE);
-		saleprice.setBorder(new LineBorder(DARK_GREY, 2));
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridy = 5;
-		east.add(saleprice, c);
-		
-		JLabel inventory = new JLabel("Order Inventory ");
-		inventory.setForeground(GREY_110x3);
-		inventory.setFont(FONT);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 6;
-		east.add(inventory, c);
-		JTextField orderinv = new JTextField(10); //creates textfield with 10 columns
-		orderinv.setBackground(GREY_110x3);
-		orderinv.setForeground(PURE_WHITE);
-		orderinv.setBorder(new LineBorder(DARK_GREY, 2));
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridy = 6;
-		east.add(orderinv, c);
+		}); //end of search filter
 	}
 	
 	private void createFrame(JPanel north, JPanel east, JPanel west, JPanel south, JPanel center,
@@ -273,6 +211,7 @@ public class GUI {
 		frame.add(west, BorderLayout.WEST);
 		frame.add(south, BorderLayout.SOUTH);
 		frame.add(center, BorderLayout.CENTER);
+		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
