@@ -1,6 +1,8 @@
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.UIManager;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.plaf.ColorUIResource;
 import java.awt.*;
 import java.awt.event.*;
@@ -8,6 +10,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
 public class GUI {
 	private static final Color CLOSED_STATUS_FOREGROUND = new Color(217, 85, 80);
@@ -28,7 +33,8 @@ public class GUI {
 	private static JPanel WEST_PANEL = new JPanel();
 	private static JFrame frame;
 	private static JScrollPane scrollPane;
-	private static JTable table;
+	private JTable table;
+	private TableRowSorter sorter;
 	private static String tmptest;
 	private final Crud crud;
 	private DefaultTableModel model;
@@ -63,17 +69,19 @@ public class GUI {
 		listRenderer.setHorizontalAlignment(DefaultListCellRenderer.CENTER); // center-aligned 
 		// items
 		tableSelections.setBackground(GREY_110x3);
+		tableSelections.setBorder(new LineBorder(GREY_110x3, 2));
 		tableSelections.setForeground(TABLE_FOREGROUND);
 		tableSelections.setFont(FONT);
 		MIDDLE_CONSTRAINTS.weightx = 0.5;
-		MIDDLE_CONSTRAINTS.ipady = 70;
 		MIDDLE_CONSTRAINTS.gridx = 0;
 		MIDDLE_CONSTRAINTS.gridy = 0;
-		MIDDLE_CONSTRAINTS.insets = new Insets(13, 0, - 1, 0);  //top padding
+		MIDDLE_CONSTRAINTS.insets = new Insets(0, 0, 25, 0);  //top padding
 		CENTER_PANEL.add(tableSelections, MIDDLE_CONSTRAINTS);
 		crud.setWorkingTable("inventory");
 		System.out.println(crud.getWorkingTable());
 		createTable();
+		sorter = new TableRowSorter<>(model);
+		table.setRowSorter(sorter);
 		makeComponents(EAST_PANEL, CENTER_PANEL, MIDDLE_CONSTRAINTS);
 		createFrame(NORTH_PANEL, EAST_PANEL, WEST_PANEL, SOUTH_PANEL, CENTER_PANEL, status);
 	}
@@ -122,6 +130,9 @@ public class GUI {
 		middle.gridy = 1;
 		table.setBackground(GREY_50x3);
 		table.setGridColor(GREY_110x3);
+		JTableHeader header = table.getTableHeader();
+		header.setBackground(GREY_110x3);
+		header.setBorder(new LineBorder(GREY_110x3));
 		table.setForeground(TABLE_FOREGROUND);
 		table.setFont(FONT);
 		center.add(table, middle);
@@ -150,15 +161,28 @@ public class GUI {
 		c.gridx = 1;
 		c.gridy = 0;
 		east.add(productid, c);
-		
-		productid.addActionListener(
-		 new ActionListener() {
-			 public void actionPerformed(ActionEvent e) {
-				 tmptest = productid.getText();
-				 System.out.print(tmptest);
-			 }
-		 }
-		);
+
+		productid.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				search(productid.getText());
+			}
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				search(productid.getText());
+			}
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				search(productid.getText());
+			}
+			public void search(String str) {
+				if (str.length() == 0) {
+					sorter.setRowFilter(null);
+				} else {
+					sorter.setRowFilter(RowFilter.regexFilter(str));
+				}
+			}
+		});
 		
 		JLabel sid = new JLabel("Supplier ID ");
 		sid.setForeground(GREY_110x3);
