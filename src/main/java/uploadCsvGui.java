@@ -10,7 +10,7 @@ import java.util.Scanner;
 
 import static java.util.Map.entry;
 
-class uploadCsvGui {
+class 	uploadCsvGui {
 	private String[] columns;
 	private String fileName;
 	private final Crud crud;
@@ -154,7 +154,7 @@ class uploadCsvGui {
 	throws SQLException {
 		if(typeMap != null) {
 			crud.insertTable(tableName, columns, typeMap);
-			StringBuilder sf = new StringBuilder(String.format("INSERT INTO %s %s"
+			StringBuilder sf = new StringBuilder(String.format("INSERT INTO %s %s VALUES"
 			 , tableName, crud.getColumnsTuple(columns)));
 			String sqlDeclaration = sf.toString();
 			if(scanner.hasNextLine()) {
