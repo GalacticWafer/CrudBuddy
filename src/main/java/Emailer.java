@@ -132,8 +132,4 @@ public class Emailer {
 		Transport.send(message);
 		System.out.println();
 	}
-	
-	public void sendAttathment(File csvFile){
-	// Todo: make a method that attaches a file and sends it through a message
-	}
 }

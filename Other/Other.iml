@@ -43,6 +43,5 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="Maven: org.junit.jupiter:junit-jupiter-api:5.4.2" level="project" />
   </component>
 </module>
