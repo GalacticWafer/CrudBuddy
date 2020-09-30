@@ -179,6 +179,16 @@ public class GUI {
 		c.gridy = 1;
 		east.add(addTable, c);
 
+		addTable.addActionListener(
+				new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						for(int row = 0;row < table.getRowCount();row++) {
+							System.out.println(table.getModel().getValueAt(table.convertRowIndexToModel(row), 0));
+						}
+					}
+				}
+		);
+
 		search.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void insertUpdate(DocumentEvent e) {
