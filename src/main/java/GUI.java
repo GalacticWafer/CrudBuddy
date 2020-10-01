@@ -6,6 +6,9 @@ import javax.swing.event.DocumentListener;
 import javax.swing.plaf.ColorUIResource;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.net.URL;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -169,17 +172,41 @@ public class GUI {
 		c.gridy = 0;
 		east.add(search, c);
 
-		JButton addTable = new JButton("Add Table"); //creates textfield with 10 columns
-		addTable.setBackground(GREY_110x3);
-		addTable.setFont(FONT);
-		addTable.setForeground(TABLE_FOREGROUND);
-		addTable.setBorder(new LineBorder(DARK_GREY, 2));
+		JButton exportButton = new JButton("Export"); //creates textfield with 10 columns
+		exportButton.setBackground(GREY_110x3);
+		exportButton.setFont(FONT);
+		exportButton.setForeground(TABLE_FOREGROUND);
+		exportButton.setBorder(new LineBorder(DARK_GREY, 2));
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 2;
+		east.add(exportButton, c);
+
+		exportButton.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e)
+			{
+				try
+				{
+					sendEmail("gui.csv");
+				}
+				catch(FileNotFoundException | SQLException fileNotFoundException)
+				{
+					fileNotFoundException.printStackTrace();
+				}
+			}
+		});
+
+		JButton testButton = new JButton("TEST IGNORE"); //creates textfield with 10 columns
+		testButton.setBackground(GREY_110x3);
+		testButton.setFont(FONT);
+		testButton.setForeground(TABLE_FOREGROUND);
+		testButton.setBorder(new LineBorder(DARK_GREY, 2));
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 1;
-		east.add(addTable, c);
+		east.add(testButton, c);
 
-		addTable.addActionListener(
+		testButton.addActionListener(
 				new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						for(int row = 0;row < table.getRowCount();row++) {
@@ -250,4 +277,38 @@ public class GUI {
 		model.fireTableDataChanged();
 		table.repaint();
 	}
+
+	private void sendEmail(String fileName) throws FileNotFoundException, SQLException
+	{
+		/*
+		 * PSUEDO CODE
+		 *
+		 * HIGHER LEVEL
+		 * 1. Take data
+		 * 2. write to a csv
+		 * 3. export csv
+		 *
+		 * Next Level
+		 * 1.Loop through data
+		 * 2. Put data in Object[][] dat
+		 * */
+
+		File report = new File(fileName);
+
+		PrintWriter dataWriter = new PrintWriter(report);
+		dataWriter.println(crud.arrayToCSV(crud.getColumnNames()));
+		for(int i = 0; i < data.length; i++)
+		{
+			Object[] row = data[i];
+			for(int j = 0; j < row.length; j++)
+			{
+				dataWriter.print(row[j]);
+				if(j < row.length - 1) {
+					dataWriter.print(",");
+				}
+			}
+			dataWriter.println();
+		}
+		dataWriter.close();
+	}  // End sendFile
 }
