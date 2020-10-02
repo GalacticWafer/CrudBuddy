@@ -48,6 +48,7 @@ class Crud {
 		String a = Arrays.toString(array);
 		return a.substring(1, a.length() - 1);
 	}
+
 	
 	/** Creates a gui to get user input on a new table to be uploaded to MySQL database. */
 	private uploadCsvGui csvGuiLoad(String[] columns, String fileName) {
@@ -297,7 +298,7 @@ class Crud {
 	}
 	
 	/** Wraps the given object in quotes if it is a string */
-	private static String quoteWrap(Object columnValue) {
+	static String quoteWrap(Object columnValue) {
 		if(columnValue instanceof String 
 		   || columnValue instanceof Date) {
 			return "'" + columnValue + "'";

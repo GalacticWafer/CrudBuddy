@@ -173,14 +173,14 @@ public class GUI {
 		c.gridy = 0;
 		east.add(search, c);
 
-		JButton exportButton = new JButton("Export"); //creates textfield with 10 columns
+		JButton exportButton = new JButton("Export");
 		exportButton.setBackground(GREY_110x3);
 		exportButton.setFont(FONT);
 		exportButton.setForeground(TABLE_FOREGROUND);
 		exportButton.setBorder(new LineBorder(DARK_GREY, 2));
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
-		c.gridy = 2;
+		c.gridy = 3;
 		east.add(exportButton, c);
 
 		exportButton.addActionListener(new ActionListener() {
@@ -188,7 +188,7 @@ public class GUI {
 			{
 				try
 				{
-					sendEmail("gui.csv");
+					sendEmail("gui.csv", data);
 				}
 				catch(FileNotFoundException | SQLException fileNotFoundException)
 				{
@@ -197,7 +197,37 @@ public class GUI {
 			}
 		});
 
-		JButton testButton = new JButton("TEST IGNORE"); //creates textfield with 10 columns
+		JButton delete = new JButton("Delete Current");
+		delete.setBackground(GREY_110x3);
+		delete.setFont(FONT);
+		delete.setForeground(TABLE_FOREGROUND);
+		delete.setBorder(new LineBorder(DARK_GREY, 2));
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 2;
+		east.add(delete, c);
+
+		delete.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent ae) {
+				// check for selected row first
+				if(table.getSelectedRow() != -1) {
+					// remove selected row from the model
+					System.out.println(table.getModel().getValueAt(table.getSelectedRow(), 0));
+					System.out.println(table.getColumnName(0));
+					try {
+						crud.deleteRecord(crud.getWorkingTable(), table.getColumnName(0),
+								crud.quoteWrap(table.getModel().getValueAt(table.getSelectedRow(), 0)));
+					} catch (SQLException throwables) {
+						throwables.printStackTrace();
+					}
+					model.removeRow(table.getSelectedRow());
+					JOptionPane.showMessageDialog(null, "Selected row deleted successfully");
+				}
+			}
+		});
+
+		JButton testButton = new JButton("TEST IGNORE");
 		testButton.setBackground(GREY_110x3);
 		testButton.setFont(FONT);
 		testButton.setForeground(TABLE_FOREGROUND);
@@ -216,6 +246,13 @@ public class GUI {
 							for(int column = 0;column < table.getColumnCount();column++){
 								update[row][column] = table.getModel().getValueAt(table.convertRowIndexToModel(row), column);
 							}
+						}
+						try {
+							sendEmail("test.csv", update);
+						} catch (FileNotFoundException fileNotFoundException) {
+							fileNotFoundException.printStackTrace();
+						} catch (SQLException throwables) {
+							throwables.printStackTrace();
 						}
 						System.out.println(Arrays.deepToString(update));
 					}
@@ -284,7 +321,7 @@ public class GUI {
 		table.repaint();
 	}
 
-	private void sendEmail(String fileName) throws FileNotFoundException, SQLException
+	private void sendEmail(String fileName, Object[][] data) throws FileNotFoundException, SQLException
 	{
 		/*
 		 * PSUEDO CODE
