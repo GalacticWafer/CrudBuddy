@@ -173,7 +173,7 @@ public class GUI {
 		c.gridy = 0;
 		east.add(search, c);
 
-		JButton exportButton = new JButton("Export");
+		JButton exportButton = new JButton("Export All");
 		exportButton.setBackground(GREY_110x3);
 		exportButton.setFont(FONT);
 		exportButton.setForeground(TABLE_FOREGROUND);
@@ -204,7 +204,7 @@ public class GUI {
 		delete.setBorder(new LineBorder(DARK_GREY, 2));
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
-		c.gridy = 2;
+		c.gridy = 1;
 		east.add(delete, c);
 
 		delete.addActionListener(new ActionListener() {
@@ -227,24 +227,23 @@ public class GUI {
 			}
 		});
 
-		JButton testButton = new JButton("TEST IGNORE");
-		testButton.setBackground(GREY_110x3);
-		testButton.setFont(FONT);
-		testButton.setForeground(TABLE_FOREGROUND);
-		testButton.setBorder(new LineBorder(DARK_GREY, 2));
+		JButton exportCurrent = new JButton("Export Current");
+		exportCurrent.setBackground(GREY_110x3);
+		exportCurrent.setFont(FONT);
+		exportCurrent.setForeground(TABLE_FOREGROUND);
+		exportCurrent.setBorder(new LineBorder(DARK_GREY, 2));
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
-		c.gridy = 1;
-		east.add(testButton, c);
+		c.gridy = 2;
+		east.add(exportCurrent, c);
 
-		testButton.addActionListener(
-				new ActionListener() {
+		exportCurrent.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						Object[][] update = new Object[table.getRowCount()][table.getColumnCount()];
 						for(int row = 0;row < table.getRowCount();row++) {
-							System.out.println();
 							for(int column = 0;column < table.getColumnCount();column++){
-								update[row][column] = table.getModel().getValueAt(table.convertRowIndexToModel(row), column);
+								update[row][column] = table.getModel().getValueAt(
+										table.convertRowIndexToModel(row), column);
 							}
 						}
 						try {
@@ -254,10 +253,29 @@ public class GUI {
 						} catch (SQLException throwables) {
 							throwables.printStackTrace();
 						}
-						System.out.println(Arrays.deepToString(update));
+						//System.out.println(Arrays.deepToString(update));
 					}
+				});
+
+		JButton upload = new JButton("Upload Table");
+		upload.setBackground(GREY_110x3);
+		upload.setFont(FONT);
+		upload.setForeground(TABLE_FOREGROUND);
+		upload.setBorder(new LineBorder(DARK_GREY, 2));
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 4;
+		east.add(upload, c);
+
+		upload.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				try {
+					crud.insertTableFromGui();
+				} catch (Exception exception) {
+					exception.printStackTrace();
 				}
-		);
+			}
+		});
 
 		search.getDocument().addDocumentListener(new DocumentListener() {
 			@Override

@@ -251,7 +251,7 @@ class Crud {
 	 * Starts the process of getting user input for information about the table to be created and
 	 * uploaded, then summons a gui to collect the input.
 	 */
-	private void insertTableFromGui() throws Exception {
+	void insertTableFromGui() throws Exception {
 		String filePath = JOptionPane.showInputDialog(null, "Open file:");
 		int[] count = null;
 		if(! filePath.endsWith(".csv")) {
