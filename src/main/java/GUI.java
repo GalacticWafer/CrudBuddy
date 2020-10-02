@@ -210,7 +210,10 @@ public class GUI {
 				new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						for(int row = 0;row < table.getRowCount();row++) {
-							System.out.println(table.getModel().getValueAt(table.convertRowIndexToModel(row), 0));
+							System.out.println();
+							for(int column = 0;column < table.getColumnCount();column++){
+								System.out.print(table.getModel().getValueAt(table.convertRowIndexToModel(row), column)+ ", ");
+							}
 						}
 					}
 				}
