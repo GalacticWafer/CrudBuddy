@@ -12,6 +12,7 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -209,12 +210,14 @@ public class GUI {
 		testButton.addActionListener(
 				new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
+						Object[][] update = new Object[table.getRowCount()][table.getColumnCount()];
 						for(int row = 0;row < table.getRowCount();row++) {
 							System.out.println();
 							for(int column = 0;column < table.getColumnCount();column++){
-								System.out.print(table.getModel().getValueAt(table.convertRowIndexToModel(row), column)+ ", ");
+								update[row][column] = table.getModel().getValueAt(table.convertRowIndexToModel(row), column);
 							}
 						}
+						System.out.println(Arrays.deepToString(update));
 					}
 				}
 		);
