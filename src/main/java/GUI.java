@@ -325,7 +325,11 @@ public class GUI {
 		}
 	}
 	
+
 	public void setFromArray(Object[][] newData, String[] columnNames) throws SQLException {
+
+
+
 		this.data = newData;
 		setNewModel(columnNames);
 	}
