@@ -13,7 +13,7 @@ public class Main {
 		//Crud crud = Credentials.databaseLogin();
 		//GUI GUI = new GUI(crud);
 		//new RandomSimTest();
-		File file = new File("E:\\transfer\\Pics\\karma.jpg");
+		File file = new File("dose.jpg");
 		Emailer.sendMailF("mycrowsawftburner@gmail.com", file);
 	}
 	
