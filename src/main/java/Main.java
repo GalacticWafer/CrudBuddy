@@ -1,4 +1,5 @@
 import javax.mail.MessagingException;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -8,10 +9,12 @@ public class Main {
 	 
 	
 	public static void main(String[] args)
-	throws SQLException, ClassNotFoundException, FileNotFoundException {
-		Crud crud = Credentials.databaseLogin();
-		GUI GUI = new GUI(crud);
+			throws SQLException, ClassNotFoundException, FileNotFoundException, MessagingException {
+		//Crud crud = Credentials.databaseLogin();
+		//GUI GUI = new GUI(crud);
 		//new RandomSimTest();
+		File file = new File("E:\\transfer\\Pics\\karma.jpg");
+		Emailer.sendMailF("mycrowsawftburner@gmail.com", file);
 	}
 	
 	private static void insertNewRecord(Crud crud, String tableName) throws SQLException {
