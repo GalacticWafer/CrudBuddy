@@ -1,4 +1,6 @@
 import javax.mail.MessagingException;
+import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -15,9 +17,46 @@ public class Main {
 		//new SalesProcessorTest();
 		//File file = new File("dose.jpg");
 		//Emailer.sendMailF("mycrowsawftburner@gmail.com", file);
-		
+
+		Crud crud = Credentials.databaseLogin();
+		GUI gui = new GUI(crud);
+		crud.deleteAllRecords("sales");
+		msgBox("Check the sales table to show empty table.");
+		Object[][] testRecord =
+		 {{"A1B2C3D4E5F6", 500, 149.99, "TEST123", 299.99}};
+		crud.setWorkingTable("inventory");
+		crud.deleteRecord("inventory", "product_id", "A1B2C3D4E5F6");
+		crud.insertRecords(crud.getColumnNames(), testRecord);
+		msgBox("Check the inventory table to show test record.");
+		crud.setWorkingTable("sales");
+		new SalesProcessor(crud).processItems("little_order_test.csv");
+		crud.deleteRecord("inventory", "product_id", "A1B2C3D4E5F6");
+		msgBox("Check the sales table to see the sales history.");
+		msgBox("Now for the full thing customer orders list.");
+		new SalesProcessor(crud).processItems("customer_orders_A_team4.csv");
 	}
 	
+	public static void msgBox(String message) {
+		msgInvoke(new JLabel(message, JLabel.CENTER));
+	}
+	
+	public static void msgBox(String message, String iconPath) {
+		msgInvoke(new JLabel(message, new ImageIcon(iconPath), JLabel.CENTER));
+	}
+	
+	public static void msgInvoke(JLabel label) {
+		EventQueue.invokeLater(() -> {
+			try {
+				UIManager.setLookAndFeel(
+				 UIManager.getSystemLookAndFeelClassName());
+			}
+			catch(Exception ignored) {}
+			label.setFont(new Font("Liberation Mono", Font.BOLD, 30));
+			JOptionPane.showMessageDialog(
+			 null, label, "Demo Day", JOptionPane.INFORMATION_MESSAGE);
+		});
+		new Scanner(System.in).nextLine();
+	}
 	private static void insertNewRecord(Crud crud, String tableName) throws SQLException {
 		crud.setWorkingTable(tableName);
 		Object[] insertFromOrder = crud.find("VBEUS2ETCKA4", "product_id");

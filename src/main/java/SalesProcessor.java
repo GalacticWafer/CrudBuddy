@@ -123,7 +123,7 @@ public void processItems(String csvPath)
 		/* Update the  database with the recorded  sales.*/
 		sb.delete(0, sb.length());
 		sb.append("insert into sales(" +
-				  "customer_email,customer_location,date,product_id, " +
+				  "customer_email,customer_location,date_ordered, date_accepted,product_id, " +
 				  "quantity)" +
 				  "values");
 
