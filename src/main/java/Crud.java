@@ -196,7 +196,7 @@ class Crud {
 	}
 	
 	/** Create a new record in the specified table from order information. */
-	public void insertFromOrder(Order od, int table) throws SQLException {
+	public void insertFromOrder(TransactionItem od, int table) throws SQLException {
 		String[] recordStrings = RECORD_STRINGS.get(table);
 		setWorkingTable(recordStrings[0]);
 		if(!exists(recordStrings[1], od.getMatchValue(table))) {
@@ -266,24 +266,28 @@ class Crud {
 	}
 	
 	/** Return an integer indicating if the order can be processed, and if not, why */
-	public int isProcessableOrder(Order order) throws SQLException, MessagingException {
+	public int isProcessableOrder(TransactionItem transactionItem) throws SQLException, MessagingException {
 		setWorkingTable("inventory");
-		String productId = order.getProductId();
+		String productId = transactionItem.getProductId();
 		ResultSet rs = queryF("select quantity from %s where product_id = '%s';",
 		 tableName, productId);
 		if(! rs.next()) {
-			order.setResultString(order.getProductId() + " : unknown product id");
-			System.out.println(order.getProductId() + " : unknown product id");
+			transactionItem.setResultString(
+			 transactionItem.getProductId() + " : unknown product id");
+			System.out.println(
+			 transactionItem.getProductId() + " : unknown product id");
 			return UNKNOWN_PRODUCT;
 		}
 		int currentQuantity = rs.getInt(1);
-		if(currentQuantity < order.getQuantity()) {
-			order.setResultString(format("%s : %d - %d",
-			 order.getProductId(), order.getQuantity(), order.getQuantity() + currentQuantity));
+		if(currentQuantity < transactionItem.getQuantity()) {
+			transactionItem.setResultString(format("%s : %d - %d",
+			 transactionItem.getProductId(), transactionItem
+			  .getQuantity(), transactionItem.getQuantity() + currentQuantity));
 			return QUANTITY_SHORTAGE;
 		}
-		order.setResultString(order.getProductId() + " : " + order.getQuantity());
-		order.setCurrentQuantity(currentQuantity);
+		transactionItem.setResultString(
+		 transactionItem.getProductId() + " : " + transactionItem.getQuantity());
+		transactionItem.setCurrentQuantity(currentQuantity);
 		return currentQuantity;
 	}
 	
@@ -335,10 +339,11 @@ class Crud {
 	}
 	
 	/** Updates a product's quantity from an order */
-	public void setQuantityFromOrder(Order order) throws SQLException {
-		int newQuantity = order.getCurrentQuantity() - order.getQuantity();
+	public void setQuantityFromOrder(TransactionItem transactionItem) throws SQLException {
+		int newQuantity = transactionItem.getCurrentQuantity() - transactionItem
+		 .getQuantity();
 		updateF("UPDATE %s SET quantity = %s WHERE product_id = '%s';",
-		 tableName, newQuantity, order.getProductId());
+		 tableName, newQuantity, transactionItem.getProductId());
 	}
 	
 	/** Sets the static variable <code>tableName</code> as the table to make statements against. */

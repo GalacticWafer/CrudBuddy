@@ -80,25 +80,25 @@ public class Emailer {
 		String prefix, suffix;
 		for(Message message: messages) {
 			boolean canComplete = true;
-			LinkedList<Order> orderList = new LinkedList<>();
+			LinkedList<TransactionItem> transactionItemList = new LinkedList<>();
 			String customerEmail = "";
 			StringBuilder orderString = new StringBuilder();
 			String[] orders = getTextFromMessage(message).trim().split("\n");
 			if(orders[0].split(",").length == 4) {
-				String orderId = Order.generateId();
+				String orderId = TransactionItem.generateId();
 				int[] results = new int[orders.length];
 				for(int i = 0; i < orders.length; i++) {
 					String item = orders[i];
 					String senderInfo = message.getFrom()[0].toString();
-					Order order = new Order(item.trim(), orderId, senderInfo);
-					order.setDate(message.getSentDate());
-					results[i] = crud.isProcessableOrder(order);
+					TransactionItem transactionItem = new TransactionItem(item.trim(), orderId, senderInfo);
+					transactionItem.setDate(message.getSentDate());
+					results[i] = crud.isProcessableOrder(transactionItem);
 					canComplete = results[i] >= 0 && canComplete;
-					orderString.append(order.getResultString()).append("\n");
+					orderString.append(transactionItem.getResultString()).append("\n");
 					if(i == 0) {
-						customerEmail = order.getEmail();
+						customerEmail = transactionItem.getEmail();
 					}
-					orderList.addLast(order);
+					transactionItemList.addLast(transactionItem);
 				}
 				list.addLast(results);
 			}
@@ -106,8 +106,8 @@ public class Emailer {
 				message.setFlag(Flags.Flag.DELETED, true);
 			}
 			if(canComplete) {
-				for(Order order: orderList) {
-					crud.setQuantityFromOrder(order);
+				for(TransactionItem transactionItem: transactionItemList) {
+					crud.setQuantityFromOrder(transactionItem);
 				}
 			}
 			prefix = (canComplete ?

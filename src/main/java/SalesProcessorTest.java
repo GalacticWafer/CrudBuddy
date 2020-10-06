@@ -4,7 +4,7 @@ import javax.mail.MessagingException;
 import java.io.FileNotFoundException;
 import java.sql.SQLException;
 
-class RandomSimTest {
+class SalesProcessorTest {
 
 	@Test public void assertNewEmail() throws SQLException {
 		
@@ -25,8 +25,8 @@ class RandomSimTest {
 	public static void main(String[] args)
 	throws SQLException, ClassNotFoundException, FileNotFoundException, MessagingException {
 		Crud crud = Credentials.databaseLogin();
-		RandomSim rs = new RandomSim(crud);
+		SalesProcessor sp = new SalesProcessor(crud);
 		new GUI(crud);
-		rs.simulateOrders();
+		sp.processItems("little_order_test.csv");
 	}
 }

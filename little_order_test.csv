@@ -1,0 +1,4 @@
+date,cust_email,cust_location,product_id,product_quantity
+2020-01-01,small_buyer_1@gmail,11111,A1B2C3D4E5F6,4
+2020-01-03,big_money_2@aol.com,22222,A1B2C3D4E5F6,1000
+2020-01-05,buyer_3@outlook.com,33333,A1B2C3D4E5F6,50

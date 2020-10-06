@@ -12,9 +12,10 @@ public class Main {
 			throws SQLException, ClassNotFoundException, FileNotFoundException, MessagingException {
 		//Crud crud = Credentials.databaseLogin();
 		//GUI GUI = new GUI(crud);
-		//new RandomSimTest();
-		File file = new File("dose.jpg");
-		Emailer.sendMailF("mycrowsawftburner@gmail.com", file);
+		//new SalesProcessorTest();
+		//File file = new File("dose.jpg");
+		//Emailer.sendMailF("mycrowsawftburner@gmail.com", file);
+		
 	}
 	
 	private static void insertNewRecord(Crud crud, String tableName) throws SQLException {
