@@ -213,15 +213,16 @@ public class GUI {
 				// check for selected row first
 				if(table.getSelectedRow() != -1) {
 					// remove selected row from the model
-					System.out.println(table.getModel().getValueAt(table.getSelectedRow(), 0));
-					System.out.println(table.getColumnName(0));
+					//System.out.println(table.getModel().getValueAt(table.getSelectedRow(), 0));
+					//System.out.println(table.getColumnName(0));
 					try {
 						crud.deleteRecord(crud.getWorkingTable(), table.getColumnName(0),
-								crud.quoteWrap(table.getModel().getValueAt(table.getSelectedRow(), 0)));
+								crud.quoteWrap(table.getModel().getValueAt(table.convertRowIndexToModel
+										(table.getSelectedRow()), 0)));
 					} catch (SQLException throwables) {
 						throwables.printStackTrace();
 					}
-					model.removeRow(table.getSelectedRow());
+					model.removeRow(table.convertRowIndexToModel(table.getSelectedRow()));
 					JOptionPane.showMessageDialog(null, "Selected row deleted successfully");
 				}
 			}
