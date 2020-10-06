@@ -11,16 +11,14 @@ public class Main {
 	 
 	
 	public static void main(String[] args)
-			throws SQLException, ClassNotFoundException, FileNotFoundException, MessagingException {
-		//Crud crud = Credentials.databaseLogin();
-		//GUI GUI = new GUI(crud);
+			throws Exception {
 		//new SalesProcessorTest();
 		//File file = new File("dose.jpg");
 		//Emailer.sendMailF("mycrowsawftburner@gmail.com", file);
 
 		Crud crud = Credentials.databaseLogin();
 		GUI gui = new GUI(crud);
-		crud.deleteAllRecords("sales");
+		//crud.deleteAllRecords("sales");
 		msgBox("Check the sales table to show empty table.");
 		Object[][] testRecord =
 		 {{"A1B2C3D4E5F6", 500, 149.99, "TEST123", 299.99}};

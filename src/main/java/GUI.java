@@ -277,6 +277,22 @@ public class GUI {
 			}
 		});
 
+		JButton send = new JButton("Send Email");
+		send.setBackground(GREY_110x3);
+		send.setFont(FONT);
+		send.setForeground(TABLE_FOREGROUND);
+		send.setBorder(new LineBorder(DARK_GREY, 2));
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 5;
+		east.add(send, c);
+
+		send.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+
+			}
+		});
+
 		search.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void insertUpdate(DocumentEvent e) {
