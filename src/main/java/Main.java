@@ -14,7 +14,7 @@ public class Main {
 			throws Exception {
 		//new SalesProcessorTest();
 		//File file = new File("dose.jpg");
-		//Emailer.sendMailF("mycrowsawftburner@gmail.com", file);
+		//Emailer.sendAttatchedEmail("mycrowsawftburner@gmail.com", file);
 
 		Crud crud = Credentials.databaseLogin();
 		GUI gui = new GUI(crud);

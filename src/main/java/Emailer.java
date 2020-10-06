@@ -140,7 +140,7 @@ public class Emailer {
 		System.out.println();
 	}
 
-	public static void sendMailF(String email, File reportFile) throws MessagingException {
+	public static void sendAttatchedEmail(String email, File reportFile) throws MessagingException {
 		Properties properties = new Properties();
 
 		properties.put("mail.smtp.auth", "true");
@@ -158,13 +158,13 @@ public class Emailer {
 			}
 		});
 
-		Message message = prepareMessageF(session, myAccountEmail, email, reportFile);
+		Message message = prepareAttachedMessage(session, myAccountEmail, email, reportFile);
 
 		Transport.send(message);
 		System.out.println("");
 	}
 
-	private static Message prepareMessageF(Session session, String myAccountEmail, String recepient, File reportFile){
+	private static Message prepareAttachedMessage(Session session, String myAccountEmail, String recepient, File reportFile){
 		try {
 			BodyPart messageBodyPart = new MimeBodyPart();
 
