@@ -67,7 +67,7 @@ class Crud {
 	(String table, String idColumn, Object idValue)
 	throws SQLException {
 		return updateF("DELETE FROM %s WHERE %s = %s",
-		 table, idColumn, idValue);
+		 table, idColumn, quoteWrap(idValue));
 	}
 	
 	/** Deletes an entire table */

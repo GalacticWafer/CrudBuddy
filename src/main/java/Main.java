@@ -8,33 +8,51 @@ import java.sql.SQLException;
 import java.util.*;
 
 public class Main {
-	 
+	private static Crud crud;
+	private static int i = 0;
+	private static Object[][] testRecord;
+	
+	private static void dailyOrderCheck(Crud crud)
+	throws MessagingException, IOException, SQLException {
+		
+		LinkedList<int[]> list = Emailer.processEmailOrders(crud);
+		System.out.println(list);
+	}
+	
+	private static void insertNewRecord(Crud crud, String tableName)
+	throws SQLException {
+		crud.setWorkingTable(tableName);
+		Object[] insertFromOrder = crud.find("VBEUS2ETCKA4", "product_id");
+		System.out.println(Arrays.toString(insertFromOrder));
+		String someTextField = "sales";
+		int columnCount = crud.getColumnCount(someTextField);
+		System.out.println(columnCount);
+		Object[] newRecord = new Object[columnCount];
+		for(int i = 0; i < newRecord.length; i++) {
+			newRecord[i] = null
+			//fixme, insertRecord all the names of your JtextFields and such 
+			// variables
+			;
+		}
+	}
 	
 	public static void main(String[] args)
-			throws Exception {
-		//new SalesProcessorTest();
-		//File file = new File("dose.jpg");
-		//Emailer.sendAttatchedEmail("mycrowsawftburner@gmail.com", file);
-
-		Crud crud = Credentials.databaseLogin();
-		GUI gui = new GUI(crud);
-		//crud.deleteAllRecords("sales");
-		msgBox("Check the sales table to show empty table.");
-		Object[][] testRecord =
-		 {{"A1B2C3D4E5F6", 500, 149.99, "TEST123", 299.99}};
-		crud.setWorkingTable("inventory");
-		crud.deleteRecord("inventory", "product_id", "A1B2C3D4E5F6");
+	throws Exception {
+		crud = Credentials.databaseLogin();
+		testRecord =
+		 new Object[][] {{"A1B2C3D4E5F6", 500, 149.99, "TEST123", 299.99}};
 		crud.insertRecords(crud.getColumnNames(), testRecord);
-		msgBox("Check the inventory table to show test record.");
-		crud.setWorkingTable("sales");
-		new SalesProcessor(crud).processItems("little_order_test.csv");
-		crud.deleteRecord("inventory", "product_id", "A1B2C3D4E5F6");
-		msgBox("Check the sales table to see the sales history.");
-		msgBox("Now for the full thing customer orders list.");
-		new SalesProcessor(crud).processItems("customer_orders_A_team4.csv");
+		crud.deleteAllRecords("sales");
+		crud.deleteAllRecords("inventory");
+		new GUI(crud);
+		
+		msgBox("First let's make sure the inventory table is in the original" +
+			   "\nform given to us by uploading the table. Notice that " +
+			   "\nthe sales table is  empty.");
 	}
 	
 	public static void msgBox(String message) {
+		message = "<html>" + message.replace("\n", "<br>") + "</html>";
 		msgInvoke(new JLabel(message, JLabel.CENTER));
 	}
 	
@@ -50,31 +68,55 @@ public class Main {
 			}
 			catch(Exception ignored) {}
 			label.setFont(new Font("Liberation Mono", Font.BOLD, 30));
-			JOptionPane.showMessageDialog(
-			 null, label, "Demo Day", JOptionPane.INFORMATION_MESSAGE);
+			JFrame f = new JFrame();
+			Container pane = f.getContentPane();
+			GridBagConstraints constraints = new GridBagConstraints();
+			constraints.gridwidth = 15;
+			constraints.insets = new Insets(10, 10, 10, 10);
+			pane.setLayout(new GridBagLayout());
+			pane.add(label, constraints);
+			constraints.gridx = 8;
+			constraints.gridwidth = 1;
+			constraints.weightx = 1;
+			JButton ok = new JButton("OK");
+			pane.add(ok, constraints);
+			ok.addActionListener(e -> {
+				f.dispose();
+				try {
+					nextSlide();
+				}
+				catch(SQLException | FileNotFoundException throwables) {
+					throwables.printStackTrace();
+				}
+			});
+			f.pack();
+			f.setLocationRelativeTo(null);
+			f.setVisible(true);
+			f.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		});
-		new Scanner(System.in).nextLine();
-	}
-	private static void insertNewRecord(Crud crud, String tableName) throws SQLException {
-		crud.setWorkingTable(tableName);
-		Object[] insertFromOrder = crud.find("VBEUS2ETCKA4", "product_id");
-		System.out.println(Arrays.toString(insertFromOrder));
-		String someTextField = "sales";
-		int columnCount = crud.getColumnCount(someTextField);
-		System.out.println(columnCount);
-		Object[] newRecord = new Object[columnCount];
-		for(int i = 0; i < newRecord.length; i++) {
-			newRecord[i] = null
-			//fixme, insertRecord all the names of your JtextFields and such variables
-			;
-		}
 	}
 	
-	private static void dailyOrderCheck(Crud crud)
-	throws MessagingException, IOException, SQLException {
-		
-		LinkedList<int[]> list = Emailer.processEmailOrders(crud);
-		System.out.println(list);
+	private static void nextSlide() throws SQLException, FileNotFoundException {
+		switch(i) {
+			case 0:
+				crud.setWorkingTable("inventory");
+				msgBox("Check the inventory table to show test record.");
+				break;
+			case 1:
+				crud.insertRecords(crud.getColumnNames(), testRecord);
+				msgBox("Check the sales table to see the sales have been added.");
+				break;
+			case 2:
+				crud.setWorkingTable("sales");
+				new SalesProcessor(crud).processItems("little_order_test.csv");
+				msgBox("Now for the full customer orders list, we'll upload the file.");
+				break;
+			case 3:
+				crud.deleteRecord("inventory", "product_id", "A1B2C3D4E5F6");
+				new SalesProcessor(crud).processItems("customer_orders_A_team4.csv");
+				break;
+		}
+		i++;
 	}
 	
 	private static void orderDemoSetup(Crud crud) throws SQLException {
@@ -101,7 +143,8 @@ public class Main {
 		};
 		for(String testId: testIds) {
 			crud
-			 .updateRow(new String[] {"quantity"}, new Object[] {rand.nextInt(2000)},
+			 .updateRow(new String[] {"quantity"},
+			  new Object[] {rand.nextInt(2000)},
 			  "product_id", testId, "inventory");
 		}
 		
