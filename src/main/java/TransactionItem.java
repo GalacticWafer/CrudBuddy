@@ -210,8 +210,8 @@ public class TransactionItem {
 		return new Object[] {
 		 getEmail(),
 		 getLocation(),
-		 getSqlDate(dateOrdered),
-		 getSqlDate(dateAccepted),
+		 getSqlDate(dateOrdered.plusDays(1)),
+		 getSqlDate(dateAccepted.plusDays(1)),
 		 getProductId(),
 		 getCurrentQuantity(),
 		 };
@@ -223,6 +223,6 @@ public class TransactionItem {
 			   "\n\tdateOrdered=" + dateOrdered +
 			   "\n\tdateAccepted=" + dateAccepted +
 			   "\n\tquantity=" + quantity +
-			   '}';
+			   "\n}";
 	}
 }

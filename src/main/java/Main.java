@@ -1,3 +1,5 @@
+import org.apache.commons.text.WordUtils;
+
 import javax.mail.MessagingException;
 import javax.swing.*;
 import java.awt.*;
@@ -5,54 +7,30 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.*;
 
 public class Main {
 	private static Crud crud;
-	private static int i = 0;
+	private static GUI gui;
+	private static int slide = 0;
+	private static Toolkit toolkit = Toolkit.getDefaultToolkit();
 	private static Object[][] testRecord;
-	
-	private static void dailyOrderCheck(Crud crud)
-	throws MessagingException, IOException, SQLException {
-		
-		LinkedList<int[]> list = Emailer.processEmailOrders(crud);
-		System.out.println(list);
-	}
-	
-	private static void insertNewRecord(Crud crud, String tableName)
-	throws SQLException {
-		crud.setWorkingTable(tableName);
-		Object[] insertFromOrder = crud.find("VBEUS2ETCKA4", "product_id");
-		System.out.println(Arrays.toString(insertFromOrder));
-		String someTextField = "sales";
-		int columnCount = crud.getColumnCount(someTextField);
-		System.out.println(columnCount);
-		Object[] newRecord = new Object[columnCount];
-		for(int i = 0; i < newRecord.length; i++) {
-			newRecord[i] = null
-			//fixme, insertRecord all the names of your JtextFields and such 
-			// variables
-			;
-		}
-	}
 	
 	public static void main(String[] args)
 	throws Exception {
 		crud = Credentials.databaseLogin();
-		testRecord =
-		 new Object[][] {{"A1B2C3D4E5F6", 500, 149.99, "TEST123", 299.99}};
-		crud.insertRecords(crud.getColumnNames(), testRecord);
 		crud.deleteAllRecords("sales");
-		crud.deleteAllRecords("inventory");
-		new GUI(crud);
-		
-		msgBox("First let's make sure the inventory table is in the original" +
-			   "\nform given to us by uploading the table. Notice that " +
-			   "\nthe sales table is  empty.");
+		gui = new GUI(crud);
+		nextSlide();
 	}
 	
 	public static void msgBox(String message) {
-		message = "<html>" + message.replace("\n", "<br>") + "</html>";
+		message = "<html><pre>" +
+				  WordUtils.wrap(message, 80)
+						   .replaceAll("\t", "    ")
+						   .replace("\n", "<br>") + 
+				  "</pre></html>";
 		msgInvoke(new JLabel(message, JLabel.CENTER));
 	}
 	
@@ -67,7 +45,7 @@ public class Main {
 				 UIManager.getSystemLookAndFeelClassName());
 			}
 			catch(Exception ignored) {}
-			label.setFont(new Font("Liberation Mono", Font.BOLD, 30));
+			label.setFont(new Font("Fira Code Retina", Font.BOLD, 24));
 			JFrame f = new JFrame();
 			Container pane = f.getContentPane();
 			GridBagConstraints constraints = new GridBagConstraints();
@@ -90,68 +68,89 @@ public class Main {
 				}
 			});
 			f.pack();
-			f.setLocationRelativeTo(null);
+			int screenHeight =
+			 toolkit.getScreenSize().height;
+			JFrame gf = gui.getFrame();
+			int width = f.getWidth();
+			f.setLocation(
+			 gf.getX() + (gf.getWidth() / 2) - (width / 2),
+			 screenHeight - f.getHeight() - 40
+			);
 			f.setVisible(true);
 			f.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		});
 	}
 	
-	private static void nextSlide() throws SQLException, FileNotFoundException {
-		switch(i) {
-			case 0:
+	private static void nextSlide() throws SQLException,
+										   FileNotFoundException {
+		switch(slide) {
+			case 0: {
+				crud.update("Delete from inventory where product_id = " +
+							"'A1B2C3D4E5F6'");
+				crud.deleteAllRecords("sales");
 				crud.setWorkingTable("inventory");
-				msgBox("Check the inventory table to show test record.");
+				crud.insertRecords(
+				 crud.getColumnNames(),
+				 new Object[][] {
+				  {
+				   "A1B2C3D4E5F6", 500, 149.99, "TEST123",
+				   299.99
+				  }
+				 });
+				msgBox(
+				 "We have one tester item in the inventory table at the " +
+				 "bottom, and a blank sales table. Notice that we only have " +
+				 "500 quantity, but the second transaction calls for 1,000. " +
+				 "Let's run three test transactions to see how it works.");
 				break;
-			case 1:
-				crud.insertRecords(crud.getColumnNames(), testRecord);
-				msgBox("Check the sales table to see the sales have been added.");
+			}
+			case 1: {
+				LinkedList<Object[]> sales =
+				 new SalesProcessor(crud).processItems("little_order_test" +
+													   ".csv");
+				String str = "";
+				for(Object[] sale: sales) {
+					TransactionItem item = new TransactionItem();
+					String email = (String)sale[0];
+					String location = (String)sale[1];
+					LocalDate ld = LocalDate.parse((String)sale[2]);
+					LocalDate accepted = LocalDate.parse((String)sale[3]);
+					String productId = (String)sale[4];
+					int quantity = (int)sale[5];
+					item.setFields(ld, email, location, productId, quantity);
+					item.setDateAccepted(accepted);
+					str += item.toString() + "\n\n";
+				}
+				msgBox("We just ran three transactions:\n\n" +
+				 str + "    Check the sales table to see the" +
+				 " sales have been added.");
 				break;
-			case 2:
+			}
+			case 2: {
 				crud.setWorkingTable("sales");
-				new SalesProcessor(crud).processItems("little_order_test.csv");
-				msgBox("Now for the full customer orders list, we'll upload the file.");
+				msgBox("We could not fulfill the second order for an extra " +
+					   "week due to the restocking delay time, but we could " +
+					   "fulfill the third order immediately.");
 				break;
-			case 3:
+			}
+			case 3: {
+				crud.deleteAllRecords("sales");
+				crud.deleteTable("temp_table");
+				msgBox("Now for the full customer orders list," +
+					   "we'll remove these three records");
+				break;
+			}
+			case 4: {
+				crud.deleteAllRecords("sales");
 				crud.deleteRecord("inventory", "product_id", "A1B2C3D4E5F6");
-				new SalesProcessor(crud).processItems("customer_orders_A_team4.csv");
-				break;
+				msgBox("And now here are the results of the entire simulation " +
+					   "file.");
+			}
+			case 5: {
+				new SalesProcessor(crud)
+				 .processItems("customer_orders_A_team4.csv");
+			}
 		}
-		i++;
-	}
-	
-	private static void orderDemoSetup(Crud crud) throws SQLException {
-		
-		crud.setWorkingTable("inventory");
-		Random rand = new Random();
-		String[] testIds = new String[] {
-		 "RHPXPHGBJS1P", "QSC2QT4FINCJ",
-		 "64KOGZHOKLE4", "PHRXVC8ALL0F",
-		 "VCNZ0DSD7YSZ", "G0L5248Q2Z3F",
-		 "GZ7GOTL72VMS", "ILP04DM9GDK3",
-		 "WVTYLB7W4GJ5", "B5LJR0ELKJXL",
-		 "STPJASCJV013", "PYRQR50LBHXG",
-		 "U9VRBFPT4DHP", "ZUVE5YZY005O"
-		};
-		String[] goodIds = new String[] {
-		 "17TXG621YHM0", "5OAUECA58RWR",
-		 "GSOB9EYF7O7G", "I5PDMXUJFVIY",
-		 "B89RPM7ZZ7WG", "BVQT9IUZLOV0",
-		 "198BKGR5C2YQ", "A1D5CZQM7PFA",
-		 "CDTGG7B2FTIT", "GQ0WZUI7J6CT",
-		 "J575EG1KGXDI", "NBGSOV8WIZ54",
-		 "VJTR3EQFQZ5E", "6TWB0AUWETK7"
-		};
-		for(String testId: testIds) {
-			crud
-			 .updateRow(new String[] {"quantity"},
-			  new Object[] {rand.nextInt(2000)},
-			  "product_id", testId, "inventory");
-		}
-		
-		for(String goodId: goodIds) {
-			crud
-			 .updateRow(new String[] {"quantity"}, new Object[] {999999999},
-			  "product_id", goodId, "inventory");
-		}
+		slide++;
 	}
 }

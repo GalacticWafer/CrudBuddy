@@ -33,8 +33,9 @@ class SalesProcessor {
 		}
 	}
 
-	/** Carries out all the orders from a CSV file over the given time. */
-public void processItems(String csvPath)
+	/** Carries out all the orders from a CSV file over the given time. 
+	 * @return*/
+public LinkedList<Object[]> processItems(String csvPath)
 	throws SQLException, FileNotFoundException {
 		/* Holds successful transaction information. */
 		LinkedList<Object[]> sales = new LinkedList<>();
@@ -72,6 +73,9 @@ public void processItems(String csvPath)
 			if(orderScanner.hasNextLine()) {
 				line = orderScanner.nextLine().split(",");
 				newItemDate = LocalDate.parse(line[0]);
+				if(newItemDate.isBefore(today)) {
+					today = newItemDate;
+				}
 			} else {
 				assert backOrders.peek() != null;
 				if(backOrders.peek().getDateOrdered().plusDays(7)
@@ -132,7 +136,8 @@ public void processItems(String csvPath)
 			  .append(",");
 		} // End for
 		crud.update(sb.substring(0, sb.length() - 1) + ";");
-	} // End processItems
+	return sales;
+} // End processItems
 
 	/**
 	 * Attempts to process orders, and adds them to the list of back-orders if

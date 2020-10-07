@@ -13,6 +13,7 @@ import java.net.URL;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Collection;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -88,6 +89,10 @@ public class GUI {
 		table.setRowSorter(sorter);
 		makeComponents(EAST_PANEL, CENTER_PANEL, MIDDLE_CONSTRAINTS);
 		createFrame(NORTH_PANEL, EAST_PANEL, WEST_PANEL, SOUTH_PANEL, CENTER_PANEL, status);
+	}
+	
+	public JFrame getFrame() {
+		return frame;
 	}
 	
 	private void setUIManager() {
@@ -211,18 +216,21 @@ public class GUI {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				// check for selected row first
-				if(table.getSelectedRow() != -1) {
+				int selectedRow = table.getSelectedRow();
+				if(selectedRow != -1 ) {
 					// remove selected row from the model
 					//System.out.println(table.getModel().getValueAt(table.getSelectedRow(), 0));
 					//System.out.println(table.getColumnName(0));
+					int rowIndex = table.convertRowIndexToModel(selectedRow);
 					try {
-						crud.deleteRecord(crud.getWorkingTable(), table.getColumnName(0),
-								crud.quoteWrap(table.getModel().getValueAt(table.convertRowIndexToModel
-										(table.getSelectedRow()), 0)));
+						Object columnValue = table.getModel().getValueAt(rowIndex, 0);
+						String workingTable = crud.getWorkingTable();
+						String columnName = table.getColumnName(0);
+						crud.deleteRecord(workingTable, columnName, columnValue);
 					} catch (SQLException throwables) {
 						throwables.printStackTrace();
 					}
-					model.removeRow(table.convertRowIndexToModel(table.getSelectedRow()));
+					model.removeRow(rowIndex);
 					JOptionPane.showMessageDialog(null, "Selected row deleted successfully");
 				}
 			}
