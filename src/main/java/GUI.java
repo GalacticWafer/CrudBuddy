@@ -12,6 +12,7 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.table.DefaultTableModel;
@@ -292,10 +293,27 @@ public class GUI {
 				search(search.getText());
 			}
 			public void search(String str) {
+				RowFilter<DefaultTableModel, Object> rf = null;
+				ArrayList<RowFilter<DefaultTableModel,Object>> rfs =
+						new ArrayList<RowFilter<DefaultTableModel,Object>>();
+
+				try {
+					String text = search.getText();
+					String[] textArray = text.split(" ");
+
+					for (int i = 0; i < textArray.length; i++) {
+						rfs.add(RowFilter.regexFilter("(?i)" + textArray[i], 0, 1, 2, 4));
+					}
+
+					rf = RowFilter.andFilter(rfs);
+
+				} catch (java.util.regex.PatternSyntaxException e) {
+					return;
+				}
 				if (str.length() == 0) {
 					sorter.setRowFilter(null);
 				} else {
-					sorter.setRowFilter(RowFilter.regexFilter(str));
+					sorter.setRowFilter(rf);
 				}
 			}
 		}); //end of search filter
