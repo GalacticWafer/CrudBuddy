@@ -223,7 +223,7 @@ public class GUI {
 					//System.out.println(table.getColumnName(0));
 					int rowIndex = table.convertRowIndexToModel(selectedRow);
 					try {
-						Object columnValue = table.getModel().getValueAt(rowIndex, 0);
+						Object columnValue = Crud.quoteWrap(table.getModel().getValueAt(rowIndex, 0));
 						String workingTable = crud.getWorkingTable();
 						String columnName = table.getColumnName(0);
 						crud.deleteRecord(workingTable, columnName, columnValue);

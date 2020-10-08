@@ -151,13 +151,15 @@ class Crud {
 	/** Create the tuple of column names as a String to be sent as sql code. */
 	public String getColumnsTuple(String[] columnNames) {
 		if(columnNames.length == 0) {return null;}
-		StringBuilder sb = new StringBuilder("(");
-		int i = 0;
-		for(; i < columnNames.length - 1; i++) {
-			sb.append(columnNames[i]).append(",");
-		}
-		return sb.append(columnNames[i]).append(")").toString();
-	}
+		String str = Arrays.toString(columnNames);
+		return "(" + str.substring(1, str.length() - 1) + ")"; 
+		//StringBuilder sb = new StringBuilder("(");
+		//int i = 0;
+		//for(; i < columnNames.length - 1; i++) {
+		//	sb.append(columnNames[i]).append(",");
+		//}
+		//return sb.append(columnNames[i]).append(")").toString();
+	}// (email, first_name, last_name)    array.toString() -> [email, first_name, last_name]
 	
 	/** Helper method to clean up code when concatenating commas for sql code. */
 	private static String getComma(int length, int i, String lastChar) {
@@ -220,7 +222,7 @@ class Crud {
 			sb.append(toValueTuple(tableValues[i]));
 			sb.append(i == tableValues.length - 1 ? ";" : ",");
 		}
-		try {
+		try {	
 			return update(sb + "");
 		}
 		catch(Exception e) {
@@ -303,7 +305,7 @@ class Crud {
 	
 	/** Wraps the given object in quotes if it is a string */
 	static String quoteWrap(Object columnValue) {
-		if(columnValue instanceof String 
+		if(columnValue instanceof String // quoteWrap(999) -> 999     ||   quoteWrap(07-05-1990) -> "07-05-1990" 
 		   || columnValue instanceof Date) {
 			return "'" + columnValue + "'";
 		}

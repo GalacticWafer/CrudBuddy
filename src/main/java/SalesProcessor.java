@@ -9,11 +9,11 @@ import java.time.temporal.ChronoUnit;
 class SalesProcessor {
 	private final Crud crud;
 	private HashMap<String, Integer> quantityMap;
-
+	
 	public SalesProcessor(Crud crud) {
 		this.crud = crud;
 	} // End Constructor
-
+	
 	private void checkBackOrders(LinkedList<Object[]> sales, LocalDate today,
 								 Queue<TransactionItem> backOrders) {
 		if(!backOrders.isEmpty()) {
@@ -32,10 +32,13 @@ class SalesProcessor {
 			}
 		}
 	}
-
-	/** Carries out all the orders from a CSV file over the given time. 
-	 * @return*/
-public LinkedList<Object[]> processItems(String csvPath)
+	
+	/**
+	 * Carries out all the orders from a CSV file over the given time.
+	 *
+	 * @return
+	 */
+	public LinkedList<Object[]> processItems(String csvPath)
 	throws SQLException, FileNotFoundException {
 		/* Holds successful transaction information. */
 		LinkedList<Object[]> sales = new LinkedList<>();
@@ -51,7 +54,7 @@ public LinkedList<Object[]> processItems(String csvPath)
 		ArrayList<Integer> idxList = new ArrayList<>(size);
 		/* Use a FIFO collection for back-orders */
 		Queue<TransactionItem> backOrders = new ArrayDeque<>();
-
+		
 		while(rs.next()) {
 			int quantity = rs.getInt(1);
 			int idx = rs.getInt(2);
@@ -60,12 +63,12 @@ public LinkedList<Object[]> processItems(String csvPath)
 			indexMap.put(idx, productId);
 			idxList.add(idx);
 		} // End while
-
+		
 		/* Get a scanner on the csv, and skip the column names.*/
 		Scanner orderScanner = new Scanner(new File(csvPath));
 		orderScanner.nextLine();
 		LocalDate newItemDate = LocalDate.parse("2020-01-01");
-
+		
 		for(LocalDate today = newItemDate;
 			orderScanner.hasNextLine() || !backOrders.isEmpty();
 			today = today.plusDays(1)) {
@@ -96,23 +99,23 @@ public LinkedList<Object[]> processItems(String csvPath)
 				processOrder(newItem, sales, today, backOrders);
 			}
 		}
-
 		StringBuilder sb = new StringBuilder();
+		crud.update("Drop table if exists temp_table");
+		
 		crud.update("CREATE TEMPORARY TABLE temp_table(" +
 					"quantity int(16), product_id varchar(16));");
 		sb.append("insert into temp_table(product_id,quantity)values");
-
+		
 		Iterator<Integer> idxItr = idxList.iterator();
 		while(idxItr.hasNext()) {
 			Integer idx = idxItr.next();
 			String productId = indexMap.get(idx);
 			Integer quantity = quantityMap.get(productId);
-
-			sb.append(String.format("('%s',%d)%s",
-			 productId, quantity, idxItr.hasNext() ? "," : ";"));
+			sb.append("('").append(productId).append("',")
+			  .append(quantity).append(")")
+			  .append(idxItr.hasNext() ? "," : ";");
 		}
 		crud.update(sb.toString());
-
 		crud.update("CREATE TABLE temp2 SELECT inventory.product_id," +
 					"inventory.wholesale_cost,inventory.sale_price," +
 					"inventory.supplier_id,inventory.idx," +
@@ -121,24 +124,25 @@ public LinkedList<Object[]> processItems(String csvPath)
 					"ON inventory.product_id = temp_table.product_id");
 		crud.update("drop table inventory");
 		crud.update("alter table temp2 rename to inventory");
-
+		
 		crud.setWorkingTable("sales");
-
+		
 		/* Update the  database with the recorded  sales.*/
 		sb.delete(0, sb.length());
 		sb.append("insert into sales(" +
-				  "customer_email,customer_location,date_ordered, date_accepted,product_id, " +
+				  "customer_email,customer_location,date_ordered, " +
+				  "date_accepted,product_id, " +
 				  "quantity)" +
 				  "values");
-
-		for(Object[] sale: sales) {
-			sb.append(crud.toValueTuple(sale))
+		Iterator<Object[]> salesItr = sales.iterator();
+		while(salesItr.hasNext()) {
+			sb.append(crud.toValueTuple(salesItr.next()))
 			  .append(",");
 		} // End for
-		crud.update(sb.substring(0, sb.length() - 1) + ";");
-	return sales;
-} // End processItems
-
+		crud.update(sb.substring(0, sb.length() - 1).replace("''", "") + ";");
+		return sales;
+	} // End processItems
+	
 	/**
 	 * Attempts to process orders, and adds them to the list of back-orders if
 	 * needed.
@@ -160,7 +164,7 @@ public LinkedList<Object[]> processItems(String csvPath)
 			sales.add(item.toArray(Crud.SALES));
 		}// End if
 	}
-
+	
 	/**
 	 * Checks to make sure there is enough quantity to fulfill the order.
 	 * if yes, @return is the quantity remaining, otherwise, a self-explanatory
@@ -176,16 +180,15 @@ public LinkedList<Object[]> processItems(String csvPath)
 			System.out.println(productId + " : unknown product id");
 			return Crud.UNKNOWN_PRODUCT;
 		} // End if
-
+		
 		int requestQuantity = item.getRequestedQuantity();
 		int inventoryQuantity = quantityMap.get(productId);
-
+		
 		/* If the requested quantity is too large, return QUANTITY_SHORTAGE*/
 		if(requestQuantity > inventoryQuantity) {
-			item.setResultString(crud.format(
-			 "%s : %d - %d",
-			 productId, inventoryQuantity,
-			 inventoryQuantity + requestQuantity));
+			item.setResultString(productId + ": " + inventoryQuantity
+								 + " - " +
+								 (inventoryQuantity + requestQuantity));
 			return Crud.QUANTITY_SHORTAGE;
 		} // End if
 
@@ -197,7 +200,7 @@ public LinkedList<Object[]> processItems(String csvPath)
 		quantityMap.put(productId, newQuantity);
 		return newQuantity;
 	}
-
+	
 	private void restock(TransactionItem item) {
 		String id = item.getProductId();
 		Integer quantity = quantityMap.get(id);

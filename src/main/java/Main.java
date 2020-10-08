@@ -20,9 +20,10 @@ public class Main {
 	public static void main(String[] args)
 	throws Exception {
 		crud = Credentials.databaseLogin();
+		//gui = new GUI(crud);
+		SalesProcessor sp = new SalesProcessor(crud);
 		crud.deleteAllRecords("sales");
-		gui = new GUI(crud);
-		nextSlide();
+		sp.processItems("customer_orders_A_team4.csv");
 	}
 	
 	public static void msgBox(String message) {
@@ -105,26 +106,26 @@ public class Main {
 				break;
 			}
 			case 1: {
-				LinkedList<Object[]> sales =
-				 new SalesProcessor(crud).processItems("little_order_test" +
-													   ".csv");
-				String str = "";
-				for(Object[] sale: sales) {
-					TransactionItem item = new TransactionItem();
-					String email = (String)sale[0];
-					String location = (String)sale[1];
-					LocalDate ld = LocalDate.parse((String)sale[2]);
-					LocalDate accepted = LocalDate.parse((String)sale[3]);
-					String productId = (String)sale[4];
-					int quantity = (int)sale[5];
-					item.setFields(ld, email, location, productId, quantity);
-					item.setDateAccepted(accepted);
-					str += item.toString() + "\n\n";
-				}
-				msgBox("We just ran three transactions:\n\n" +
-				 str + "    Check the sales table to see the" +
-				 " sales have been added.");
-				break;
+				//LinkedList<Object[]> sales =
+				// new SalesProcessor(crud).processItems("little_order_test" +
+				//									   ".csv");
+				//String str = "";
+				//for(Object[] sale: sales) {
+				//	TransactionItem item = new TransactionItem();
+				//	String email = (String)sale[0];
+				//	String location = (String)sale[1];
+				//	LocalDate ld = LocalDate.parse((String)sale[2]);
+				//	LocalDate accepted = LocalDate.parse((String)sale[3]);
+				//	String productId = (String)sale[4];
+				//	int quantity = (int)sale[5];
+				//	item.setFields(ld, email, location, productId, quantity);
+				//	item.setDateAccepted(accepted);
+				//	str += item.toString() + "\n\n";
+				//}
+				//msgBox("We just ran three transactions:\n\n" +
+				// str + "    Check the sales table to see the" +
+				// " sales have been added.");
+				//break;
 			}
 			case 2: {
 				crud.setWorkingTable("sales");
@@ -143,10 +144,13 @@ public class Main {
 			case 4: {
 				crud.deleteAllRecords("sales");
 				crud.deleteRecord("inventory", "product_id", "A1B2C3D4E5F6");
-				msgBox("And now here are the results of the entire simulation " +
-					   "file.");
+				crud.setWorkingTable("inventory");
+				crud.deleteAllRecords("sales");
+				msgBox("And now we will upload a fresh copy of the inventory table and record the " +
+					   " results of the entire simulation file.");
 			}
 			case 5: {
+				crud.deleteTable("temp_table");
 				new SalesProcessor(crud)
 				 .processItems("customer_orders_A_team4.csv");
 			}
