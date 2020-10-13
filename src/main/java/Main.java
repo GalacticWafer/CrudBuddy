@@ -6,6 +6,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
@@ -14,23 +15,38 @@ public class Main {
 	private static Crud crud;
 	private static GUI gui;
 	private static int slide = 0;
-	private static Toolkit toolkit = Toolkit.getDefaultToolkit();
 	private static Object[][] testRecord;
+	private static Toolkit toolkit = Toolkit.getDefaultToolkit();
 	
 	public static void main(String[] args)
 	throws Exception {
 		crud = Credentials.databaseLogin();
+		crud.setWorkingTable("sales");
+		Object x = crud.getAssetTotal(null);
+		System.out.println(x);
+		/*
+		Object[][] topCustomers =
+		 crud
+		  .topNByCustomer("2020-01-03", "customer_email", "quantity", 5, true);
+		System.out.println(Arrays.deepToString(topCustomers));
+		 */
+		/*Object [][] topCustomers_firsTest =
+			crud
+			.topNbyDate("2020-01-03","date_accepted",5,true,"quantity");
+		 System.out.println(Arrays.deepToString(topCustomers_firstTest));
+		 */
 		//gui = new GUI(crud);
-		SalesProcessor sp = new SalesProcessor(crud);
-		crud.deleteAllRecords("sales");
-		sp.processItems("customer_orders_A_team4.csv");
+		//SalesProcessor sp = new SalesProcessor(crud);
+		//crud.deleteAllRecords("sales");
+		//sp.processItems("customer_orders_A_team4.csv");
+		
 	}
 	
 	public static void msgBox(String message) {
 		message = "<html><pre>" +
 				  WordUtils.wrap(message, 80)
 						   .replaceAll("\t", "    ")
-						   .replace("\n", "<br>") + 
+						   .replace("\n", "<br>") +
 				  "</pre></html>";
 		msgInvoke(new JLabel(message, JLabel.CENTER));
 	}
@@ -146,8 +162,10 @@ public class Main {
 				crud.deleteRecord("inventory", "product_id", "A1B2C3D4E5F6");
 				crud.setWorkingTable("inventory");
 				crud.deleteAllRecords("sales");
-				msgBox("And now we will upload a fresh copy of the inventory table and record the " +
-					   " results of the entire simulation file.");
+				msgBox(
+				 "And now we will upload a fresh copy of the inventory table " +
+				 "and record the " +
+				 " results of the entire simulation file.");
 			}
 			case 5: {
 				crud.deleteTable("temp_table");
