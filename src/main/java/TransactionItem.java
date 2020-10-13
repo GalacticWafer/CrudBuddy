@@ -208,15 +208,14 @@ public class TransactionItem {
 
 	private Object[] toSalesArray() {
 		return new Object[] {
-		 getEmail(),
 		 getLocation(),
-		 getSqlDate(dateOrdered.plusDays(1)),
-		 getSqlDate(dateAccepted.plusDays(1)),
+		 getEmail(),
 		 getProductId(),
+		 getSqlDate(dateOrdered.plusDays(1)),
 		 getCurrentQuantity(),
+		 getSqlDate(dateAccepted.plusDays(1)),
 		 };
 	}
-
 	@Override public String toString() {
 		return "TransactionItem{" +
 			   "\n\tproductId='" + productId + '\'' +

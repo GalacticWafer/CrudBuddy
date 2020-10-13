@@ -8,6 +8,7 @@ import java.time.temporal.ChronoUnit;
 
 class SalesProcessor {
 	private final Crud crud;
+	private HashMap<String, String> customers;
 	private HashMap<String, Integer> quantityMap;
 	
 	public SalesProcessor(Crud crud) {
@@ -42,7 +43,7 @@ class SalesProcessor {
 	throws SQLException, FileNotFoundException {
 		/* Holds successful transaction information. */
 		LinkedList<Object[]> sales = new LinkedList<>();
-
+		customers = new HashMap<>();
 		/* Get a copy product_id, quantity, and idx columns, and put them in 
 		relational hashmaps. */
 		crud.setWorkingTable("inventory");
@@ -125,21 +126,25 @@ class SalesProcessor {
 		crud.update("drop table inventory");
 		crud.update("alter table temp2 rename to inventory");
 		
-		crud.setWorkingTable("sales");
 		
+		crud.setWorkingTable("customers");
+		Object[][] customerEntries = new Object[customers.size()][2];
+		Iterator<Map.Entry<String,String>> custItr = customers.entrySet().iterator();
+		for(int i = 0; i < customerEntries.length; i++) {
+			Map.Entry<String,String> customer = custItr.next();
+			customerEntries[i] = new Object[]{customer.getKey(),customer.getValue()};
+		}
+		crud.insertRecords(new String[]{"email","location" }, customerEntries);
 		/* Update the  database with the recorded  sales.*/
 		sb.delete(0, sb.length());
-		sb.append("insert into sales(" +
-				  "customer_email,customer_location,date_ordered, " +
-				  "date_accepted,product_id, " +
-				  "quantity)" +
-				  "values");
+		crud.setWorkingTable("sales");
+		String[] salesColumns = crud.getColumnNames();
+		Object[][] salesEntries = new Object[sales.size()][salesColumns.length];
 		Iterator<Object[]> salesItr = sales.iterator();
-		while(salesItr.hasNext()) {
-			sb.append(crud.toValueTuple(salesItr.next()))
-			  .append(",");
-		} // End for
-		crud.update(sb.substring(0, sb.length() - 1).replace("''", "") + ";");
+		for(int i = 0; i < salesEntries.length; i++) {
+			salesEntries[i] = salesItr.next();
+		}
+		crud.insertRecords(salesColumns, salesEntries);
 		return sales;
 	} // End processItems
 	
@@ -150,6 +155,7 @@ class SalesProcessor {
 	private void processOrder(TransactionItem item,
 							  LinkedList<Object[]> sales, LocalDate today,
 							  Queue<TransactionItem> backOrders) {
+		customers.put(item.getEmail(), item.getLocation());
 		int check = quantityCheck(item);
 		if(check == Crud.QUANTITY_SHORTAGE) {
 			if(ChronoUnit.DAYS.between(today, item.getDateOrdered()) >= 7) {

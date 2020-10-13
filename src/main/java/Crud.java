@@ -33,6 +33,7 @@ class Crud {
 	public static final int UNKNOWN_PRODUCT = -1;
 	private static Connection connection;
 	private String currentTable = "inventory";
+	public static TreeSet<String> temporaryTables = new TreeSet<>();
 	
 	/**
 	 * Class that facilitates a connection to a database, and carries out CRUD
@@ -141,11 +142,10 @@ class Crud {
 		setWorkingTable(tableName);
 		String sql =
 		 format("SELECT count(*) AS %s FROM information_schema.columns WHERE" +
-				" " +
-				"table_name = '%s';",
+				" table_name = '%s';",
 		  tableName, tableName);
 		ResultSet rs = queryF(sql);
-		while(rs.next()) {
+		if(rs.next()) {
 			return rs.getInt(1);
 		}
 		return -1;
@@ -159,17 +159,15 @@ class Crud {
 		 " WHERE `TABLE_SCHEMA`='%s' AND `TABLE_NAME`='%s'", DB_NAME,
 		 currentTable);
 		ResultSet rs = query(sql);
-		ArrayList<String> temp = new ArrayList<>();
-		int size = 0;
+		ArrayList<String> list = new ArrayList<>();
 		while(rs.next()) {
 			if(!rs.getString(1).equals("idx")) {
-				temp.add(rs.getString(1));
-				size++;
+				list.add(rs.getString(1));
 			}
 		}
-		String[] columnNames = new String[size];
-		Iterator<String> it = temp.iterator();
-		for(int i1 = 0; i1 < size; i1++) {
+		String[] columnNames = new String[list.size()];
+		Iterator<String> it = list.iterator();
+		for(int i1 = 0; it.hasNext(); i1++) {
 			columnNames[i1] = it.next();
 		}
 		return columnNames;
@@ -225,7 +223,7 @@ class Crud {
 	
 	/** Get an array with all the table names */
 	public String[] getTableNames() throws SQLException {
-		ResultSet rs = query("SHOW tables");
+		ResultSet rs = query("SHOW TABLES");
 		int count = 0;
 		ArrayList<String> temp = new ArrayList<>();
 		while(rs.next()) {
@@ -276,9 +274,6 @@ class Crud {
 		 "INSERT INTO %s %s VALUES",
 		 currentTable, getColumnsTuple(columnNames)));
 		for(int i = 0; i < tableValues.length; i++) {
-			if(tableValues[i].length != columnNames.length) {
-				throw new InputMismatchException();
-			}
 			sb.append(toValueTuple(tableValues[i]));
 			sb.append(i == tableValues.length - 1 ? ";" : ",");
 		}
@@ -507,17 +502,35 @@ class Crud {
 		return sb.toString();
 	}
 	
-	public Object[][] topNByCustomer
-	 (String date, String groupingColumn, String sumColumn, int limit,
-	  boolean isDescending) throws SQLException {
-		String query =
-		 "SELECT " + groupingColumn + ", SUM(" + sumColumn + ") FROM sales " +
+	/**
+	 * @return
+	 *
+	 * @throws SQLException
+	 */
+	public String topNByCustomer
+	(String date, int limit, boolean isDescending, GUI gui)
+	throws SQLException {
+		setWorkingTable("customers");
+		deleteTable("top_customers");
+		String newTableName = "Top_" + limit + "_Customers";
+		String sql =
+		 " CREATE TEMPORARY TABLE IF NOT EXISTS " + newTableName +
+		 " AS (SELECT customer_email, SUM(sales.quantity * " +
+		 "(sale_price - wholesale_cost)) AS revenue " +
+		 " FROM sales " +
 		 (date == null ? "" :
-		  "WHERE date_accepted = '" + date) + "' GROUP BY " + groupingColumn +
-		 " ORDER BY SUM(" + sumColumn +
-		 ") " + (isDescending ? " DESC" : "ASC") + " LIMIT " + limit;
-		return resultsToArray(query(
-		 query));
+		  "WHERE date_accepted = '" + date + "'") +
+		 " INNER JOIN customers _customers on sales.customer_email" +
+		 " = _customers.email " +
+		 " INNER JOIN inventory i on sales.product_id = i" +
+		 ".product_id " +
+		 " GROUP BY customer_email " +
+		 " ORDER BY revenue " + (isDescending ? " DESC" : "ASC") +
+		 " LIMIT " + limit + ")";
+		update(sql);
+		temporaryTables.add(newTableName);
+		gui.addTable(newTableName);
+		return newTableName;
 	}
 	
 	public Object[][] topNByDate(String date, String columnName,
