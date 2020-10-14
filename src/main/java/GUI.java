@@ -49,9 +49,10 @@ public class GUI {
 	private JTable table;
 	private String tableName;
 	private final JComboBox tableSelections;
+	Object[][] tempData;
 	private DefaultTableModel tempDataModel;
 	String tempTable = "";
-	Object[][] tempData;
+	
 	public GUI(Crud crud) throws SQLException {
 		this.crud = crud;
 		setUIManager();
@@ -336,6 +337,29 @@ public class GUI {
 				}
 			}
 		}); //end of search filter
+		
+		JButton analyzer = new JButton("Analyze");
+		analyzer.setBackground(GREY_110x3);
+		analyzer.setFont(FONT);
+		analyzer.setForeground(TABLE_FOREGROUND);
+		analyzer.setBorder(new LineBorder(DARK_GREY, 2));
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 6;
+		east.add(analyzer, c);
+		analyzer.addActionListener(e -> {
+			JOptionPane
+			 .showMessageDialog
+			  (null,
+			   "Uriel,\n\tPlease make it so that when this button is pressed,\n " +
+			   "it does the stuff in Main.main() instead of this message." +
+			   "Make sure to take in an 'int' first, to pass into the topNCustomers() function.\n" +
+			   "That code in main()  is responsible for displaying topNCustomers() results.\n" +
+			   " seen at the beginning of this program, which is our analytics.\n" +
+			   "After that, when any other table is selected from the drop-down menu of\n" +
+				"tables, remove the one associated with this table, and\n" +
+			   "call crud.setWorkingTable(<some_other_table_string_name)");
+		});
 	}
 	
 	private void refresh() throws SQLException {
@@ -392,15 +416,6 @@ public class GUI {
 		frame.getContentPane().setBackground(GREY_50x3);
 	}
 	
-	public void setTempData(String[] columnNames, Object[][] newData)
-	throws SQLException {
-		model = new DefaultTableModel(newData, columnNames);
-		table.setModel(model);
-		model.fireTableDataChanged();
-		table.repaint();
-		//setNewModel(columnNames);
-	}
-	
 	private void setFromDatabase(String[] columnNames) throws SQLException {
 		ResultSet rs = crud.getAllRecords();
 		data = new Object[crud.size()][columnNames.length];
@@ -419,6 +434,15 @@ public class GUI {
 		scrollPane.add(table);
 		model.fireTableDataChanged();
 		table.repaint();
+	}
+	
+	public void setTempData(String[] columnNames, Object[][] newData)
+	throws SQLException {
+		model = new DefaultTableModel(newData, columnNames);
+		table.setModel(model);
+		model.fireTableDataChanged();
+		table.repaint();
+		//setNewModel(columnNames);
 	}
 	
 	private void setUIManager() {
