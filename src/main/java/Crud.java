@@ -503,9 +503,7 @@ class Crud {
 	}
 	
 	/**
-	 * @return
-	 *
-	 * @throws SQLException
+	 * 
 	 */
 	public String topNByCustomer
 	(String date, int limit, boolean isDescending, GUI gui)
@@ -533,16 +531,27 @@ class Crud {
 		return newTableName;
 	}
 	
+	/**
+	 *
+	 * @param date that date you want to produce the analysis for
+	 * @param columnName the column name that identifies the data to analyze
+	 * @param limit where limit is the number of rows you want (i.e., top 5? 10? 1000?)
+	 * @param isDescending top- to bottom if true, bottom to top if false
+	 * @param orderArg if you want to order these results by a specific column, 
+	 *                 include it here (i.e., "quantity" -> higher quantities will
+	 *                 be on the top of the results
+	 * @return 2d array of all the results
+	 * @throws SQLException if the query was an incorrect string, according to sql syntax
+	 */
 	public Object[][] topNByDate(String date, String columnName,
 								 int limit, boolean isDescending,
 								 String orderArg) throws SQLException {
 		return resultsToArray(query(
 		 "Select * FROM sales WHERE " + columnName + " = '" + date +
 		 "' ORDER BY " + orderArg + (isDescending ? " DESC" : "ASC") +
-		 " LIMIT 5"));
+		 " LIMIT " + limit));
 	}
 	
-	/** Send an sql executeUpdate() statement */
 	public int update(String sql) throws SQLException {
 		Statement st = connection.createStatement(
 		 ResultSet.TYPE_SCROLL_INSENSITIVE,
