@@ -9,11 +9,12 @@ public class Main {
 	
 	public static void main(String[] args)
 	throws Exception {
+		new GUI(Credentials.databaseLogin());
 		// topNByCustomer()
 		/*
 		crud = Credentials.databaseLogin();
-		GUI gui = new GUI(crud);
-		String newTableName = crud.topNByCustomer(null, 30, true, gui);
+		GUString newTableName =I gui = new GUI(crud);
+		 crud.topNByCustomer(null, 30, true, gui);
 		crud.setWorkingTable(newTableName);
 		Object[][] description = crud.resultsToArray(crud.query("describe " + 
 		newTableName));

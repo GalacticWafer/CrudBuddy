@@ -524,6 +524,14 @@ class Crud {
 		temporaryTables.add(newTableName);
 		gui.addTable(newTableName);
 		return newTableName;
+		/*
+		 *  CREATE TEMPORARY TABLE IF NOT EXISTS Top_2_Customers AS (SELECT
+		 * sales.cust_email, SUM(sales.quantity * (sale_price - wholesale_cost))
+		 *  AS revenue  FROM sales WHERE date_accepted = '2020-01-01' INNER
+		 * JOIN customers _customers on sales.customer_email = _customers
+		 * .email  INNER JOIN inventory i on sales.product_id = i.product_id
+		 * GROUP BY customer_email  ORDER BY revenue  DESC LIMIT 2)
+		 * */
 	}
 	
 	/**
