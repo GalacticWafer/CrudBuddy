@@ -15,11 +15,6 @@ class Crud {
 	private static String DB_NAME;
 	private static String HOST_IP;
 	public static final int INVENTORY = 1;
-	public static final String[] INVENTORY_COLUMNS =
-	 new String[] {
-	  "product_id", "quantity", "wholesale_cost", "sale_price"
-	  , "supplier_id"
-	 };
 	private static String PORT;
 	private static final Pair<String, String> PRIMARY_KEY =
 	 new Pair("idx", "int(16)");
@@ -70,8 +65,8 @@ class Crud {
 	}
 	
 	/** Deletes all records from a table, but the table remains */
-	public int deleteAllRecords(String table) throws SQLException {
-		return update("DELETE FROM " + table);
+	public int deleteAllRecords() throws SQLException {
+		return update("DELETE FROM " + currentTable);
 	}
 	
 	/** Delete the record in the specified table */
@@ -503,7 +498,7 @@ class Crud {
 	}
 	
 	/**
-	 * 
+	 *
 	 */
 	public String topNByCustomer
 	(String date, int limit, boolean isDescending, GUI gui)
@@ -532,16 +527,23 @@ class Crud {
 	}
 	
 	/**
+	 * @param date
+	 *  that date you want to produce the analysis for
+	 * @param columnName
+	 *  the column name that identifies the data to analyze
+	 * @param limit
+	 *  where limit is the number of rows you want (i.e., top 5? 10? 1000?)
+	 * @param isDescending
+	 *  top- to bottom if true, bottom to top if false
+	 * @param orderArg
+	 *  if you want to order these results by a specific column,
+	 *  include it here (i.e., "quantity" -> higher quantities will
+	 *  be on the top of the results
 	 *
-	 * @param date that date you want to produce the analysis for
-	 * @param columnName the column name that identifies the data to analyze
-	 * @param limit where limit is the number of rows you want (i.e., top 5? 10? 1000?)
-	 * @param isDescending top- to bottom if true, bottom to top if false
-	 * @param orderArg if you want to order these results by a specific column, 
-	 *                 include it here (i.e., "quantity" -> higher quantities will
-	 *                 be on the top of the results
 	 * @return 2d array of all the results
-	 * @throws SQLException if the query was an incorrect string, according to sql syntax
+	 *
+	 * @throws SQLException
+	 *  if the query was an incorrect string, according to sql syntax
 	 */
 	public Object[][] topNByDate(String date, String columnName,
 								 int limit, boolean isDescending,

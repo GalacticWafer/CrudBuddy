@@ -169,6 +169,9 @@ public class TransactionItem {
 		this.location = cust_location;
 		this.productId = productId;
 		this.quantity = quantity;
+		if(orderId == null) { 
+			setOrderId(generateId());
+		}
 	}
 	
 	public void setFirstName(String firstName) {this.firstName = firstName;}
@@ -207,13 +210,15 @@ public class TransactionItem {
 	}
 
 	private Object[] toSalesArray() {
+		if(getOrderId() == null) { setOrderId(generateId()); }
 		return new Object[] {
-		 getLocation(),
-		 getEmail(),
 		 getProductId(),
-		 getSqlDate(dateOrdered.plusDays(1)),
+		 getOrderId(),
 		 getCurrentQuantity(),
+		 getEmail(),
+		 getSqlDate(dateOrdered.plusDays(1)),
 		 getSqlDate(dateAccepted.plusDays(1)),
+		 getLocation()
 		 };
 	}
 	@Override public String toString() {
