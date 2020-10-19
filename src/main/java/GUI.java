@@ -79,7 +79,7 @@ public class GUI {
 		tableSelections.setFont(FONT);
 		MIDDLE_CONSTRAINTS.weightx = 0.5;
 		MIDDLE_CONSTRAINTS.gridx = 0;
-		MIDDLE_CONSTRAINTS.gridy = 0;
+		MIDDLE_CONSTRAINTS.gridy = 1;
 		MIDDLE_CONSTRAINTS.insets = new Insets(0, 0, 25, 0);  //top padding
 		CENTER_PANEL.add(tableSelections, MIDDLE_CONSTRAINTS);
 		crud.setWorkingTable("inventory");
@@ -132,12 +132,49 @@ public class GUI {
 	}
 	
 	private void makeComponents(JPanel east, JPanel center, GridBagConstraints middle) {
+		JLabel user = new JLabel("Username:");
+		user.setForeground(GREY_110x3);
+		user.setFont(FONT);
+		middle.anchor = GridBagConstraints.WEST;
+		middle.gridx = 0;
+		middle.gridy = 0;
+		center.add(user, middle);
+		JTextField username = new JTextField(10); //creates textfield with 10 columns
+		username.setBackground(GREY_110x3);
+		username.setForeground(PURE_WHITE);
+		username.setBorder(new LineBorder(DARK_GREY, 2));
+		middle.insets = new Insets(0, 85, 20, 820);
+		middle.fill = GridBagConstraints.HORIZONTAL ;
+		middle.anchor = GridBagConstraints.EAST;
+		middle.gridx = 0;
+		middle.gridy = 0;
+		center.add(username, middle);
+
+		JLabel pass = new JLabel("Password:");
+		pass.setForeground(GREY_110x3);
+		pass.setFont(FONT);
+		middle.insets = new Insets(0, 250, 25, 0);
+		middle.gridx = 0;
+		middle.gridy = 0;
+		center.add(pass, middle);
+		JTextField password = new JTextField(10); //creates textfield with 10 columns
+		password.setBackground(GREY_110x3);
+		password.setForeground(PURE_WHITE);
+		password.setBorder(new LineBorder(DARK_GREY, 2));
+		middle.insets = new Insets(0, 333, 20, 550);
 		middle.fill = GridBagConstraints.HORIZONTAL;
+		middle.anchor = GridBagConstraints.EAST;
+		middle.gridx = 0;
+		middle.gridy = 0;
+		center.add(password, middle);
+
+		middle.fill = GridBagConstraints.HORIZONTAL;
+		middle.insets = new Insets(0, 0, 0, 0);
 		middle.ipady = 380;      //make this component tall
 		middle.weightx = 0.0;
-		middle.gridwidth = 6;
+		middle.gridwidth = 2;
 		middle.gridx = 0;
-		middle.gridy = 1;
+		middle.gridy = 2;
 		table.setBackground(GREY_50x3);
 		table.setForeground(TABLE_FOREGROUND);
 		table.setGridColor(GREY_110x3);
