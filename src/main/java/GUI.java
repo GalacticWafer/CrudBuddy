@@ -12,6 +12,7 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collection;
 import javax.swing.plaf.basic.BasicScrollBarUI;
@@ -348,17 +349,58 @@ public class GUI {
 		c.gridy = 6;
 		east.add(analyzer, c);
 		analyzer.addActionListener(e -> {
-			JOptionPane
+			
+			String newTableName = null;
+			try {
+				int count = Integer.parseInt(JOptionPane.showInputDialog(
+				 "Please enter the amount records you would like to see"));
+				
+				String d = JOptionPane.showInputDialog(
+				 null,
+				 "what date would you like to see results for? (leave blank " +
+				 "for all-time");
+				LocalDate date = null;
+				if(d != "") {
+					date = LocalDate.parse(d);
+				}
+				
+				boolean isDescending =
+				 JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog
+				  (null, "Should the results be ascending?\"",
+				   "Is Descending", JOptionPane.YES_NO_OPTION);
+				
+				newTableName =
+				 crud.topNByCustomer((date == null ? null :date.toString()), count, isDescending, this);
+				crud.setWorkingTable(newTableName);
+				Object[][] description =
+				 crud.resultsToArray(crud.query("describe " + newTableName));
+				String[] columnNames = new String[description.length];
+				for(int i = 0; i < columnNames.length; i++) {
+					columnNames[i] = String.valueOf(description[i][0]);
+				}
+				setTempData(columnNames, crud
+				 .resultsToArray(crud.query("select * from " + newTableName)));
+			}
+			catch(SQLException throwables) {
+				throwables.printStackTrace();
+			}
+			
+			/*JOptionPane
 			 .showMessageDialog
 			  (null,
-			   "Uriel,\n\tPlease make it so that when this button is pressed,\n " +
+			   "Uriel,\n\tPlease make it so that when this button is pressed,
+			   \n " +
 			   "it does the stuff in Main.main() instead of this message." +
-			   "Make sure to take in an 'int' first, to pass into the topNCustomers() function.\n" +
-			   "That code in main()  is responsible for displaying topNCustomers() results.\n" +
-			   " seen at the beginning of this program, which is our analytics.\n" +
-			   "After that, when any other table is selected from the drop-down menu of\n" +
+			   "Make sure to take in an 'int' first, to pass into the
+			   topNCustomers() function.\n" +
+			   "That code in main()  is responsible for displaying
+			   topNCustomers() results.\n" +
+			   " seen at the beginning of this program, which is our analytics
+			   .\n" +
+			   "After that, when any other table is selected from the
+			   drop-down menu of\n" +
 				"tables, remove the one associated with this table, and\n" +
-			   "call crud.setWorkingTable(<some_other_table_string_name)");
+			   "call crud.setWorkingTable(<some_other_table_string_name)");*/
 		});
 	}
 	
