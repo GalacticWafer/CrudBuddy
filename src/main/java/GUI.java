@@ -405,7 +405,7 @@ public class GUI {
 	}
 	
 	private void refresh() throws SQLException {
-		setFromDatabase(crud.getColumnNames());
+
 		DefaultTableModel dm = (DefaultTableModel)table.getModel();
 		dm.setDataVector(data, crud.getColumnNames());
 		dm.fireTableDataChanged();
