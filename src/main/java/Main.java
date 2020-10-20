@@ -10,6 +10,7 @@ public class Main {
 	public static void main(String[] args)
 	throws Exception {
 		Crud crud = Credentials.databaseLogin();
+		Emailer.processEmailOrders(crud);
 		//new GUI(crud);
 		// topNByCustomer()
 		/*
