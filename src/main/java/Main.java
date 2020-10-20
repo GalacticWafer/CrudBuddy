@@ -9,7 +9,8 @@ public class Main {
 	
 	public static void main(String[] args)
 	throws Exception {
-		new GUI(Credentials.databaseLogin());
+		Crud crud = Credentials.databaseLogin();
+		//new GUI(crud);
 		// topNByCustomer()
 		/*
 		crud = Credentials.databaseLogin();
@@ -25,8 +26,6 @@ public class Main {
 		gui.setTempData(columnNames, crud.resultsToArray(crud.query("select * 
 		from " + newTableName)));
 		*/
-		
-		// reload sales table
 		/*
 		crud = Credentials.databaseLogin();
 		for(String s: new String[] {"sales", "customers", "inventory"}) {
@@ -36,5 +35,8 @@ public class Main {
 		new GUI(crud);
 		}
 		*/
+		// reload sales table
+		
+		new Restoration(crud);
 	}
 }

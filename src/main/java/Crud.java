@@ -380,7 +380,7 @@ class Crud {
 	}
 	
 	/** Removes the (BOM byte-order mark) from the beginning of the string. */
-	private static String removeUTF8BOM(String s) {
+	public static String removeUTF8BOM(String s) {
 		if(s.startsWith("\uFEFF")) {
 			s = s.substring(1);
 		}

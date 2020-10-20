@@ -138,7 +138,7 @@ class SalesProcessor {
 		/* Update the  database with the recorded  sales.*/
 		sb.delete(0, sb.length());
 		crud.setWorkingTable("sales");
-		String[] salesColumns = crud.getColumnNames();
+		String[] salesColumns = new String[]{"product_id",	"order_id", "quantity", "cust_email", "date_ordered", "date_accepted", "location"};
 		Object[][] salesEntries = new Object[sales.size()][salesColumns.length];
 		Iterator<Object[]> salesItr = sales.iterator();
 		for(int i = 0; i < salesEntries.length; i++) {
