@@ -9,16 +9,12 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.net.URL;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.Collection;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
-import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 public class GUI {
@@ -348,7 +344,7 @@ public class GUI {
 		c.gridx = 1;
 		c.gridy = 6;
 		east.add(analyzer, c);
-		analyzer.addActionListener(e -> {
+		/*analyzer.addActionListener(e -> {
 			
 			String newTableName = null;
 			try {
@@ -370,7 +366,7 @@ public class GUI {
 				   "Is Descending", JOptionPane.YES_NO_OPTION);
 				
 				newTableName =
-				 crud.topNByCustomer((date == null ? null :date.toString()), count, isDescending, this);
+				 crud.mostOrderedProducts((date == null ? null :date.toString()), count, isDescending, this);
 				crud.setWorkingTable(newTableName);
 				Object[][] description =
 				 crud.resultsToArray(crud.query("describe " + newTableName));
@@ -385,7 +381,7 @@ public class GUI {
 				throwables.printStackTrace();
 			}
 			
-			/*JOptionPane
+			*//*JOptionPane
 			 .showMessageDialog
 			  (null,
 			   "Uriel,\n\tPlease make it so that when this button is pressed,
@@ -400,12 +396,12 @@ public class GUI {
 			   "After that, when any other table is selected from the
 			   drop-down menu of\n" +
 				"tables, remove the one associated with this table, and\n" +
-			   "call crud.setWorkingTable(<some_other_table_string_name)");*/
-		});
+			   "call crud.setWorkingTable(<some_other_table_string_name)");*//*
+		});*/
 	}
 	
 	private void refresh() throws SQLException {
-		setFromDatabase(crud.getColumnNames());
+
 		DefaultTableModel dm = (DefaultTableModel)table.getModel();
 		dm.setDataVector(data, crud.getColumnNames());
 		dm.fireTableDataChanged();
