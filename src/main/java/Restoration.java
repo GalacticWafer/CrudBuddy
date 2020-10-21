@@ -8,14 +8,13 @@ import java.util.Scanner;
 
 public class Restoration {
 	public Restoration(Crud crud) throws SQLException, FileNotFoundException {
-		for(String tableName: crud.getTableNames()) {
-			if(tableName.equals("inventory")) {
-				crud.deleteTable("inventory");
-			} else {
-				crud.setWorkingTable(tableName);
-				crud.deleteAllRecords();
-			}
-		}
+		deleteAllTables(crud);
+		Restoration.rebuildInventory(crud);
+		new SalesProcessor(crud).processItems("customer_orders_A_team4.csv");
+	}
+	
+	public static void rebuildInventory(Crud crud)
+	throws FileNotFoundException, SQLException {
 		Scanner scanner = new Scanner(new File("inventory_team4.csv"));
 		String[] headers = scanner.nextLine().split(",");
 		headers[0] = crud.removeUTF8BOM(headers[0]);
@@ -27,7 +26,6 @@ public class Restoration {
 		types.put(3, "DECIMAL(13,2)");
 		types.put(4, "VARCHAR(8)");
 		crud.insertTable("inventory", headers,types );
-		
 		
 		ArrayList<Object[]> list = new ArrayList<>();
 		while(scanner.hasNextLine()) {
@@ -51,7 +49,16 @@ public class Restoration {
 		}
 		crud.setWorkingTable("inventory");
 		crud.insertRecords(headers, inventory);
-		
-		new SalesProcessor(crud).processItems("customer_orders_A_team4.csv");
+	}
+	
+	public static void deleteAllTables(Crud crud) throws SQLException {
+		for(String tableName: crud.getTableNames()) {
+			if(tableName.equals("inventory")) {
+				crud.deleteTable("inventory");
+			} else {
+				crud.setWorkingTable(tableName);
+				crud.deleteAllRecords();
+			}
+		}
 	}
 }
