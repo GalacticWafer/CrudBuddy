@@ -7,6 +7,9 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.sql.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.Date;
 
@@ -497,61 +500,19 @@ class Crud {
 		return sb.toString();
 	}
 	
-	/**
-	 *
-	 */
-	public String topNByCustomer
-	(String date, int limit, boolean isDescending, GUI gui)
+	public Object[][] mostOrderedProducts
+	 (int limit)
 	throws SQLException {
-		setWorkingTable("customers");
-		deleteTable("top_customers");
-		String newTableName = "Top_" + limit + "_Customers";
-		String sql =
-		 " CREATE TEMPORARY TABLE IF NOT EXISTS " + newTableName +
-		 " AS (SELECT customer_email, SUM(sales.quantity * " +
-		 "(sale_price - wholesale_cost)) AS revenue " +
-		 " FROM sales " +
-		 (date == null ? "" :
-		  "WHERE date_accepted = '" + date + "'") +
-		 " INNER JOIN customers _customers on sales.customer_email" +
-		 " = _customers.email " +
-		 " INNER JOIN inventory i on sales.product_id = i" +
-		 ".product_id " +
-		 " GROUP BY customer_email " +
-		 " ORDER BY revenue " + (isDescending ? " DESC" : "ASC") +
-		 " LIMIT " + limit + ")";
-		update(sql);
-		temporaryTables.add(newTableName);
-		gui.addTable(newTableName);
-		return newTableName;
-		/*
-		 *  CREATE TEMPORARY TABLE IF NOT EXISTS Top_2_Customers AS (SELECT
-		 * sales.cust_email, SUM(sales.quantity * (sale_price - wholesale_cost))
-		 *  AS revenue  FROM sales WHERE date_accepted = '2020-01-01' INNER
-		 * JOIN customers _customers on sales.customer_email = _customers
-		 * .email  INNER JOIN inventory i on sales.product_id = i.product_id
-		 * GROUP BY customer_email  ORDER BY revenue  DESC LIMIT 2)
-		 * */
+		String query =
+		 "select product_id, sum(quantity) as totalQuantity from sales " +
+		 " group by \nproduct_id order by sum(quantity) desc limit " + limit;
+		return resultsToArray(query(query));
 	}
 	
+	
+	
 	/**
-	 * @param date
-	 *  that date you want to produce the analysis for
-	 * @param columnName
-	 *  the column name that identifies the data to analyze
-	 * @param limit
-	 *  where limit is the number of rows you want (i.e., top 5? 10? 1000?)
-	 * @param isDescending
-	 *  top- to bottom if true, bottom to top if false
-	 * @param orderArg
-	 *  if you want to order these results by a specific column,
-	 *  include it here (i.e., "quantity" -> higher quantities will
-	 *  be on the top of the results
-	 *
-	 * @return 2d array of all the results
-	 *
-	 * @throws SQLException
-	 *  if the query was an incorrect string, according to sql syntax
+	 * 10 best customers (by dollar amount)
 	 */
 	public Object[][] topNByDate(String date, String columnName,
 								 int limit, boolean isDescending,
