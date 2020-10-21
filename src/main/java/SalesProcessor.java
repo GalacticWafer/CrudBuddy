@@ -82,8 +82,8 @@ class SalesProcessor {
 				}
 			} else {
 				assert backOrders.peek() != null;
-				if(backOrders.peek().getDateOrdered().plusDays(7)
-							 .isBefore(today)) {
+				if(backOrders.peek().getDateOrdered().
+				 plusDays(7).isBefore(today)) {
 					checkBackOrders(sales, today, backOrders);
 				}
 			}

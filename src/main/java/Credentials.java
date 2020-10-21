@@ -3,8 +3,8 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 public class Credentials {
-	static String userName = "OutbreakSource";
-	static String password = "HHwp5r2)|j";
+	static String userName = "GalacticWafer";
+	static String password = "7!qaJ|B[t$";
 	static String ipAddress = "45.79.55.190";
 	static String portNumber = "3306";
 	static String databaseName = "cs3250_project";
