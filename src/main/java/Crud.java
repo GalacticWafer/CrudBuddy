@@ -355,6 +355,15 @@ class Crud {
 		return currentQuantity;
 	}
 	
+	public Object[][] mostOrderedProducts
+	 (int limit)
+	throws SQLException {
+		String query =
+		 "select product_id, sum(quantity) as totalQuantity from sales " +
+		 " group by \nproduct_id order by sum(quantity) desc limit " + limit;
+		return resultsToArray(query(query));
+	}
+	
 	/** Sends a sql query string */
 	public ResultSet query(String query) throws SQLException {
 		Statement st = connection.createStatement(
@@ -436,14 +445,6 @@ class Crud {
 		 currentTable, newQuantity, transactionItem.getProductId());
 	}
 	
-	/**
-	 * Sets the static variable <code>tableName</code> as the table to make
-	 * statements against.
-	 */
-	public void setWorkingTable(String tableName) {
-		this.currentTable = tableName;
-	}
-	
 	;
 	//public static final String[] SALES_COLUMNS = new String[]
 	// {"product_id", "quantity", "wholesale_cost", "sale_price",
@@ -451,6 +452,14 @@ class Crud {
 	//public static final String[] CUSTOMERS_COLUMNS = new String[]
 	// {"product_id", "quantity", "wholesale_cost", "sale_price",
 	// "supplier_id"};;
+	
+	/**
+	 * Sets the static variable <code>tableName</code> as the table to make
+	 * statements against.
+	 */
+	public void setWorkingTable(String tableName) {
+		this.currentTable = tableName;
+	}
 	
 	private boolean shouldQuote(String s) {
 		return s.contains("VARCHAR")
@@ -526,7 +535,8 @@ class Crud {
 		return newTableName;
 		/*
 		 *  CREATE TEMPORARY TABLE IF NOT EXISTS Top_2_Customers AS (SELECT
-		 * sales.cust_email, SUM(sales.quantity * (sale_price - wholesale_cost))
+		 * sales.cust_email, SUM(sales.quantity * (sale_price -
+		 * wholesale_cost))
 		 *  AS revenue  FROM sales WHERE date_accepted = '2020-01-01' INNER
 		 * JOIN customers _customers on sales.customer_email = _customers
 		 * .email  INNER JOIN inventory i on sales.product_id = i.product_id
