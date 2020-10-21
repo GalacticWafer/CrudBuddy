@@ -620,4 +620,12 @@ class Crud {
 		pw.close();
 		return file;
 	}
+	public Object [][] mostValuableCustomers(int n) throws SQLException{
+		String query = "SELECT cust_email , SUM(sales.quantity * sale_price - " +
+					   "wholesale_cost) as revenue from sales\n" +
+					   "    inner join\n" +
+					   "    inventory i on sales.product_id = i.product_id\n" +
+					   "GROUP BY cust_email ORDER BY revenue desc limit " + n;
+		return resultsToArray(query(query));
+	}
 }
