@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 public class TransactionItem {
 	private static final String CHAR_LOWER = "abcdefghijklmnopqrstuvwxyz";
 	private static final String CHAR_UPPER = CHAR_LOWER.toUpperCase();
-	private static final SimpleDateFormat DATE_FORMAT =
+	public static final SimpleDateFormat DATE_FORMAT =
 	 new SimpleDateFormat("yyyy-MM-dd");
 	private static final String NUMBER = "0123456789";
 	private static final String DATA_FOR_RANDOM_STRING =
