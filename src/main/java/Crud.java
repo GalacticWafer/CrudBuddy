@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.sql.*;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.Date;
 
@@ -90,11 +91,20 @@ class Crud {
 		return rs.getFetchSize() > 0;
 	}
 	
+	
+	
+	
+	
+	
+	
+	
 	/** Find a specific record */
 	public Object[] find(String idValue, String idColumnName)
 	throws SQLException {
+		
 		String sql = format("select * from %s where %s = '%s';",
 		 currentTable, idColumnName, idValue);
+		
 		var result = queryF(sql);
 		Object[] record = new Object[result.getMetaData().getColumnCount()];
 		while(result.next()) {
@@ -104,6 +114,12 @@ class Crud {
 		}
 		return record;
 	}
+	
+	
+	
+	
+	
+	
 	
 	/** Format a string for sql statement */
 	public String format(String format, Object... args) {

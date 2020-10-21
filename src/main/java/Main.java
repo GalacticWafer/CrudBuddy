@@ -1,4 +1,5 @@
 import java.awt.*;
+import java.util.Arrays;
 
 public class Main {
 	private static Crud crud;
@@ -11,21 +12,13 @@ public class Main {
 	throws Exception {
 		new GUI(Credentials.databaseLogin());
 		// topNByCustomer()
-		/*
 		crud = Credentials.databaseLogin();
-		GUString newTableName =I gui = new GUI(crud);
-		 crud.topNByCustomer(null, 30, true, gui);
+		GUI gui = new GUI(crud);
+		 String newTableName = crud.topNByCustomer(null, 30, true, gui);
 		crud.setWorkingTable(newTableName);
 		Object[][] description = crud.resultsToArray(crud.query("describe " + 
 		newTableName));
-		String[] columnNames = new String[description.length];
-		for(int i = 0; i < columnNames.length; i++) {
-			columnNames[i] = String.valueOf(description[i][0]);
-		}
-		gui.setTempData(columnNames, crud.resultsToArray(crud.query("select * 
-		from " + newTableName)));
-		*/
-		
+			System.out.println(Arrays.deepToString(crud.resultsToArray(crud.query("Select * from " + newTableName))));
 		// reload sales table
 		/*
 		crud = Credentials.databaseLogin();
