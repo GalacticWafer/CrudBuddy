@@ -31,7 +31,7 @@ public class GUI {
 	private static final Color TABLE_FOREGROUND = new Color(125, 211, 224);
 	private static final Color centerBackground = GREY_50x3;
 	private static GridBagLayout BAG_LAYOUT = new GridBagLayout();
-	private static JPanel CENTER_PANEL = new JPanel(new GridBagLayout());
+	private static JPanel CENTER_PANEL = new JPanel();
 	private static JPanel EAST_PANEL = new JPanel();
 	private static GridBagConstraints MIDDLE_CONSTRAINTS = new GridBagConstraints();
 	private static JPanel NORTH_PANEL = new JPanel();
@@ -71,16 +71,15 @@ public class GUI {
 			}
 		});
 		DefaultListCellRenderer listRenderer = new DefaultListCellRenderer();
-		listRenderer.setHorizontalAlignment(DefaultListCellRenderer.CENTER); // center-aligned
-		// items
+		listRenderer.setHorizontalAlignment(DefaultListCellRenderer.CENTER); // center-aligned items
 		tableSelections.setBackground(GREY_110x3);
 		tableSelections.setBorder(new LineBorder(GREY_110x3, 2));
 		tableSelections.setForeground(TABLE_FOREGROUND);
 		tableSelections.setFont(FONT);
-		/*MIDDLE_CONSTRAINTS.gridx = 0;
+		MIDDLE_CONSTRAINTS.gridx = 1;
 		MIDDLE_CONSTRAINTS.gridy = 1;
-		MIDDLE_CONSTRAINTS.insets = new Insets(0, 0, 25, 0);  //top padding
-		CENTER_PANEL.add(tableSelections, MIDDLE_CONSTRAINTS); */
+		MIDDLE_CONSTRAINTS.insets = new Insets(0, 0, 10, 0);
+		CENTER_PANEL.add(tableSelections, MIDDLE_CONSTRAINTS);
 		crud.setWorkingTable("inventory");
 		System.out.println(crud.getWorkingTable());
 		createTable();
@@ -104,13 +103,13 @@ public class GUI {
 	
 	private void setFrameStyle(JLabel status) {
 		status.setFont(FONT);
-		CENTER_PANEL.setBackground(new ColorUIResource(0, 255, 0));
+		CENTER_PANEL.setBackground(GREY_50x3);
 		CENTER_PANEL.setOpaque(true);
 		NORTH_PANEL.setBackground(DARK_GREY);
 		NORTH_PANEL.setOpaque(true);
 		EAST_PANEL.setBackground(GREY_50x3);
 		EAST_PANEL.setOpaque(true);
-		WEST_PANEL.setBackground(new ColorUIResource(255, 0, 0));
+		WEST_PANEL.setBackground(GREY_50x3);
 		WEST_PANEL.setOpaque(true);
 		SOUTH_PANEL.setBackground(GREY_50x3);
 		SOUTH_PANEL.setOpaque(true);
@@ -131,50 +130,45 @@ public class GUI {
 	}
 	
 	private void makeComponents(JPanel east, JPanel center, GridBagConstraints middle) {
-		/*JLabel user = new JLabel("Username:");
+
+		JLabel user = new JLabel("Username:");
 		user.setForeground(GREY_110x3);
 		user.setFont(FONT);
-		middle.fill = GridBagConstraints.HORIZONTAL;
-		//middle.anchor = GridBagConstraints.WEST;
+		middle.anchor = GridBagConstraints.WEST;
 		middle.gridx = 0;
 		middle.gridy = 0;
-		center.add(user, middle); */
-		JTextField username = new JTextField(10); //creates textfield with 10 columns
+		center.add(user, middle);
+		JTextField username = new JTextField(20); //creates textfield with 10 columns
 		username.setBackground(GREY_110x3);
 		username.setForeground(PURE_WHITE);
 		username.setBorder(new LineBorder(DARK_GREY, 2));
-		//middle.insets = new Insets(0, 85, 20, 0);
-		middle.fill = GridBagConstraints.BOTH ;
-		//middle.anchor = GridBagConstraints.EAST;
-		middle.weightx = 0.0;
+		middle.insets = new Insets(10, 4,20, 0); //padding between textfields labels
+		middle.anchor = GridBagConstraints.WEST;
+		middle.gridx = 1;
+		center.add(username, middle);
 
-		center.add(username);
-/*
 		JLabel pass = new JLabel("Password:");
 		pass.setForeground(GREY_110x3);
 		pass.setFont(FONT);
-		middle.insets = new Insets(0, 250, 25, 0);
-		middle.gridx = 0;
-		middle.gridy = 0;
+		middle.anchor = GridBagConstraints.WEST;
+		middle.gridx = 2;
 		center.add(pass, middle);
-		JTextField password = new JTextField(10); //creates textfield with 10 columns
+		JTextField password = new JTextField(20); //creates textfield with 10 columns
 		password.setBackground(GREY_110x3);
 		password.setForeground(PURE_WHITE);
 		password.setBorder(new LineBorder(DARK_GREY, 2));
-		middle.insets = new Insets(0, 333, 20, 550);
-		middle.fill = GridBagConstraints.HORIZONTAL;
-		middle.anchor = GridBagConstraints.EAST;
-		middle.gridx = 0;
+		middle.anchor = GridBagConstraints.WEST;
+		middle.weightx = 3;
+		middle.gridx = 3;
 		middle.gridy = 0;
 		center.add(password, middle);
 
-		middle.fill = GridBagConstraints.HORIZONTAL;
-		//middle.insets = new Insets(0, 0, 0, 0);
-		middle.ipady = 380;      //make this component tall
-		//middle.weightx = 0.0;
-		//middle.gridwidth = 2;
+		middle.fill = GridBagConstraints.BOTH;
+		middle.weightx = 0.0;
+		middle.weighty = 0.9;
+		middle.gridwidth = 4;
 		middle.gridx = 0;
-		middle.gridy = 1;
+		middle.gridy = 2;
 		table.setBackground(GREY_50x3);
 		table.setForeground(TABLE_FOREGROUND);
 		table.setGridColor(GREY_110x3);
@@ -191,7 +185,7 @@ public class GUI {
 		scrollPane.setBorder(new LineBorder(GREY_110x3, 2));
 		scrollPane.getVerticalScrollBar().setUI(new BasicScrollBarUI());
 		scrollPane.getHorizontalScrollBar().setUI(new BasicScrollBarUI());
-		center.add(scrollPane, middle); */
+		center.add(scrollPane, middle);
 		
 		GridBagConstraints c = new GridBagConstraints();
 		JLabel srch = new JLabel("Search:");
@@ -250,9 +244,6 @@ public class GUI {
 			public void actionPerformed(ActionEvent ae) {
 				// check for selected row first
 				if(table.getSelectedRow() != -1) {
-					// remove selected row from the model
-					//System.out.println(table.getModel().getValueAt(table.getSelectedRow(), 0));
-					//System.out.println(table.getColumnName(0));
 					try {
 						crud.deleteRecord(crud.getWorkingTable(), table.getColumnName(0),
 								crud.quoteWrap(table.getModel().getValueAt(table.convertRowIndexToModel
@@ -358,7 +349,7 @@ public class GUI {
 	
 	private void createFrame(JPanel north, JPanel east, JPanel west, JPanel south, JPanel center,
 							 JLabel status) {
-		frame.setBounds(200, 400, 1300, 620);
+		frame.setBounds(200, 400, 1300, 1007);
 		north.add(status);
 		frame.add(north, BorderLayout.NORTH);
 		frame.add(east, BorderLayout.EAST);
@@ -383,9 +374,6 @@ public class GUI {
 	
 
 	public void setFromArray(Object[][] newData, String[] columnNames) throws SQLException {
-
-
-
 		this.data = newData;
 		setNewModel(columnNames);
 	}
@@ -401,19 +389,6 @@ public class GUI {
 
 	private void sendEmail(String fileName, Object[][] data) throws FileNotFoundException, SQLException
 	{
-		/*
-		 * PSUEDO CODE
-		 *
-		 * HIGHER LEVEL
-		 * 1. Take data
-		 * 2. write to a csv
-		 * 3. export csv
-		 *
-		 * Next Level
-		 * 1.Loop through data
-		 * 2. Put data in Object[][] dat
-		 * */
-
 		File report = new File(fileName);
 
 		PrintWriter dataWriter = new PrintWriter(report);
