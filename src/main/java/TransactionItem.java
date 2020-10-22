@@ -131,8 +131,8 @@ public class TransactionItem {
 		}
 	}
 	
-	public void setDate(Date sentDate) {
-		this.dateOrdered = LocalDate.parse(DATE_FORMAT.format(sentDate));
+	public void setDate(LocalDate sentDate) {
+		this.dateOrdered = sentDate;
 	}
 	
 	public void setDateAccepted(LocalDate today) {
