@@ -9,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TransactionItem {
+	public static final String[] SALES_COLUMNS =  {"date","cust_email","cust_location","product_id","product_quantity"};
 	private static final String CHAR_LOWER = "abcdefghijklmnopqrstuvwxyz";
 	private static final String CHAR_UPPER = CHAR_LOWER.toUpperCase();
 	public static final SimpleDateFormat DATE_FORMAT =
