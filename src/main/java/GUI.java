@@ -1,39 +1,54 @@
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.UIManager;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.plaf.ColorUIResource;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableRowSorter;
 
 public class GUI {
-	private static final Color CLOSED_STATUS_FOREGROUND = new Color(217, 85, 80);
+	private static GridBagLayout BAG_LAYOUT = new GridBagLayout();
+	private static JPanel CENTER_PANEL = new JPanel();
+	private static final Color CLOSED_STATUS_FOREGROUND =
+	 new Color(217, 85, 80);
 	private static final Color DARK_GREY = new Color(20, 20, 20);
+	private static JPanel EAST_PANEL = new JPanel();
 	private static final Font FONT = new Font("Aharoni", Font.BOLD, 15);
 	private static final Color GREY_110x3 = new Color(110, 110, 110);
 	private static final Color GREY_50x3 = new Color(50, 50, 50);
-	private static final Color OPEN_STATUS_FOREGROUND = new Color(131, 224, 158);
-	private static final Color PURE_WHITE = new Color(255, 255, 255);
-	private static final Color TABLE_FOREGROUND = new Color(125, 211, 224);
-	private static final Color centerBackground = GREY_50x3;
-	private static GridBagLayout BAG_LAYOUT = new GridBagLayout();
-	private static JPanel CENTER_PANEL = new JPanel();
-	private static JPanel EAST_PANEL = new JPanel();
-	private static GridBagConstraints MIDDLE_CONSTRAINTS = new GridBagConstraints();
+	private static GridBagConstraints MIDDLE_CONSTRAINTS =
+	 new GridBagConstraints();
 	private static JPanel NORTH_PANEL = new JPanel();
+	private static final Color OPEN_STATUS_FOREGROUND =
+	 new Color(131, 224, 158);
+	private static final Color PURE_WHITE = new Color(255, 255, 255);
 	private static JPanel SOUTH_PANEL = new JPanel();
+	private static final Color TABLE_FOREGROUND = new Color(125, 211, 224);
 	private static JPanel WEST_PANEL = new JPanel();
-	private static JFrame frame;
-	private static JScrollPane scrollPane;
-	private static JTable table;
-	private static String tmptest;
+	private static final Color centerBackground = GREY_50x3;
 	private final Crud crud;
-	private DefaultTableModel model;
 	private Object[][] data;
+	private static JFrame frame;
+	private DefaultTableModel model;
+	private static JScrollPane scrollPane;
+	private TableRowSorter sorter;
+	private JTable table;
 	private String tableName;
+	private final JComboBox tableSelections;
+	Object[][] tempData;
+	private DefaultTableModel tempDataModel;
+	String tempTable = "";
 	
 	public GUI(Crud crud) throws SQLException {
 		this.crud = crud;
@@ -42,12 +57,13 @@ public class GUI {
 		table = new JTable();
 		frame = new JFrame("CRUD Buddy");
 		JLabel status = new JLabel("Status: " + checkConnection());
-		status.setForeground(crud.isClosed() ? CLOSED_STATUS_FOREGROUND : OPEN_STATUS_FOREGROUND);
+		status.setForeground(crud
+		 .isClosed() ? CLOSED_STATUS_FOREGROUND : OPEN_STATUS_FOREGROUND);
 		setFrameStyle(status);
 		
 		EAST_PANEL.setLayout(BAG_LAYOUT);
 		CENTER_PANEL.setLayout(BAG_LAYOUT);
-		JComboBox tableSelections = new JComboBox(crud.getTableNames());
+		tableSelections = new JComboBox(crud.getTableNames());
 		
 		tableSelections.addActionListener(e -> {
 			tableName = tableSelections.getSelectedItem() + "";
@@ -60,61 +76,51 @@ public class GUI {
 			}
 		});
 		DefaultListCellRenderer listRenderer = new DefaultListCellRenderer();
-		listRenderer.setHorizontalAlignment(DefaultListCellRenderer.CENTER); // center-aligned 
+		listRenderer
+		 .setHorizontalAlignment(DefaultListCellRenderer.CENTER); // center
+		// -aligned 
 		// items
 		tableSelections.setBackground(GREY_110x3);
+		tableSelections.setBorder(new LineBorder(GREY_110x3, 2));
 		tableSelections.setForeground(TABLE_FOREGROUND);
 		tableSelections.setFont(FONT);
 		MIDDLE_CONSTRAINTS.weightx = 0.5;
-		MIDDLE_CONSTRAINTS.ipady = 70;
 		MIDDLE_CONSTRAINTS.gridx = 0;
 		MIDDLE_CONSTRAINTS.gridy = 0;
-		MIDDLE_CONSTRAINTS.insets = new Insets(13, 0, - 1, 0);  //top padding
+		MIDDLE_CONSTRAINTS.insets = new Insets(0, 0, 25, 0);  //top padding
 		CENTER_PANEL.add(tableSelections, MIDDLE_CONSTRAINTS);
-       /* JLabel tname = new JLabel(crud.getWorkingTable());
-        tname.setForeground(TABLE_FOREGROUND);
-        tname.setFont(FONT);
-        middle.weightx = 0.5;
-        middle.fill = GridBagConstraints.HORIZONTAL;
-        middle.ipady = 70;
-        middle.gridx = 0;
-        middle.gridy = 0;
-        middle.insets = new Insets(5,40,0,50);  //top padding
-        center.add(tname, middle); */
 		crud.setWorkingTable("inventory");
 		System.out.println(crud.getWorkingTable());
 		createTable();
+		sorter = new TableRowSorter<>(model);
+		table.setRowSorter(sorter);
 		makeComponents(EAST_PANEL, CENTER_PANEL, MIDDLE_CONSTRAINTS);
-		createFrame(NORTH_PANEL, EAST_PANEL, WEST_PANEL, SOUTH_PANEL, CENTER_PANEL, status);
+		createFrame(NORTH_PANEL, EAST_PANEL, WEST_PANEL, SOUTH_PANEL,
+		 CENTER_PANEL, status);
 	}
 	
-	private void setUIManager() {
-		UIManager.put("ScrollBar.thumb", new ColorUIResource(GREY_110x3));
-		UIManager.put("ScrollBar.thumbDarkShadow", new ColorUIResource(GREY_50x3));
-		UIManager.put("ScrollBar.thumbShadow", new ColorUIResource(GREY_50x3));
-		UIManager.put("ScrollBar.thumbHighlight", new ColorUIResource(GREY_50x3));
-		UIManager.put("ScrollBar.track", new ColorUIResource(GREY_50x3));
+	public void addTable(String tableName) {
+		tableSelections.addItem(tableName);
+		tableSelections.setSelectedItem(tableName);
 	}
 	
 	private String checkConnection() throws SQLException {
 		return crud.isClosed() ? "No Connection" : "Connected";
 	}
 	
-	private void setFrameStyle(JLabel status) {
-		status.setFont(FONT);
-		CENTER_PANEL.setBackground(centerBackground);
-		NORTH_PANEL.setBackground(GREY_50x3);
-		SOUTH_PANEL.setBackground(GREY_50x3);
-		EAST_PANEL.setBackground(GREY_50x3);
-		WEST_PANEL.setBackground(GREY_50x3);
-		frame.getContentPane().setBackground(GREY_50x3);
-	}
-	
-	private void refresh() throws SQLException {
-		setFromDatabase(crud.getColumnNames());
-		DefaultTableModel dm = (DefaultTableModel)table.getModel();
-		dm.setDataVector(data, crud.getColumnNames());
-		dm.fireTableDataChanged();
+	private void createFrame(JPanel north, JPanel east, JPanel west,
+							 JPanel south, JPanel center,
+							 JLabel status) {
+		frame.setBounds(200, 400, 1300, 620);
+		north.add(status);
+		frame.add(north, BorderLayout.NORTH);
+		frame.add(east, BorderLayout.EAST);
+		frame.add(west, BorderLayout.WEST);
+		frame.add(south, BorderLayout.SOUTH);
+		frame.add(center, BorderLayout.CENTER);
+		frame.setLocationRelativeTo(null);
+		frame.setVisible(true);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
 	
 	private void createTable() throws SQLException {
@@ -123,7 +129,12 @@ public class GUI {
 		setNewModel(columnNames);
 	}
 	
-	private void makeComponents(JPanel east, JPanel center, GridBagConstraints middle) {
+	public JFrame getFrame() {
+		return frame;
+	}
+	
+	private void makeComponents(JPanel east, JPanel center,
+								GridBagConstraints middle) {
 		middle.fill = GridBagConstraints.HORIZONTAL;
 		middle.ipady = 380;      //make this component tall
 		middle.weightx = 0.0;
@@ -131,9 +142,14 @@ public class GUI {
 		middle.gridx = 0;
 		middle.gridy = 1;
 		table.setBackground(GREY_50x3);
-		table.setGridColor(GREY_110x3);
 		table.setForeground(TABLE_FOREGROUND);
+		table.setGridColor(GREY_110x3);
 		table.setFont(FONT);
+		table.setSelectionBackground(GREY_110x3);
+		table.setSelectionForeground(OPEN_STATUS_FOREGROUND);
+		JTableHeader header = table.getTableHeader();
+		header.setBackground(GREY_110x3);
+		header.setBorder(new LineBorder(GREY_110x3));
 		center.add(table, middle);
 		
 		scrollPane = new JScrollPane(table);
@@ -144,123 +160,298 @@ public class GUI {
 		center.add(scrollPane, middle);
 		
 		GridBagConstraints c = new GridBagConstraints();
-		JLabel pid = new JLabel("Product ID ");
-		pid.setForeground(GREY_110x3);
-		pid.setFont(FONT);
+		JLabel srch = new JLabel("Search:");
+		srch.setForeground(GREY_110x3);
+		srch.setFont(FONT);
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 0;
 		c.gridy = 0;
-		east.add(pid, c);
-		JTextField productid = new JTextField(10); //creates textfield with 10 columns
-		productid.setBackground(GREY_110x3);
-		productid.setForeground(PURE_WHITE);
-		productid.setBorder(new LineBorder(DARK_GREY, 2));
+		c.insets = new Insets(3, 15, 0, 10);
+		east.add(srch, c);
+		JTextField search =
+		 new JTextField(10); //creates textfield with 10 columns
+		search.setBackground(GREY_110x3);
+		search.setForeground(PURE_WHITE);
+		search.setBorder(new LineBorder(DARK_GREY, 2));
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 0;
-		c.insets = new Insets(0, 0, 0, 20);  //top padding
-		east.add(productid, c);
+		east.add(search, c);
 		
-		productid.addActionListener(
-		 new ActionListener() {
-			 public void actionPerformed(ActionEvent e) {
-				 tmptest = productid.getText();
-				 System.out.print(tmptest);
-			 }
-		 }
-		);
-		
-		JLabel sid = new JLabel("Supplier ID ");
-		sid.setForeground(GREY_110x3);
-		sid.setFont(FONT);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 2;
-		east.add(sid, c);
-		JTextField supplierid = new JTextField(10); //creates textfield with 10 columns
-		supplierid.setBackground(GREY_110x3);
-		supplierid.setForeground(PURE_WHITE);
-		supplierid.setBorder(new LineBorder(DARK_GREY, 2));
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridy = 2;
-		east.add(supplierid, c);
-		
-		JLabel qty = new JLabel("Quantity ");
-		qty.setForeground(GREY_110x3);
-		qty.setFont(FONT);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 3;
-		east.add(qty, c);
-		JTextField quantity = new JTextField(10); //creates textfield with 10 columns
-		quantity.setBackground(GREY_110x3);
-		quantity.setForeground(PURE_WHITE);
-		quantity.setBorder(new LineBorder(DARK_GREY, 2));
+		JButton exportButton = new JButton("Export All");
+		exportButton.setBackground(GREY_110x3);
+		exportButton.setFont(FONT);
+		exportButton.setForeground(TABLE_FOREGROUND);
+		exportButton.setBorder(new LineBorder(DARK_GREY, 2));
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 3;
-		east.add(quantity, c);
+		east.add(exportButton, c);
 		
-		JLabel wholesale = new JLabel("Wholesale ");
-		wholesale.setForeground(GREY_110x3);
-		wholesale.setFont(FONT);
+		exportButton.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) {
+				try {
+					sendEmail("gui.csv", data);
+				}
+				catch(FileNotFoundException | SQLException fileNotFoundException) {
+					fileNotFoundException.printStackTrace();
+				}
+			}
+		});
+		
+		JButton delete = new JButton("Delete Current");
+		delete.setBackground(GREY_110x3);
+		delete.setFont(FONT);
+		delete.setForeground(TABLE_FOREGROUND);
+		delete.setBorder(new LineBorder(DARK_GREY, 2));
 		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 4;
-		east.add(wholesale, c);
-		JLabel wsamount = new JLabel("temp");
-		wsamount.setForeground(TABLE_FOREGROUND);
-		wsamount.setFont(FONT);
+		c.gridx = 1;
+		c.gridy = 1;
+		east.add(delete, c);
+		
+		delete.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent ae) {
+				// check for selected row first
+				int selectedRow = table.getSelectedRow();
+				if(selectedRow != -1) {
+					// remove selected row from the model
+					//System.out.println(table.getModel().getValueAt(table
+					// .getSelectedRow(), 0));
+					//System.out.println(table.getColumnName(0));
+					int rowIndex = table.convertRowIndexToModel(selectedRow);
+					try {
+						Object columnValue = Crud
+						 .quoteWrap(table.getModel().getValueAt(rowIndex, 0));
+						String workingTable = crud.getWorkingTable();
+						String columnName = table.getColumnName(0);
+						crud
+						 .deleteRecord(workingTable, columnName, columnValue);
+					}
+					catch(SQLException throwables) {
+						throwables.printStackTrace();
+					}
+					model.removeRow(rowIndex);
+					JOptionPane
+					 .showMessageDialog(null, "Selected row deleted " +
+											  "successfully");
+				}
+			}
+		});
+		
+		JButton exportCurrent = new JButton("Export Current");
+		exportCurrent.setBackground(GREY_110x3);
+		exportCurrent.setFont(FONT);
+		exportCurrent.setForeground(TABLE_FOREGROUND);
+		exportCurrent.setBorder(new LineBorder(DARK_GREY, 2));
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 2;
+		east.add(exportCurrent, c);
+		
+		exportCurrent.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Object[][] update =
+				 new Object[table.getRowCount()][table.getColumnCount()];
+				for(int row = 0; row < table.getRowCount(); row++) {
+					for(int column = 0;
+						column < table.getColumnCount(); column++) {
+						update[row][column] = table.getModel().getValueAt(
+						 table.convertRowIndexToModel(row), column);
+					}
+				}
+				try {
+					sendEmail("test.csv", update);
+				}
+				catch(FileNotFoundException fileNotFoundException) {
+					fileNotFoundException.printStackTrace();
+				}
+				catch(SQLException throwables) {
+					throwables.printStackTrace();
+				}
+				//System.out.println(Arrays.deepToString(update));
+			}
+		});
+		
+		JButton upload = new JButton("Upload Table");
+		upload.setBackground(GREY_110x3);
+		upload.setFont(FONT);
+		upload.setForeground(TABLE_FOREGROUND);
+		upload.setBorder(new LineBorder(DARK_GREY, 2));
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 4;
-		east.add(wsamount, c);
+		east.add(upload, c);
 		
-		JLabel sale = new JLabel("Set Sale Price ");
-		sale.setForeground(GREY_110x3);
-		sale.setFont(FONT);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 5;
-		east.add(sale, c);
-		JTextField saleprice = new JTextField(10); //creates textfield with 10 columns
-		saleprice.setBackground(GREY_110x3);
-		saleprice.setForeground(PURE_WHITE);
-		saleprice.setBorder(new LineBorder(DARK_GREY, 2));
+		upload.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				try {
+					crud.insertTableFromGui();
+				}
+				catch(Exception exception) {
+					exception.printStackTrace();
+				}
+			}
+		});
+		
+		JButton send = new JButton("Send Email");
+		send.setBackground(GREY_110x3);
+		send.setFont(FONT);
+		send.setForeground(TABLE_FOREGROUND);
+		send.setBorder(new LineBorder(DARK_GREY, 2));
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 5;
-		east.add(saleprice, c);
+		east.add(send, c);
 		
-		JLabel inventory = new JLabel("Order Inventory ");
-		inventory.setForeground(GREY_110x3);
-		inventory.setFont(FONT);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 6;
-		east.add(inventory, c);
-		JTextField orderinv = new JTextField(10); //creates textfield with 10 columns
-		orderinv.setBackground(GREY_110x3);
-		orderinv.setForeground(PURE_WHITE);
-		orderinv.setBorder(new LineBorder(DARK_GREY, 2));
+		send.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				
+			}
+		});
+		
+		search.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				search(search.getText());
+			}
+			
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				search(search.getText());
+			}
+			
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				search(search.getText());
+			}
+			
+			public void search(String str) {
+				if(str.length() == 0) {
+					sorter.setRowFilter(null);
+				} else {
+					sorter.setRowFilter(RowFilter.regexFilter(str));
+				}
+			}
+		}); //end of search filter
+		
+		JButton analyzer = new JButton("Analyze");
+		analyzer.setBackground(GREY_110x3);
+		analyzer.setFont(FONT);
+		analyzer.setForeground(TABLE_FOREGROUND);
+		analyzer.setBorder(new LineBorder(DARK_GREY, 2));
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 6;
-		east.add(orderinv, c);
+		east.add(analyzer, c);
+		/*analyzer.addActionListener(e -> {
+			
+			String newTableName = null;
+			try {
+				int count = Integer.parseInt(JOptionPane.showInputDialog(
+				 "Please enter the amount records you would like to see"));
+				
+				String d = JOptionPane.showInputDialog(
+				 null,
+				 "what date would you like to see results for? (leave blank " +
+				 "for all-time");
+				LocalDate date = null;
+				if(d != "") {
+					date = LocalDate.parse(d);
+				}
+				
+				boolean isDescending =
+				 JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog
+				  (null, "Should the results be ascending?\"",
+				   "Is Descending", JOptionPane.YES_NO_OPTION);
+				
+				newTableName =
+				 crud.mostOrderedProducts((date == null ? null :date.toString()), count, isDescending, this);
+				crud.setWorkingTable(newTableName);
+				Object[][] description =
+				 crud.resultsToArray(crud.query("describe " + newTableName));
+				String[] columnNames = new String[description.length];
+				for(int i = 0; i < columnNames.length; i++) {
+					columnNames[i] = String.valueOf(description[i][0]);
+				}
+				setTempData(columnNames, crud
+				 .resultsToArray(crud.query("select * from " + newTableName)));
+			}
+			catch(SQLException throwables) {
+				throwables.printStackTrace();
+			}
+			
+			*//*JOptionPane
+			 .showMessageDialog
+			  (null,
+			   "Uriel,\n\tPlease make it so that when this button is pressed,
+			   \n " +
+			   "it does the stuff in Main.main() instead of this message." +
+			   "Make sure to take in an 'int' first, to pass into the
+			   topNCustomers() function.\n" +
+			   "That code in main()  is responsible for displaying
+			   topNCustomers() results.\n" +
+			   " seen at the beginning of this program, which is our analytics
+			   .\n" +
+			   "After that, when any other table is selected from the
+			   drop-down menu of\n" +
+				"tables, remove the one associated with this table, and\n" +
+			   "call crud.setWorkingTable(<some_other_table_string_name)");*//*
+		});*/
 	}
 	
-	private void createFrame(JPanel north, JPanel east, JPanel west, JPanel south, JPanel center,
-							 JLabel status) {
-		frame.setBounds(200, 400, 1300, 620);
-		north.add(status);
-		frame.add(north, BorderLayout.NORTH);
-		frame.add(east, BorderLayout.EAST);
-		frame.add(west, BorderLayout.WEST);
-		frame.add(south, BorderLayout.SOUTH);
-		frame.add(center, BorderLayout.CENTER);
-		frame.setVisible(true);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	private void refresh() throws SQLException {
+
+		DefaultTableModel dm = (DefaultTableModel)table.getModel();
+		dm.setDataVector(data, crud.getColumnNames());
+		dm.fireTableDataChanged();
+	}
+	
+	private void sendEmail(String fileName, Object[][] data)
+	throws FileNotFoundException, SQLException {
+		/*
+		 * PSUEDO CODE
+		 *
+		 * HIGHER LEVEL
+		 * 1. Take data
+		 * 2. write to a csv
+		 * 3. export csv
+		 *
+		 * Next Level
+		 * 1.Loop through data
+		 * 2. Put data in Object[][] dat
+		 * */
+		
+		File report = new File(fileName);
+		
+		PrintWriter dataWriter = new PrintWriter(report);
+		dataWriter.println(crud.arrayToCSV(crud.getColumnNames()));
+		for(int i = 0; i < data.length; i++) {
+			Object[] row = data[i];
+			for(int j = 0; j < row.length; j++) {
+				dataWriter.print(row[j]);
+				if(j < row.length - 1) {
+					dataWriter.print(",");
+				}
+			}
+			dataWriter.println();
+		}
+		dataWriter.close();
+	}  // End sendFile
+	
+	private void setFrameStyle(JLabel status) {
+		status.setFont(FONT);
+		CENTER_PANEL.setBackground(centerBackground);
+		CENTER_PANEL.setOpaque(true);
+		NORTH_PANEL.setBackground(DARK_GREY);
+		NORTH_PANEL.setOpaque(true);
+		EAST_PANEL.setBackground(GREY_50x3);
+		EAST_PANEL.setOpaque(true);
+		WEST_PANEL.setBackground(GREY_50x3);
+		WEST_PANEL.setOpaque(true);
+		SOUTH_PANEL.setBackground(GREY_50x3);
+		SOUTH_PANEL.setOpaque(true);
+		frame.getContentPane().setBackground(GREY_50x3);
 	}
 	
 	private void setFromDatabase(String[] columnNames) throws SQLException {
@@ -274,11 +465,6 @@ public class GUI {
 		}
 	}
 	
-	public void setFromArray(Object[][] newData, String[] columnNames) {
-		this.data = newData;
-		setNewModel(columnNames);
-	}
-	
 	private void setNewModel(String[] columnNames) {
 		model = new DefaultTableModel(data, columnNames);
 		model.setDataVector(data, columnNames);
@@ -286,5 +472,24 @@ public class GUI {
 		scrollPane.add(table);
 		model.fireTableDataChanged();
 		table.repaint();
+	}
+	
+	public void setTempData(String[] columnNames, Object[][] newData)
+	throws SQLException {
+		model = new DefaultTableModel(newData, columnNames);
+		table.setModel(model);
+		model.fireTableDataChanged();
+		table.repaint();
+		//setNewModel(columnNames);
+	}
+	
+	private void setUIManager() {
+		UIManager.put("ScrollBar.thumb", new ColorUIResource(GREY_110x3));
+		UIManager
+		 .put("ScrollBar.thumbDarkShadow", new ColorUIResource(GREY_50x3));
+		UIManager.put("ScrollBar.thumbShadow", new ColorUIResource(GREY_50x3));
+		UIManager
+		 .put("ScrollBar.thumbHighlight", new ColorUIResource(GREY_50x3));
+		UIManager.put("ScrollBar.track", new ColorUIResource(GREY_50x3));
 	}
 }
