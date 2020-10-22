@@ -177,7 +177,10 @@ class 	uploadCsvGui {
 				}
 				if(i > 1) {
 					sf.replace(sf.length() - 1, sf.length(), ";");
+					long start = System.nanoTime();
 					crud.updateF(sf.toString());
+					long end = System.nanoTime();
+					System.out.println("uploading new csv time: " + (end - start));
 				}
 			}
 			scanner.close();
