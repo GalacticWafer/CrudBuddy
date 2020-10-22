@@ -108,6 +108,7 @@ public class Emailer {
 			if(canComplete) {
 				for(TransactionItem transactionItem: transactionItemList) {
 					crud.setQuantityFromOrder(transactionItem);
+					crud.insertFromOrder(transactionItem, 0);
 				}
 			}
 			prefix = (canComplete ?
