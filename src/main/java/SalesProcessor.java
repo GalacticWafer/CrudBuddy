@@ -166,7 +166,7 @@ class SalesProcessor {
 		{
 			salesEntries[i] = salesItr.next();
 		}
-		crud.insertRecords(salesColumns, salesEntries);
+		crud.insertRecords(TransactionItem.SALES_COLUMNS, salesEntries);
 		return sales;
 	} // End processItems
 	
