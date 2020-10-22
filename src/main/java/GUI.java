@@ -11,6 +11,8 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.time.LocalDate;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.table.DefaultTableModel;
@@ -76,18 +78,17 @@ public class GUI {
 			}
 		});
 		DefaultListCellRenderer listRenderer = new DefaultListCellRenderer();
-		listRenderer
-		 .setHorizontalAlignment(DefaultListCellRenderer.CENTER); // center
+
+		listRenderer.setHorizontalAlignment(DefaultListCellRenderer.CENTER); // center
 		// -aligned 
 		// items
 		tableSelections.setBackground(GREY_110x3);
 		tableSelections.setBorder(new LineBorder(GREY_110x3, 2));
 		tableSelections.setForeground(TABLE_FOREGROUND);
 		tableSelections.setFont(FONT);
-		MIDDLE_CONSTRAINTS.weightx = 0.5;
-		MIDDLE_CONSTRAINTS.gridx = 0;
-		MIDDLE_CONSTRAINTS.gridy = 0;
-		MIDDLE_CONSTRAINTS.insets = new Insets(0, 0, 25, 0);  //top padding
+		MIDDLE_CONSTRAINTS.gridx = 1;
+		MIDDLE_CONSTRAINTS.gridy = 1;
+		MIDDLE_CONSTRAINTS.insets = new Insets(0, 0, 10, 0);
 		CENTER_PANEL.add(tableSelections, MIDDLE_CONSTRAINTS);
 		crud.setWorkingTable("inventory");
 		System.out.println(crud.getWorkingTable());
@@ -108,19 +109,11 @@ public class GUI {
 		return crud.isClosed() ? "No Connection" : "Connected";
 	}
 	
-	private void createFrame(JPanel north, JPanel east, JPanel west,
-							 JPanel south, JPanel center,
-							 JLabel status) {
-		frame.setBounds(200, 400, 1300, 620);
-		north.add(status);
-		frame.add(north, BorderLayout.NORTH);
-		frame.add(east, BorderLayout.EAST);
-		frame.add(west, BorderLayout.WEST);
-		frame.add(south, BorderLayout.SOUTH);
-		frame.add(center, BorderLayout.CENTER);
-		frame.setLocationRelativeTo(null);
-		frame.setVisible(true);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	private void refresh() throws SQLException {
+		setFromDatabase(crud.getColumnNames());
+		DefaultTableModel dm = (DefaultTableModel)table.getModel();
+		dm.setDataVector(data, crud.getColumnNames());
+		dm.fireTableDataChanged();
 	}
 	
 	private void createTable() throws SQLException {
@@ -129,18 +122,46 @@ public class GUI {
 		setNewModel(columnNames);
 	}
 	
-	public JFrame getFrame() {
-		return frame;
-	}
-	
-	private void makeComponents(JPanel east, JPanel center,
-								GridBagConstraints middle) {
-		middle.fill = GridBagConstraints.HORIZONTAL;
-		middle.ipady = 380;      //make this component tall
-		middle.weightx = 0.0;
-		middle.gridwidth = 6;
+	private void makeComponents(JPanel east, JPanel center, GridBagConstraints middle) {
+
+		JLabel user = new JLabel("Username:");
+		user.setForeground(GREY_110x3);
+		user.setFont(FONT);
+		middle.anchor = GridBagConstraints.WEST;
 		middle.gridx = 0;
-		middle.gridy = 1;
+		middle.gridy = 0;
+		center.add(user, middle);
+		JTextField username = new JTextField(20); //creates textfield with 10 columns
+		username.setBackground(GREY_110x3);
+		username.setForeground(PURE_WHITE);
+		username.setBorder(new LineBorder(DARK_GREY, 2));
+		middle.insets = new Insets(10, 4,20, 0); //padding between textfields labels
+		middle.anchor = GridBagConstraints.WEST;
+		middle.gridx = 1;
+		center.add(username, middle);
+
+		JLabel pass = new JLabel("Password:");
+		pass.setForeground(GREY_110x3);
+		pass.setFont(FONT);
+		middle.anchor = GridBagConstraints.WEST;
+		middle.gridx = 2;
+		center.add(pass, middle);
+		JTextField password = new JTextField(20); //creates textfield with 10 columns
+		password.setBackground(GREY_110x3);
+		password.setForeground(PURE_WHITE);
+		password.setBorder(new LineBorder(DARK_GREY, 2));
+		middle.anchor = GridBagConstraints.WEST;
+		middle.weightx = 3;
+		middle.gridx = 3;
+		middle.gridy = 0;
+		center.add(password, middle);
+
+		middle.fill = GridBagConstraints.BOTH;
+		middle.weightx = 0.0;
+		middle.weighty = 0.9;
+		middle.gridwidth = 4;
+		middle.gridx = 0;
+		middle.gridy = 2;
 		table.setBackground(GREY_50x3);
 		table.setForeground(TABLE_FOREGROUND);
 		table.setGridColor(GREY_110x3);
@@ -213,13 +234,7 @@ public class GUI {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				// check for selected row first
-				int selectedRow = table.getSelectedRow();
-				if(selectedRow != -1) {
-					// remove selected row from the model
-					//System.out.println(table.getModel().getValueAt(table
-					// .getSelectedRow(), 0));
-					//System.out.println(table.getColumnName(0));
-					int rowIndex = table.convertRowIndexToModel(selectedRow);
+				if(table.getSelectedRow() != -1) {
 					try {
 						Object columnValue = Crud
 						 .quoteWrap(table.getModel().getValueAt(rowIndex, 0));
@@ -327,14 +342,31 @@ public class GUI {
 			}
 			
 			public void search(String str) {
-				if(str.length() == 0) {
+				RowFilter<DefaultTableModel, Object> rf = null;
+				ArrayList<RowFilter<DefaultTableModel,Object>> rfs =
+						new ArrayList<RowFilter<DefaultTableModel,Object>>();
+
+				try {
+					String text = search.getText();
+					String[] textArray = text.split(" ");
+
+					for (int i = 0; i < textArray.length; i++) {
+						rfs.add(RowFilter.regexFilter("(?i)" + textArray[i], 0, 1, 2, 4));
+					}
+
+					rf = RowFilter.andFilter(rfs);
+
+				} catch (java.util.regex.PatternSyntaxException e) {
+					return;
+				}
+				if (str.length() == 0) {
 					sorter.setRowFilter(null);
 				} else {
-					sorter.setRowFilter(RowFilter.regexFilter(str));
+					sorter.setRowFilter(rf);
 				}
 			}
 		}); //end of search filter
-		
+
 		JButton analyzer = new JButton("Analyze");
 		analyzer.setBackground(GREY_110x3);
 		analyzer.setFont(FONT);
@@ -399,29 +431,37 @@ public class GUI {
 			   "call crud.setWorkingTable(<some_other_table_string_name)");*//*
 		});*/
 	}
-	
-	private void refresh() throws SQLException {
-
-		DefaultTableModel dm = (DefaultTableModel)table.getModel();
-		dm.setDataVector(data, crud.getColumnNames());
-		dm.fireTableDataChanged();
+  
+  private void createFrame(JPanel north, JPanel east, JPanel west, JPanel south, JPanel center,
+							 JLabel status) {
+		frame.setBounds(200, 400, 1300, 1007);
+		north.add(status);
+		frame.add(north, BorderLayout.NORTH);
+		frame.add(east, BorderLayout.EAST);
+		frame.add(west, BorderLayout.WEST);
+		frame.add(south, BorderLayout.SOUTH);
+		frame.add(center, BorderLayout.CENTER);
+		frame.setLocationRelativeTo(null);
+		frame.setVisible(true);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
 	
-	private void sendEmail(String fileName, Object[][] data)
-	throws FileNotFoundException, SQLException {
-		/*
-		 * PSUEDO CODE
-		 *
-		 * HIGHER LEVEL
-		 * 1. Take data
-		 * 2. write to a csv
-		 * 3. export csv
-		 *
-		 * Next Level
-		 * 1.Loop through data
-		 * 2. Put data in Object[][] dat
-		 * */
-		
+	public void setFromArray(Object[][] newData, String[] columnNames) throws SQLException {
+		this.data = newData;
+		setNewModel(columnNames);
+	}
+	
+	private void setNewModel(String[] columnNames) {
+		model = new DefaultTableModel(data, columnNames);
+		model.setDataVector(data, columnNames);
+		table.setModel(model);
+		scrollPane.add(table);
+		model.fireTableDataChanged();
+		table.repaint();
+	}
+
+	private void sendEmail(String fileName, Object[][] data) throws FileNotFoundException, SQLException
+	{
 		File report = new File(fileName);
 		
 		PrintWriter dataWriter = new PrintWriter(report);
