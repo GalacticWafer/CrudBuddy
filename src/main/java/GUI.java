@@ -234,7 +234,9 @@ public class GUI {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				// check for selected row first
+				int selectedRow = table.getSelectedRow();
 				if(table.getSelectedRow() != -1) {
+					int rowIndex = table.convertRowIndexToModel(selectedRow);
 					try {
 						Object columnValue = Crud
 						 .quoteWrap(table.getModel().getValueAt(rowIndex, 0));
@@ -504,16 +506,7 @@ public class GUI {
 			}
 		}
 	}
-	
-	private void setNewModel(String[] columnNames) {
-		model = new DefaultTableModel(data, columnNames);
-		model.setDataVector(data, columnNames);
-		table.setModel(model);
-		scrollPane.add(table);
-		model.fireTableDataChanged();
-		table.repaint();
-	}
-	
+
 	public void setTempData(String[] columnNames, Object[][] newData)
 	throws SQLException {
 		model = new DefaultTableModel(newData, columnNames);
