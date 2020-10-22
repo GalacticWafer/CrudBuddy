@@ -36,7 +36,7 @@ public class TransactionItem {
 	private int quantity;
 	private static SecureRandom rand = new SecureRandom();
 	private String resultString;
-	
+	//test me
 	public TransactionItem(String content, String orderId, String senderInfo) {
 		String[] s = content.split(",");
 		productId = s[0].trim();
