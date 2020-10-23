@@ -1,6 +1,7 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -10,7 +11,9 @@ public class Restoration {
 	public Restoration(Crud crud) throws SQLException, FileNotFoundException {
 		deleteAllTables(crud);
 		Restoration.rebuildInventory(crud);
-		new SalesProcessor(crud).processItems("customer_orders_A_team4.csv");
+		ArrayList<File> files = new ArrayList<>();
+		files.add(new File("customer_orders_A_team4.csv"));
+		new SalesProcessor(crud).processItems(files.iterator(), LocalDate.now());
 	}
 	
 	public static void rebuildInventory(Crud crud)

@@ -4,38 +4,30 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
-import java.time.temporal.ChronoUnit;
 
 class SalesProcessor {
+	Queue<Object[]> backOrders;
 	private final Crud crud;
 	private HashMap<String, String> customers;
-	private HashMap<String, Integer> quantityMap;
-	LocalDate newItemDate;
-	Queue<TransactionItem> backOrders;
-	LinkedList<Object[]> sales;
+	Queue<Integer> idxList;
 	HashMap<Integer, String> indexMap;
-	ArrayList<Integer> idxList;
+	LocalDate newItemDate;
+	private HashMap<String, Integer> quantityMap;
+	ArrayList<Object[]> sales;
 	
-	public SalesProcessor(Crud crud) throws SQLException
-	{
+	public SalesProcessor(Crud crud) throws SQLException {
 		this.crud = crud;
-		/* Holds successful transaction information. */
-		sales = new LinkedList<>();
-		customers = new HashMap<>();
-		/* Get a copy product_id, quantity, and idx columns, and put them in 
-		relational hashmaps. */
-		crud.setWorkingTable("inventory");
 		ResultSet rs =
 		 crud.query("SELECT quantity,idx,product_id FROM inventory");
+		crud.setWorkingTable("inventory");
 		int size = crud.size();
-		quantityMap = new HashMap<>(size);
-		indexMap = new HashMap<>(size);
-		idxList = new ArrayList<>(size);
-		/* Use a FIFO collection for back-orders */
-		backOrders = new ArrayDeque<>();
-		
-		while(rs.next())
-		{
+		sales = new ArrayList<>(size); // list of Object[]'s for
+		idxList = new ArrayDeque<>(size); // ordered list of idx's
+		indexMap = new HashMap<>(size); // map from idx -> product_id
+		quantityMap = new HashMap<>(size); // map from product_id -> quantity
+		backOrders = new ArrayDeque<>(size); // anything we couldn't fulfill
+
+		while(rs.next()) {
 			int quantity = rs.getInt(1);
 			int idx = rs.getInt(2);
 			String productId = rs.getString(3);
@@ -43,220 +35,83 @@ class SalesProcessor {
 			indexMap.put(idx, productId);
 			idxList.add(idx);
 		} // End while
-		
-		
-		newItemDate = LocalDate.parse("2020-01-01");
 	} // End Constructor
-	
-	private void checkBackOrders(LinkedList<Object[]> sales, LocalDate today,
-	 Queue<TransactionItem> backOrders)
-	{
-		if(!backOrders.isEmpty())
-		{
-			LocalDate backDate;
-			for(backDate = backOrders.peek().getDateOrdered().plusDays(7);
-			 backOrders.peek() != null && (!backDate.isAfter(today));
-			 backDate = backOrders.peek().getDateOrdered().plusDays(7))
-			{
-				TransactionItem item = backOrders.remove();
-				String productId = item.getProductId();
-				int quantity = quantityMap.get(productId);
-				quantityMap.put(productId, quantity + 500);
-				processOrder(item, sales, today, backOrders);
-				if(backOrders.isEmpty())
-				{
-					break;
-				}
+
+	public ArrayList<Boolean> canProcessOrder(File file)
+	throws FileNotFoundException {
+		// Create scanner taking in a file of orders for processing
+		Scanner scanner = new Scanner(file);
+
+		// skip the header
+		scanner.nextLine();
+		ArrayList<Boolean> canProcessItems = new ArrayList<>();
+		while(scanner.hasNextLine()) {
+			// create place holder for tuple of product id and quantity
+			String[] line = scanner.nextLine().split(",");
+			String productId = line[3];
+			int requestedQuantity = Integer.parseInt(line[4]);
+			// check if product id exists by comparing to inventory table
+			int currentQuantity = quantityMap.get(productId);
+			if(requestedQuantity > currentQuantity) {
+				canProcessItems.add(false);
+			} else {
+				canProcessItems.add(true);
 			}
 		}
+		return canProcessItems;
 	}
-	
-	/**
-	 * Carries out all the orders from a CSV file over the given time.
-	 *
-	 * @return
-	 */
-	public LinkedList<Object[]> processItems(String csvPath)
-	 throws SQLException, FileNotFoundException
-	{
-		/* Get a scanner on the csv, and skip the column names.*/
-		Scanner orderScanner = new Scanner(new File(csvPath));
-		orderScanner.nextLine();
-		for(LocalDate today = newItemDate;
-		 orderScanner.hasNextLine() || !backOrders.isEmpty();
-		 today = today.plusDays(1))
-		{
-			String[] line = new String[0];
-			if(orderScanner.hasNextLine())
-			{
-				line = orderScanner.nextLine().split(",");
-				newItemDate = LocalDate.parse(line[0]);
-				if(newItemDate.isBefore(today))
-				{
-					today = newItemDate;
-				}
-			}
-			else
-			{
-				assert backOrders.peek() != null;
-				if(backOrders.peek().getDateOrdered().plusDays(7)
-				 .isBefore(today))
-				{
-					checkBackOrders(sales, today, backOrders);
-				}
-			}
-			checkBackOrders(sales, today, backOrders);
-			while(newItemDate.isAfter(today))
-			{
-				today = today.plusDays(1);
-			}
-			TransactionItem newItem = new TransactionItem();
-			if(orderScanner.hasNextLine() || line.length > 0)
-			{
-				newItem.setFields(
-				 newItemDate, line[1], line[2], line[3],
-				 Integer.parseInt(line[4])
-				);
-				processOrder(newItem, sales, today, backOrders);
-			}
+
+	public void insertBackOrders(File file) throws FileNotFoundException {
+		Scanner scanner = new Scanner(file);
+		while(scanner.hasNextLine()) {
+			TransactionItem item = new TransactionItem();
+			//date,cust_email,cust_location,product_id,product_quantity
+			String[] line = scanner.nextLine().split(",");
+			item.setFields(
+			 LocalDate.parse(line[0]),
+			 line[1],
+			 line[2],
+			 line[3],
+			 Integer.parseInt(line[4])
+			);
+			backOrders.add(item.toBackOrderArray());
 		}
-		StringBuilder sb = new StringBuilder();
-		crud.update("Drop table if exists temp_table");
-		
-		crud.update("CREATE TEMPORARY TABLE temp_table(" +
-		 "quantity int(16), product_id varchar(16));");
-		sb.append("insert into temp_table(product_id,quantity)values");
-		
-		Iterator<Integer> idxItr = idxList.iterator();
-		while(idxItr.hasNext())
-		{
-			Integer idx = idxItr.next();
-			String productId = indexMap.get(idx);
-			Integer quantity = quantityMap.get(productId);
-			sb.append("('").append(productId).append("',")
-			 .append(quantity).append(")")
-			 .append(idxItr.hasNext()?",":";");
+		crud.setWorkingTable("back_orders");
+		crud.insertRecords(TransactionItem.BACK_ORDER_COLUMNS, backOrders
+		 .iterator());
+	}
+
+	public void processOrder(File file) throws FileNotFoundException {
+		Scanner scanner = new Scanner(file);
+		while(scanner.hasNextLine()) {
+			TransactionItem item = new TransactionItem();
+			//date,cust_email,cust_location,product_id,product_quantity
+			String[] line = scanner.nextLine().split(",");
+			item.setFields(
+			 LocalDate.parse(line[0]),
+			 line[1],
+			 line[2],
+			 line[3],
+			 Integer.parseInt(line[4])
+			);
+			String productId = item.getProductId();
+			Integer inventoryQuantity = quantityMap.get(productId);
+			int requestedQuantity = item.getQuantity();
+
+			int newQuantity = inventoryQuantity - requestedQuantity;
+			quantityMap.put(productId, newQuantity);
+			sales.add(item.toSalesArray());
 		}
-		crud.update(sb.toString());
-		crud.update("CREATE TABLE temp2 SELECT inventory.product_id," +
-		 "inventory.wholesale_cost,inventory.sale_price," +
-		 "inventory.supplier_id,inventory.idx," +
-		 "temp_table.quantity " +
-		 "FROM inventory INNER JOIN temp_table " +
-		 "ON inventory.product_id = temp_table.product_id");
-		crud.update("drop table inventory");
-		crud.update("alter table temp2 rename to inventory");
-		
-		crud.setWorkingTable("customers");
-		Object[][] customerEntries = new Object[customers.size()][2];
-		Iterator<Map.Entry<String, String>> custItr = customers.entrySet().iterator();
-		for(int i = 0; i < customerEntries.length; i++)
-		{
-			Map.Entry<String, String> customer = custItr.next();
-			customerEntries[i] = new Object[] {customer.getKey(), customer.getValue()};
-		}
-		crud.insertRecords(new String[] {"email", "location"}, customerEntries);
-		/* Update the  database with the recorded  sales.*/
-		sb.delete(0, sb.length());
+		// Todo: update sales table
 		crud.setWorkingTable("sales");
-		String[] salesColumns = crud.getColumnNames();
-		Object[][] salesEntries = new Object[sales.size()][salesColumns.length];
-		Iterator<Object[]> salesItr = sales.iterator();
-		for(int i = 0; i < salesEntries.length; i++)
-		{
-			salesEntries[i] = salesItr.next();
+		crud.insertRecords(TransactionItem.SALES_COLUMNS, sales.iterator());
+		for(Integer idx: idxList) {
+			String productId = indexMap.get(idx);
+			int quanitiy = quantityMap.get(productId);
 		}
-		crud.insertRecords(TransactionItem.SALES_COLUMNS, salesEntries);
-		return sales;
-	} // End processItems
-	
-	/**
-	 * Attempts to process orders, and adds them to the list of back-orders if
-	 * needed.
-	 */
-	private void processOrder(TransactionItem item, // Creates Tran.Item object
-	 
-	 //Create Linked List of Object arrays titled sales
-	 LinkedList<Object[]> sales,
-	 
-	 // Create LocalDate Object called today
-	 LocalDate today,
-	 
-	 // Create Queu of Trans.Item Objects
-	 Queue<TransactionItem> backOrders)
-	{
-		// customers = Hash map of <String, String>
-		customers.put(item.getEmail(), item.getLocation()); // put email/ location into hash map
-		int check = quantityCheck(item); // check = number of item quantities
-		
-		// If there's a shortage...
-		if(check == Crud.QUANTITY_SHORTAGE)
-		{
-			
-			// ...And more than 6 days between orders, restock  
-			if(ChronoUnit.DAYS.between(today, item.getDateOrdered()) >= 7)
-			{
-				restock(item);
-			}
-			// ...And there's no  backorder, add to backorders
-			else if(!backOrders.contains(item))
-			{
-				backOrders.add(item);
-			}
-		}
-		else if(check >= 0)
-		{
-			/*otherwise, the sale was made, so add this info to the sales 
-			table */
-			item.setDateAccepted(today);
-			sales.add(item.toArray(Crud.SALES)); // Add row into Object array
-		}// End else if
-	} // End processOrder
-	
-	/**
-	 * Checks to make sure there is enough quantity to fulfill the order.
-	 * if yes, @return is the quantity remaining, otherwise, a self-explanatory
-	 * Crud constant, which is a negative number.
-	 */
-	// Change back to private
-	public int quantityCheck(TransactionItem item)
-	{
-		String productId = item.getProductId();
-
-		/* If the product is not something we actually sell, return 
-		UNKNOWN_PRODUCT*/
-		if(!quantityMap.containsKey(productId))
-		{
-			item.setResultString(productId + " : unknown product id");
-			System.out.println(productId + " : unknown product id");
-			return Crud.UNKNOWN_PRODUCT;
-		} // End if
-		
-		int requestQuantity = item.getRequestedQuantity();
-		int inventoryQuantity = quantityMap.get(productId);
-		
-		/* If the requested quantity is too large, return QUANTITY_SHORTAGE*/
-		if(requestQuantity > inventoryQuantity)
-		{
-			item.setResultString(productId + ": " + inventoryQuantity
-			 + " - " +
-			 (inventoryQuantity + requestQuantity));
-			return Crud.QUANTITY_SHORTAGE;
-		} // End if
-
-		/* Otherwise, subtract requested from inventory's quantity, and return
-		 this number. */
-		item.setResultString(productId + " : " + requestQuantity);
-		item.setCurrentQuantity(requestQuantity);
-		int newQuantity = inventoryQuantity - requestQuantity;
-		quantityMap.put(productId, newQuantity);
-		return newQuantity;
-	}
-	
-	private void restock(TransactionItem item)
-	{
-		String id = item.getProductId();
-		Integer quantity = quantityMap.get(id);
-		quantityMap.put(id, quantity + 500);
+		// Todo: update inventory table
+		// Todo: send an email saying we can do it.
+		// Todo: send an email saying we can't do it.
+		// Todo: put back orders into back_orders table.
 	}
 }

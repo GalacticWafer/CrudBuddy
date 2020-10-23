@@ -12,8 +12,6 @@ import java.io.PrintWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.time.LocalDate;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -234,14 +232,14 @@ public class GUI {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				// check for selected row first
+				int selectedRow = table.getSelectedRow();
 				if(table.getSelectedRow() != -1) {
+					int rowIndex = table.convertRowIndexToModel(selectedRow);
 					try {
 						Object columnValue = Crud
 						 .quoteWrap(table.getModel().getValueAt(rowIndex, 0));
-						String workingTable = crud.getWorkingTable();
 						String columnName = table.getColumnName(0);
-						crud
-						 .deleteRecord(workingTable, columnName, columnValue);
+						crud.deleteRecord(columnName, columnValue);
 					}
 					catch(SQLException throwables) {
 						throwables.printStackTrace();
@@ -401,13 +399,13 @@ public class GUI {
 				 crud.mostOrderedProducts((date == null ? null :date.toString()), count, isDescending, this);
 				crud.setWorkingTable(newTableName);
 				Object[][] description =
-				 crud.resultsToArray(crud.query("describe " + newTableName));
+				 crud.getRecords(crud.query("describe " + newTableName));
 				String[] columnNames = new String[description.length];
 				for(int i = 0; i < columnNames.length; i++) {
 					columnNames[i] = String.valueOf(description[i][0]);
 				}
 				setTempData(columnNames, crud
-				 .resultsToArray(crud.query("select * from " + newTableName)));
+				 .getRecords(crud.query("select * from " + newTableName)));
 			}
 			catch(SQLException throwables) {
 				throwables.printStackTrace();
@@ -495,7 +493,7 @@ public class GUI {
 	}
 	
 	private void setFromDatabase(String[] columnNames) throws SQLException {
-		ResultSet rs = crud.getAllRecords();
+		ResultSet rs = crud.query("SELECT * FROM " + crud.getWorkingTable());
 		data = new Object[crud.size()][columnNames.length];
 		for(int i = 0; rs.next() && i < data.length; i++) {
 			data[i] = new Object[columnNames.length];
@@ -504,16 +502,7 @@ public class GUI {
 			}
 		}
 	}
-	
-	private void setNewModel(String[] columnNames) {
-		model = new DefaultTableModel(data, columnNames);
-		model.setDataVector(data, columnNames);
-		table.setModel(model);
-		scrollPane.add(table);
-		model.fireTableDataChanged();
-		table.repaint();
-	}
-	
+
 	public void setTempData(String[] columnNames, Object[][] newData)
 	throws SQLException {
 		model = new DefaultTableModel(newData, columnNames);

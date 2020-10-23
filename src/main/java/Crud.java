@@ -5,9 +5,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.math.BigDecimal;
 import java.sql.*;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.Date;
 
@@ -48,7 +46,7 @@ class Crud {
 		// ());
 	}
 	
-	/** Creates a .csv-compatible line from an ArrayList<String> */
+	/** Creates a .csv-compatible line from a String[] array */
 	public String arrayToCSV
 	(String[] array) {
 		String a = Arrays.toString(array);
@@ -72,10 +70,9 @@ class Crud {
 	
 	/** Delete the record in the specified table */
 	public int deleteRecord
-	(String table, String idColumn, Object idValue)
+	(String idColumn, Object idValue)
 	throws SQLException {
-		return updateF("DELETE FROM %s WHERE %s = %s",
-		 table, idColumn, quoteWrap(idValue));
+		return update("DELETE FROM " + currentTable + " WHERE " + idColumn + " = " + quoteWrap(idValue));
 	}
 	
 	/** Deletes an entire table */
@@ -83,29 +80,15 @@ class Crud {
 		update("DROP TABLE IF EXISTS " + tableName);
 	}
 	
-	private boolean exists(String columnName, Object columnValue)
+	boolean exists(String columnName, Object columnValue)
 	throws SQLException {
-		ResultSet rs = queryF(
-		 "SELECT EXISTS(SELECT * FROM %s WHERE %s = %s);", currentTable,
-		 columnName, quoteWrap(columnValue));
-		return rs.getFetchSize() > 0;
+		return query("SELECT EXISTS(SELECT * FROM " + currentTable + " WHERE " + columnName + " = " + quoteWrap(columnValue) + ")").getFetchSize() > 0;
 	}
-	
-	
-	
-	
-	
-	
-	
-	
+		
 	/** Find a specific record */
 	public Object[] find(String idValue, String idColumnName)
 	throws SQLException {
-		
-		String sql = format("select * from %s where %s = '%s';",
-		 currentTable, idColumnName, idValue);
-		
-		var result = queryF(sql);
+		var result = query("select * from " + currentTable + " where " + idColumnName + " = " + idValue);
 		Object[] record = new Object[result.getMetaData().getColumnCount()];
 		while(result.next()) {
 			for(int i = 0; i < record.length; i++) {
@@ -113,23 +96,6 @@ class Crud {
 			}
 		}
 		return record;
-	}
-	
-	
-	
-	
-	
-	
-	
-	/** Format a string for sql statement */
-	public String format(String format, Object... args) {
-		return String.format(format, args);
-	}
-	
-	/** Get a ResultSet of an entire table */
-	public ResultSet getAllRecords()
-	throws SQLException {
-		return query("SELECT * FROM " + currentTable);
 	}
 	
 	public Object getAssetTotal(String onDate)
@@ -151,25 +117,18 @@ class Crud {
 	/** Gets the number of columns in a table */
 	public int getColumnCount(String tableName) throws SQLException {
 		setWorkingTable(tableName);
-		String sql =
-		 format("SELECT count(*) AS %s FROM information_schema.columns WHERE" +
-				" table_name = '%s';",
-		  tableName, tableName);
-		ResultSet rs = queryF(sql);
+		ResultSet rs = query("SELECT count(*) AS " + tableName + "FROM information_schema.columns WHERE" +
+				" table_name = " + quoteWrap(tableName));
 		if(rs.next()) {
 			return rs.getInt(1);
 		}
 		return -1;
 	}
-	// first_name, last_name]
 	
 	/** Gets an arraylist of the column names of a specific table */
 	public String[] getColumnNames() throws SQLException {
-		String sql = format(
-		 "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS`" +
-		 " WHERE `TABLE_SCHEMA`='%s' AND `TABLE_NAME`='%s'", DB_NAME,
-		 currentTable);
-		ResultSet rs = query(sql);
+		ResultSet rs = query("SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS`" +
+		 " WHERE `TABLE_SCHEMA`='" + DB_NAME +  "' AND `TABLE_NAME`='" + currentTable + "'");
 		ArrayList<String> list = new ArrayList<>();
 		while(rs.next()) {
 			if(!rs.getString(1).equals("idx")) {
@@ -198,39 +157,10 @@ class Crud {
 		return list;
 	}
 	
-	/** Create the tuple of column names as a String to be sent as sql code. */
-	public String getColumnsTuple(String[] columnNames) {
-		if(columnNames.length == 0) {return null;}
-		String str = Arrays.toString(columnNames);
-		return "(" + str.substring(1, str.length() - 1) + ")";
-		//StringBuilder sb = new StringBuilder("(");
-		//int i = 0;
-		//for(; i < columnNames.length - 1; i++) {
-		//	sb.append(columnNames[i]).append(",");
-		//}
-		//return sb.append(columnNames[i]).append(")").toString();
-	}// (email, first_name, last_name)    array.toString() -> [email,
-	
-	/**
-	 * Helper method to clean up code when concatenating commas for sql code
-	 * .
-	 */
-	private static String getComma(int length, int i, String lastChar) {
-		if(i < length - 1) {return ", ";}
-		return lastChar + "";
-	}
-	
 	/** Return the database name */
 	public Object getDatabaseName() {
 		return DB_NAME;
 	}
-	
-	/** Get a ResultSet of an entire table */
-	public ResultSet getRecord(String columnVal, String columnName)
-	throws SQLException {
-		return query("SELECT * FROM " + currentTable + " where " + columnName +
-					 " equals " + columnVal);
-	} // End getRecord
 	
 	/** Get an array with all the table names */
 	public String[] getTableNames() throws SQLException {
@@ -264,26 +194,23 @@ class Crud {
 	}
 	
 	/** Create a new record in the specified table from order information. */
-	public void insertFromOrder(TransactionItem od, int table)
+	public void insertFromOrder(TransactionItem item, int table)
 	throws SQLException {
 		String[] recordStrings = RECORD_STRINGS.get(table);
 		setWorkingTable(recordStrings[0]);
-		if(!exists(recordStrings[1], od.getMatchValue(table))) {
-			insertRecords(
-			 getColumnNames(),
-			 new Object[][] {od.toArray(table)});
+		if(!exists(recordStrings[1], item.getMatchValue(table))) {
+			insertRecords(getColumnNames(),new Object[][] {item.toArray()});
 		}
 	}
 	
 	/** Insert one or more new records into a table from a 2d array. */
-	public int insertRecords(String[] columnNames, Object[][] tableValues)
+	public int insertRecords(String[] columnNames, Iterator<Object[]> tableValues)
 	throws InputMismatchException {
 		if(tableValues.length == 0 || columnNames.length == 0) {
 			throw new InputMismatchException();
 		}
-		StringBuilder sb = new StringBuilder(format(
-		 "INSERT INTO %s %s VALUES",
-		 currentTable, getColumnsTuple(columnNames)));
+		StringBuilder sb = new StringBuilder(
+		 "INSERT INTO " + currentTable + " VALUES" + "(" + String.join(",", columnNames) + ")");
 		for(int i = 0; i < tableValues.length; i++) {
 			sb.append(toValueTuple(tableValues[i]));
 			sb.append(i == tableValues.length - 1 ? ";" : ",");
@@ -302,16 +229,12 @@ class Crud {
 	(String tableName, String[] columnNames, HashMap<Integer, String> typeMap)
 	throws SQLException {
 		deleteTable(tableName);
-		StringBuilder sb = new StringBuilder(format(
-		 "CREATE TABLE %s(%s %s NOT NULL AUTO_INCREMENT,",
-		 tableName, PRIMARY_KEY.getKey(),
-		 PRIMARY_KEY.getValue()));
+		StringBuilder sb = new StringBuilder("CREATE TABLE " + tableName + "(" +  PRIMARY_KEY.getKey() + " " + PRIMARY_KEY.getValue() + " NOT NULL AUTO_INCREMENT,");
 		int i = 0;
 		for(; i < typeMap.size(); i++) {
-			sb.append(format("%s %s,",
-			 columnNames[i].trim(), typeMap.get(i)));
+			sb.append(columnNames[i].trim() + " " + typeMap.get(i) + ",");
 		}
-		sb.append(format(" PRIMARY KEY (%s));", PRIMARY_KEY.getKey()));
+		sb.append(" PRIMARY KEY (" + PRIMARY_KEY.getKey() + "))");
 		update(sb.toString());
 	}
 	
@@ -322,7 +245,6 @@ class Crud {
 	 */
 	void insertTableFromGui() throws Exception {
 		String filePath = JOptionPane.showInputDialog(null, "Open file:");
-		int[] count = null;
 		if(!filePath.endsWith(".csv")) {
 			//Todo: throw new FileNotSupportedException
 			return;
@@ -347,8 +269,7 @@ class Crud {
 		setWorkingTable("inventory");
 		String productId = transactionItem.getProductId();
 		ResultSet rs =
-		 queryF("select quantity from %s where product_id = '%s';",
-		  currentTable, productId);
+		 query("select quantity from " + currentTable + " where product_id = '" + productId + "'");
 		if(!rs.next()) {
 			transactionItem.setResultString(
 			 transactionItem.getProductId() + " : unknown product id");
@@ -358,10 +279,8 @@ class Crud {
 		}
 		int currentQuantity = rs.getInt(1);
 		if(currentQuantity < transactionItem.getQuantity()) {
-			transactionItem.setResultString(format("%s : %d - %d",
-			 transactionItem.getProductId(), transactionItem
-			  .getQuantity(),
-			 transactionItem.getQuantity() + currentQuantity));
+			transactionItem.setResultString(
+			 transactionItem.getProductId() + " : " +  transactionItem.getQuantity() + " - " + transactionItem.getQuantity() + currentQuantity);
 			return QUANTITY_SHORTAGE;
 		}
 		transactionItem.setResultString(
@@ -377,7 +296,7 @@ class Crud {
 		String query =
 		 "select product_id, sum(quantity) as totalQuantity from sales " +
 		 " group by \nproduct_id order by sum(quantity) desc limit " + limit;
-		return resultsToArray(query(query));
+		return getRecords(query(query));
 	}
 	
 	/** Sends a sql query string */
@@ -386,11 +305,6 @@ class Crud {
 		 ResultSet.TYPE_SCROLL_INSENSITIVE,
 		 ResultSet.CONCUR_UPDATABLE);
 		return st.executeQuery(query);
-	}
-	
-	/** Formats, then sends a sql query string */
-	public ResultSet queryF(String format, Object... args) throws SQLException {
-		return query(format(format, args));
 	}
 	
 	/** Wraps the given object in quotes if it is a string */
@@ -412,14 +326,14 @@ class Crud {
 		return s;
 	}
 	
-	/** Restock a given product. */
-	public void restock(String productId) throws SQLException {
-		updateRow(new String[] {"quantity"}, new Object[] {500}, "product_id",
-		 productId,
-		 "inventory");
+	
+	/** Get a 2d array of all the results of the query. */
+	public Object[][] getRecords(String sql) throws SQLException {
+		return getRecords(query(sql));
 	}
 	
-	public Object[][] resultsToArray(ResultSet rs) throws SQLException {
+	/** Private helper for public getRecords() method.*/
+	private Object[][] getRecords(ResultSet rs) throws SQLException {
 		int columnCount = rs.getMetaData().getColumnCount();
 		int rowCount = rowCountResults(rs);
 		rs.beforeFirst();
@@ -438,36 +352,15 @@ class Crud {
 		return rs.getRow();
 	}
 	
-	/** retrieve the number of rows of a table. */
-	int rowCountTable() throws SQLException {
-		ResultSet rs = query("SELECT COUNT(*) FROM " + currentTable);
-		try {
-			rs.next();
-			return rs.getInt(1);
-		}
-		catch(SQLSyntaxErrorException sex) {
-			System.out.println("the table does not exist");
-			return -1;
-		}
-	}
-	
 	/** Updates a product's quantity from an order */
 	public void setQuantityFromOrder(TransactionItem transactionItem)
 	throws SQLException {
 		int newQuantity =
 		 transactionItem.getCurrentQuantity() - transactionItem
 		  .getQuantity();
-		updateF("UPDATE %s SET quantity = %s WHERE product_id = '%s';",
-		 currentTable, newQuantity, transactionItem.getProductId());
+		updateRow(new String[]{"quantity"}, new Object[]{newQuantity}, "product_id",  transactionItem.getProductId());
+		update("UPDATE " + currentTable + " SET quantity = " + newQuantity + " WHERE product_id = '" + "';");
 	}
-	
-	;
-	//public static final String[] SALES_COLUMNS = new String[]
-	// {"product_id", "quantity", "wholesale_cost", "sale_price",
-	// "supplier_id"};;
-	//public static final String[] CUSTOMERS_COLUMNS = new String[]
-	// {"product_id", "quantity", "wholesale_cost", "sale_price",
-	// "supplier_id"};;
 	
 	/**
 	 * Sets the static variable <code>tableName</code> as the table to make
@@ -475,11 +368,6 @@ class Crud {
 	 */
 	public void setWorkingTable(String tableName) {
 		this.currentTable = tableName;
-	}
-	
-	private boolean shouldQuote(String s) {
-		return s.contains("VARCHAR")
-			   || s.contains("DATE");
 	}
 	
 	/** retrieve the number of rows of a column. */
@@ -498,10 +386,9 @@ class Crud {
 		Object[] values = new Object[array.length];
 		StringBuilder sb = new StringBuilder("(");
 		for(int i = 0; i < values.length; i++) {
-			if(shouldQuote(typeMap.get(i))) {
-				array[i] = "'" + array[i] + "'";
-			}
-			sb.append(array[i]);
+			sb.append(typeMap.get(i).contains("VARCHAR")
+			   || typeMap.get(i).contains("DATE") ?
+				quoteWrap(array[i]) : array[i]);
 			if(i == values.length - 1) {
 				sb.append(")");
 			} else {sb.append(",");}
@@ -582,7 +469,7 @@ class Crud {
 	public Object[][] topNByDate(String date, String columnName,
 								 int limit, boolean isDescending,
 								 String orderArg) throws SQLException {
-		return resultsToArray(query(
+		return getRecords(query(
 		 "Select * FROM sales WHERE " + columnName + " = '" + date +
 		 "' ORDER BY " + orderArg + (isDescending ? " DESC" : "ASC") +
 		 " LIMIT " + limit));
@@ -595,26 +482,18 @@ class Crud {
 		return st.executeUpdate(sql);
 	}
 	
-	/** Format an sql executeUpdate() statement */
-	public int updateF(String format, Object... args) throws SQLException {
-		return update(format(format, args));
-	}
-	
 	/** Update a row where some column name = some value */
 	public void updateRow
-	(String[] columns, Object[] values, Object columnName, String columnValue,
-	 String tableName)
+	(String[] columns, Object[] values, Object columnName, String columnValue)
 	throws SQLException {
-		setWorkingTable(tableName);
+		setWorkingTable(currentTable);
 		StringBuilder sf =
-		 new StringBuilder(format("UPDATE %s SET ", tableName));
+		 new StringBuilder("UPDATE " + currentTable + " SET ");
 		for(int i = 0; i < columns.length; i++) {
-			String column = columns[i];
-			String value = quoteWrap(values[i]);
-			String comma = getComma(columns.length, i, "");
-			sf.append(format("%s = %s%s", column, value, comma));
+			String str = columns[i] + "=" + quoteWrap(values[i])+(i < columns.length - 1 ? "," : "");
+			sf.append(str);
 		}
-		sf.append(format(" where %s=%s", columnName, quoteWrap(columnValue)));
+		sf.append(" where " + columnName + "=" + quoteWrap(columnValue));
 		update(sf + "");
 	}
 	
@@ -636,12 +515,13 @@ class Crud {
 		pw.close();
 		return file;
 	}
+	
 	public Object [][] mostValuableCustomers(int n) throws SQLException{
 		String query = "SELECT cust_email , SUM(sales.quantity * sale_price - " +
 					   "wholesale_cost) as revenue from sales\n" +
 					   "    inner join\n" +
 					   "    inventory i on sales.product_id = i.product_id\n" +
 					   "GROUP BY cust_email ORDER BY revenue desc limit " + n;
-		return resultsToArray(query(query));
+		return getRecords(query(query));
 	}
 }

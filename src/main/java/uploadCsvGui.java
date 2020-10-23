@@ -150,12 +150,12 @@ class 	uploadCsvGui {
 	
 	/** Creates one sql string for an entire csv file, to create and populate a table. */
 	private void batchSqlString
-	(String tableName, String[] columns, Scanner scanner)
+	(String tableName, String[] columnNames, Scanner scanner)
 	throws SQLException {
 		if(typeMap != null) {
-			crud.insertTable(tableName, columns, typeMap);
+			crud.insertTable(tableName, columnNames, typeMap);
 			StringBuilder sf = new StringBuilder(String.format("INSERT INTO %s %s VALUES"
-			 , tableName, crud.getColumnsTuple(columns)));
+			 , tableName, "(" + String.join(",", columnNames) + ")"));
 			String sqlDeclaration = sf.toString();
 			if(scanner.hasNextLine()) {
 				scanner.nextLine();
@@ -178,15 +178,13 @@ class 	uploadCsvGui {
 				if(i > 1) {
 					sf.replace(sf.length() - 1, sf.length(), ";");
 					long start = System.nanoTime();
-					crud.updateF(sf.toString());
+					crud.update(sf.toString());
 					long end = System.nanoTime();
 					System.out.println("uploading new csv time: " + (end - start));
 				}
 			}
 			scanner.close();
-			JOptionPane.showMessageDialog(null, crud.format(
-			 "The csv file has been exported to %s in the %s database.",
-			 tableName, crud.getDatabaseName()));
+			JOptionPane.showMessageDialog(null, "The csv file has been exported to " + tableName + " in the " + crud.getDatabaseName() + " database.");
 		}
 	}
 	public static final Map<String, String> J_TO_SQL2 = Map

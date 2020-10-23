@@ -9,7 +9,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TransactionItem {
-	public static final String[] SALES_COLUMNS =  {"date","cust_email","cust_location","product_id","product_quantity"};
+	public static final String[] BACK_ORDER_COLUMNS = new String[] {
+	 "order_id",
+	 "date_ordered",
+	 "cust_email",
+	 "cust_location",
+	 "product_id",
+	 "product_quantity"
+	};
+	public static final String[] SALES_COLUMNS 
+	 =  {"date","cust_email","cust_location","product_id","product_quantity"};
+	
+
 	private static final String CHAR_LOWER = "abcdefghijklmnopqrstuvwxyz";
 	private static final String CHAR_UPPER = CHAR_LOWER.toUpperCase();
 	public static final SimpleDateFormat DATE_FORMAT =
@@ -18,7 +29,7 @@ public class TransactionItem {
 	private static final String DATA_FOR_RANDOM_STRING =
 	 CHAR_LOWER + CHAR_UPPER + NUMBER;
 	private static int ORDER_ID_LENGTH = 10;
-	private static final Pattern PATTERN = Pattern.compile(
+	public static final Pattern PATTERN = Pattern.compile(
 	 "\"(?<lastName>\\w+)," +
 	 "\\s(?<firstName>\\w+)\"\\s" +
 	 "<(?<email>\\w+@\\w+.\\w+)>");
@@ -193,25 +204,7 @@ public class TransactionItem {
 	
 	public void setSale(boolean sale) {isSale = sale;}
 	
-	public Object[] toArray(int table) {
-		switch(table) {
-			case Crud.SALES -> { return toSalesArray(); }
-			case Crud.CUSTOMERS -> { return toCustomerArray(); }
-		}
-		throw new InputMismatchException();
-	}
-	
-	private Object[] toCustomerArray() {
-		return new Object[] {
-		 getEmail(), 
-		 getFirstName(), 
-		 getLastName(),
-		 getLocation(),
-		};
-	}
-
-	private Object[] toSalesArray() {
-		if(getOrderId() == null) { setOrderId(generateId()); }
+	public Object[] toArray() {
 		return new Object[] {
 		 getProductId(),
 		 getOrderId(),
@@ -222,12 +215,28 @@ public class TransactionItem {
 		 getLocation()
 		 };
 	}
-	@Override public String toString() {
-		return "TransactionItem{" +
-			   "\n\tproductId='" + productId + '\'' +
-			   "\n\tdateOrdered=" + dateOrdered +
-			   "\n\tdateAccepted=" + dateAccepted +
-			   "\n\tquantity=" + quantity +
-			   "\n}";
+
+	public Object[] toBackOrderArray() {
+		return new Object[] {
+			 getOrderId(),
+			 getSqlDate(dateOrdered.plusDays(1)),
+			 getEmail(),
+			 getLocation(),
+			 getProductId(),
+		 	getCurrentQuantity(),
+		};
+	}
+	
+	public Object[] toSalesArray() {
+		if(getOrderId() == null) { setOrderId(generateId()); }
+		return new Object[] {
+			 getProductId(),
+			 getOrderId(),
+			 getCurrentQuantity(),
+			 getEmail(),
+			 getSqlDate(dateOrdered.plusDays(1)),
+			 getSqlDate(dateAccepted.plusDays(1)),
+			 getLocation()
+		 };
 	}
 }
