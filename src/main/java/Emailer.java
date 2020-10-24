@@ -1,12 +1,11 @@
 import java.io.*;
-import java.nio.file.Files;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.FileDataSource;
@@ -48,41 +47,6 @@ public class Emailer {
 			}
 		}
 		return result.toString();
-	}
-	
-	public static ArrayList<File> preProcessOrders(Crud crud)
-	throws MessagingException, IOException, SQLException {
-		ArrayList<File> files = new ArrayList<>();
-		Folder inbox = Credentials.getInbox();
-		inbox.open(Folder.READ_WRITE);
-		Message[] messages = inbox.getMessages();
-		Pattern p = Pattern.compile(".*<(?<email>\\w+@\\w+.\\w+)>");
-		for(int i = 0; i < messages.length; i++) {
-			Matcher m = p.matcher(messages[i].getFrom()[0].toString());
-			String email = m.find() ? m.group("email") : "";
-			String[] orders = getTextFromMessage(messages[i]).trim().split("\n");
-			File file = new File("email_orders/order_" + i + ".csv");
-			PrintWriter pw = new PrintWriter(file);
-			pw.println("date,cust_email,cust_location,product_id,product_quantity");
-			if(orders[0].split(",").length == 4) {
-				for(String order: orders) {
-					String[] s = order.split(",");
-					pw.println(
-					 LocalDate.parse(TransactionItem.DATE_FORMAT.format(
-					  messages[i].getSentDate())) + "," +
-					 email + "," +
-					 s[3].trim() + "," +
-					 s[0].trim() + "," +
-					 s[1].trim());
-				}
-				pw.close();
-				files.add(file);
-			} else {
-				messages[i].setFlag(Flags.Flag.DELETED, true);
-			}
-		}
-		var things = new SalesProcessor(crud).processItems(files.iterator(), LocalDate.now());
-		return files;
 	}
 	
 	private static Message prepareAttachedMessage(Session session,
@@ -141,18 +105,80 @@ public class Emailer {
 	}
 	
 	/**
+	 *
+	 */
+	public static void processDailyEmails(Crud crud)
+	throws MessagingException, IOException, SQLException {
+		Folder inbox = Credentials.getInbox();
+		inbox.open(Folder.READ_WRITE);
+		Message[] messages = inbox.getMessages();
+		ArrayList<String> orderIds = new ArrayList<>();
+		HashMap<String, Order> todaysOrders = new HashMap<>();
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		for(int i = 0; i < messages.length; i++) {
+			String[] messageText =
+			 getTextFromMessage(messages[i]).trim().split("\n");
+			if(messageText[0].split(",").length != 4) {
+				messages[i].setFlag(Flags.Flag.DELETED, true);
+				continue;
+			} else {
+				Order order = null;
+				LocalDate date = LocalDate.parse(sdf.format(
+				 messages[i].getSentDate()));
+				
+				Matcher m = Order.EMAIL_PATTERN.matcher(
+				 messages[i].getFrom()[0].toString());
+				String email = m.find() ? m.group("email") : "";
+				
+				orderIds.add(order.getOrderId());
+				for(String textLine: messageText) {
+					String[] s = textLine.split(",");
+					
+					String productId = s[0].trim();
+					int requestedQuantity = Integer.parseInt(s[1].trim());
+					boolean isSale = Boolean.parseBoolean(s[2].trim());
+					String location = s[3].trim();
+					
+					if(order == null) {
+						new Order(date, email, true, location, Order
+						 .generateId(), new ArrayList<>());
+					}
+					order
+					 .add(new TransactionItem(productId, requestedQuantity));
+				}
+				todaysOrders.put(order.getOrderId(), order);
+			}
+		}
+		SalesProcessor salesProcessor = new SalesProcessor(crud);
+		for(String orderId: orderIds) {
+			Order order = todaysOrders.get(orderId);
+			salesProcessor.setOrder(order);
+			if(salesProcessor.canProcessOrder().contains(false)) {
+				salesProcessor.insertBackOrders(order);
+				sendMail(order.getEmail(), "Sorry bruh", "We can't do dis...");
+			} else {
+				salesProcessor.processOrder(order);
+				// Todo: send an email saying we can do it.
+				sendMail(order.getEmail(), "I gotcha bruh!", "u want fast or slow shipping?");
+			}
+		}
+		salesProcessor.close();
+	}
+	
+	/**
 	 * Return a LinkedList<int[]> where
 	 * each int[] represents
 	 * a an array of product that we attempt to sell. Each integer inside the
 	 * array indicates the
 	 * reason for success or failure of that product's order fulfillment.
 	 */
+	/*
 	public static void respondToOrders(
 	 ArrayList<Pair<File, Boolean>> orders)
 	throws MessagingException, IOException {
 		String prefix, suffix;
 		
-		for(Pair<File, Boolean> order : orders) {
+		for(Pair<File, Boolean> order: orders) {
 			boolean canComplete = order.getValue();
 			File file = order.getKey();
 			ArrayList<Object[]> sales = new ArrayList<>();
@@ -172,7 +198,9 @@ public class Emailer {
 			suffix = (canComplete ?
 			 "\nThank you for using our service."
 			 :
-			 "\nWe are currently unable to fulfill this order. We will email you " +
+			 "\nWe are currently unable to fulfill this order. We will email
+			  " +
+			 "you " +
 			 "when this product is back in stock. Thank you.");
 			
 			String responseSubject =
@@ -182,7 +210,7 @@ public class Emailer {
 		}
 		return list;
 	}
-	
+	*/
 	public static void sendAttatchedEmail(String email, File reportFile)
 	throws MessagingException {
 		Properties properties = new Properties();

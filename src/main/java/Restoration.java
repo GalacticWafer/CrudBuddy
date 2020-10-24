@@ -13,7 +13,7 @@ public class Restoration {
 		Restoration.rebuildInventory(crud);
 		ArrayList<File> files = new ArrayList<>();
 		files.add(new File("customer_orders_A_team4.csv"));
-		new SalesProcessor(crud).processItems(files.iterator(), LocalDate.now());
+		//new SalesProcessor(crud).processItems(files.iterator(), LocalDate.now());
 	}
 	
 	public static void rebuildInventory(Crud crud)
@@ -51,7 +51,7 @@ public class Restoration {
 			i++;
 		}
 		crud.setWorkingTable("inventory");
-		crud.insertRecords(headers, inventory);
+		//crud.insertRecords(headers, inventory);
 	}
 	
 	public static void deleteAllTables(Crud crud) throws SQLException {

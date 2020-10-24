@@ -1,6 +1,5 @@
 import com.mysql.cj.MysqlType;
 
-import javax.mail.MessagingException;
 import javax.swing.*;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -192,28 +191,18 @@ class Crud {
 	protected String getWorkingTable() {
 		return this.currentTable;
 	}
-	
-	/** Create a new record in the specified table from order information. */
-	public void insertFromOrder(TransactionItem item, int table)
-	throws SQLException {
-		String[] recordStrings = RECORD_STRINGS.get(table);
-		setWorkingTable(recordStrings[0]);
-		if(!exists(recordStrings[1], item.getMatchValue(table))) {
-			insertRecords(getColumnNames(),new Object[][] {item.toArray()});
-		}
-	}
-	
+
 	/** Insert one or more new records into a table from a 2d array. */
-	public int insertRecords(String[] columnNames, Iterator<Object[]> tableValues)
+	public int insertRecords(String[] columnNames, Iterator<Object[]> tableValues, int size)
 	throws InputMismatchException {
-		if(tableValues.length == 0 || columnNames.length == 0) {
+		if(size == 0 || columnNames.length == 0) {
 			throw new InputMismatchException();
 		}
 		StringBuilder sb = new StringBuilder(
 		 "INSERT INTO " + currentTable + " VALUES" + "(" + String.join(",", columnNames) + ")");
-		for(int i = 0; i < tableValues.length; i++) {
-			sb.append(toValueTuple(tableValues[i]));
-			sb.append(i == tableValues.length - 1 ? ";" : ",");
+		for(int i = 0; i < size; i++) {
+			sb.append(toValueTuple(tableValues.next()));
+			sb.append(i == size - 1 ? ";" : ",");
 		}
 		try {
 			return update(sb + "");
@@ -260,35 +249,7 @@ class Crud {
 		return Crud.connection.isClosed();
 	}
 	
-	/**
-	 * Return an integer indicating if the order can be processed, and if not,
-	 * why
-	 */
-	public int isProcessableOrder(TransactionItem transactionItem)
-	throws SQLException, MessagingException {
-		setWorkingTable("inventory");
-		String productId = transactionItem.getProductId();
-		ResultSet rs =
-		 query("select quantity from " + currentTable + " where product_id = '" + productId + "'");
-		if(!rs.next()) {
-			transactionItem.setResultString(
-			 transactionItem.getProductId() + " : unknown product id");
-			System.out.println(
-			 transactionItem.getProductId() + " : unknown product id");
-			return UNKNOWN_PRODUCT;
-		}
-		int currentQuantity = rs.getInt(1);
-		if(currentQuantity < transactionItem.getQuantity()) {
-			transactionItem.setResultString(
-			 transactionItem.getProductId() + " : " +  transactionItem.getQuantity() + " - " + transactionItem.getQuantity() + currentQuantity);
-			return QUANTITY_SHORTAGE;
-		}
-		transactionItem.setResultString(
-		 transactionItem.getProductId() + " : " +
-		 transactionItem.getQuantity());
-		transactionItem.setCurrentQuantity(currentQuantity);
-		return currentQuantity;
-	}
+	
 	
 	public Object[][] mostOrderedProducts
 	 (int limit)
@@ -350,16 +311,6 @@ class Crud {
 	int rowCountResults(ResultSet rs) throws SQLException {
 		rs.last();
 		return rs.getRow();
-	}
-	
-	/** Updates a product's quantity from an order */
-	public void setQuantityFromOrder(TransactionItem transactionItem)
-	throws SQLException {
-		int newQuantity =
-		 transactionItem.getCurrentQuantity() - transactionItem
-		  .getQuantity();
-		updateRow(new String[]{"quantity"}, new Object[]{newQuantity}, "product_id",  transactionItem.getProductId());
-		update("UPDATE " + currentTable + " SET quantity = " + newQuantity + " WHERE product_id = '" + "';");
 	}
 	
 	/**
