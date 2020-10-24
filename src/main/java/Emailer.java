@@ -2,6 +2,8 @@ import java.io.*;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -73,13 +75,17 @@ public class Emailer {
 	 * a an array of product that we attempt to sell. Each integer inside the array indicates the
 	 * reason for success or failure of that product's order fulfillment.
 	 */
-	public static LinkedList<int[]> processEmailOrders(Crud crud)
+	public static File processEmailOrders(Crud crud)
 	throws MessagingException, IOException, SQLException {
+		File file = new File("emailOrders.csv");
+		PrintWriter pw = new PrintWriter(file);
+		pw.println(String.join(",", TransactionItem.SALES_COLUMNS));
 		Folder inbox = Credentials.getInbox();
 		inbox.open(Folder.READ_WRITE);
 		Message[] messages = inbox.getMessages();
 		LinkedList<int[]> list = new LinkedList<>();
 		String prefix, suffix;
+		int check = 0;
 		for(Message message: messages) {
 			boolean canComplete = true;
 			String recipient = InternetAddress.toString(message.getReplyTo());
@@ -95,6 +101,7 @@ public class Emailer {
 					String senderInfo = message.getFrom()[0].toString();
 					TransactionItem transactionItem = new TransactionItem(item.trim(), orderId, senderInfo);
 					transactionItem.setEmail(recipient);
+					//boolean[] exit = new boolean[orders.length];
 					SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 					transactionItem.setDate(LocalDate.parse(DATE_FORMAT.format(message.getSentDate())));
 					results[i] = crud.isProcessableOrder(transactionItem);
@@ -104,18 +111,29 @@ public class Emailer {
 						customerEmail = transactionItem.getEmail();
 					}
 					transactionItemList.addLast(transactionItem);
+					transactionItem.setCurrentQuantity(transactionItem.getQuantity());
 				}
+				
 				list.addLast(results);
 			}
-			message.setFlag(Flags.Flag.DELETED, true);
+			//message.setFlag(Flags.Flag.DELETED, true);
 			if(canComplete) {
-				int i = 0;
 				for(TransactionItem transactionItem: transactionItemList) {
-					//crud.insertFromOrder(transactionItemList.get(i), 0);
-					crud.setQuantityFromOrder(transactionItem);
-					i++;
+					transactionItem.setDateAccepted(transactionItem.getDateOrdered());
+					Object[] array = transactionItem.toArray(Crud.SALES);
+					String csvLine = String.join(",", Arrays.deepToString(array));
+					csvLine = csvLine.substring(1,csvLine.length()-1);
+					csvLine = csvLine.replace(" ", "");
+					pw.println(csvLine);
+					check += 1;
+					
+					
 				}
 			}
+			
+			
+			
+			
 			prefix = (canComplete ?
 			 "The following products have been processed:\n\nProduct\tAmount\n"
 			 : "The following products could not be " +
@@ -130,8 +148,16 @@ public class Emailer {
 			String responseSubject = canComplete ? "Order Confirmed" : "Order Canceled";
 			String response = prefix + orderString + suffix;
 			sendMail(customerEmail, responseSubject, response);
+			
+			
 		}
-		return list;
+		
+		pw.close();
+		if(check == 0){
+			return file;
+		}
+		new SalesProcessor(crud).processItemsEmail(file.getPath());
+		return file;
 	}
 	
 	

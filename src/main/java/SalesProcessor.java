@@ -170,6 +170,107 @@ class SalesProcessor {
 		return sales;
 	} // End processItems
 	
+	public LinkedList<Object[]> processItemsEmail(String csvPath)
+	throws SQLException, FileNotFoundException
+	{
+		/* Get a scanner on the csv, and skip the column names.*/
+		Scanner orderScanner = new Scanner(new File(csvPath));
+		orderScanner.nextLine();
+		for(LocalDate today = newItemDate;
+			orderScanner.hasNextLine() || !backOrders.isEmpty();
+			today = today.plusDays(1))
+		{
+			String[] line = new String[0];
+			if(orderScanner.hasNextLine())
+			{
+				line = orderScanner.nextLine().split(",");
+				newItemDate = LocalDate.parse(line[5]);
+				if(newItemDate.isBefore(today))
+				{
+					today = newItemDate;
+				}
+			}
+			else
+			{
+				assert backOrders.peek() != null;
+				if(backOrders.peek().getDateOrdered().plusDays(7)
+							 .isBefore(today))
+				{
+					checkBackOrders(sales, today, backOrders);
+				}
+			}
+			checkBackOrders(sales, today, backOrders);
+			while(newItemDate.isAfter(today))
+			{
+				today = today.plusDays(1);
+			}
+			TransactionItem newItem = new TransactionItem();
+			if(orderScanner.hasNextLine() || line.length > 0)
+			{
+				if(line[3].contains("<")){
+					String a = line[3];
+					a = a.substring(a.indexOf("<") + 1);
+					a = a.substring(0, a.indexOf(">"));
+					line[3] = a;
+					
+				}
+				newItem.setFields(
+				 newItemDate, line[3], line[6], line[0],
+				 Integer.parseInt(line[2])
+				);
+				processOrder(newItem, sales, today, backOrders);
+			}
+		}
+		StringBuilder sb = new StringBuilder();
+		crud.update("Drop table if exists temp_table");
+		
+		crud.update("CREATE TEMPORARY TABLE temp_table(" +
+					"quantity int(16), product_id varchar(16));");
+		sb.append("insert into temp_table(product_id,quantity)values");
+		
+		Iterator<Integer> idxItr = idxList.iterator();
+		while(idxItr.hasNext())
+		{
+			Integer idx = idxItr.next();
+			String productId = indexMap.get(idx);
+			Integer quantity = quantityMap.get(productId);
+			sb.append("('").append(productId).append("',")
+			  .append(quantity).append(")")
+			  .append(idxItr.hasNext()?",":";");
+		}
+		crud.update(sb.toString());
+		crud.update("CREATE TABLE temp2 SELECT inventory.product_id," +
+					"inventory.wholesale_cost,inventory.sale_price," +
+					"inventory.supplier_id,inventory.idx," +
+					"temp_table.quantity " +
+					"FROM inventory INNER JOIN temp_table " +
+					"ON inventory.product_id = temp_table.product_id");
+		crud.update("drop table inventory");
+		crud.update("alter table temp2 rename to inventory");
+		
+		crud.setWorkingTable("customers");
+		Object[][] customerEntries = new Object[customers.size()][2];
+		Iterator<Map.Entry<String, String>> custItr = customers.entrySet().iterator();
+		for(int i = 0; i < customerEntries.length; i++)
+		{
+			Map.Entry<String, String> customer = custItr.next();
+			customerEntries[i] = new Object[] {customer.getKey(), customer.getValue()};
+		}
+		crud.insertRecords(new String[] {"email", "location"}, customerEntries);
+		/* Update the  database with the recorded  sales.*/
+		sb.delete(0, sb.length());
+		crud.setWorkingTable("sales");
+		String[] salesColumns = crud.getColumnNames();
+		Object[][] salesEntries = new Object[sales.size()][salesColumns.length];
+		Iterator<Object[]> salesItr = sales.iterator();
+		for(int i = 0; i < salesEntries.length; i++)
+		{
+			salesEntries[i] = salesItr.next();
+		}
+		crud.insertRecords(TransactionItem.SALES_COLUMNS, salesEntries);
+		return sales;
+	} // End processItems
+	
 	/**
 	 * Attempts to process orders, and adds them to the list of back-orders if
 	 * needed.
