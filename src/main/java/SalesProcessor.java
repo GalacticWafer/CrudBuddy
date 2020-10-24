@@ -1,22 +1,20 @@
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
 
 class SalesProcessor {
-	Queue<Object[]> backOrders;
+	ArrayList<Object[]> backOrders;
 	private final Crud crud;
-	private HashMap<String, String> customers;
 	Queue<Integer> idxList;
 	HashMap<Integer, String> indexMap;
-	LocalDate newItemDate;
+	Order order;
 	private HashMap<String, Integer> quantityMap;
 	ArrayList<Object[]> sales;
-	
+
 	public SalesProcessor(Crud crud) throws SQLException {
 		this.crud = crud;
+		this.order = order;
 		ResultSet rs =
 		 crud.query("SELECT quantity,idx,product_id FROM inventory");
 		crud.setWorkingTable("inventory");
@@ -25,7 +23,7 @@ class SalesProcessor {
 		idxList = new ArrayDeque<>(size); // ordered list of idx's
 		indexMap = new HashMap<>(size); // map from idx -> product_id
 		quantityMap = new HashMap<>(size); // map from product_id -> quantity
-		backOrders = new ArrayDeque<>(size); // anything we couldn't fulfill
+		backOrders = new ArrayList<>(size); // anything we couldn't fulfill
 
 		while(rs.next()) {
 			int quantity = rs.getInt(1);
@@ -37,22 +35,14 @@ class SalesProcessor {
 		} // End while
 	} // End Constructor
 
-	public ArrayList<Boolean> canProcessOrder(File file)
-	throws FileNotFoundException {
-		// Create scanner taking in a file of orders for processing
-		Scanner scanner = new Scanner(file);
-
-		// skip the header
-		scanner.nextLine();
+	public ArrayList<Boolean> canProcessOrder() {
 		ArrayList<Boolean> canProcessItems = new ArrayList<>();
-		while(scanner.hasNextLine()) {
-			// create place holder for tuple of product id and quantity
-			String[] line = scanner.nextLine().split(",");
-			String productId = line[3];
-			int requestedQuantity = Integer.parseInt(line[4]);
-			// check if product id exists by comparing to inventory table
-			int currentQuantity = quantityMap.get(productId);
-			if(requestedQuantity > currentQuantity) {
+		Iterator<TransactionItem> it = order.iterator();
+		while(it.hasNext()) {
+			TransactionItem item = it.next();
+			Integer currentQuantity = quantityMap.get(item.getProductId());
+			if(currentQuantity != null &&
+			   currentQuantity >= item.getQuantity()) {
 				canProcessItems.add(false);
 			} else {
 				canProcessItems.add(true);
@@ -60,58 +50,78 @@ class SalesProcessor {
 		}
 		return canProcessItems;
 	}
+	
+	public void close() throws SQLException {
 
-	public void insertBackOrders(File file) throws FileNotFoundException {
-		Scanner scanner = new Scanner(file);
-		while(scanner.hasNextLine()) {
-			TransactionItem item = new TransactionItem();
-			//date,cust_email,cust_location,product_id,product_quantity
-			String[] line = scanner.nextLine().split(",");
-			item.setFields(
-			 LocalDate.parse(line[0]),
-			 line[1],
-			 line[2],
-			 line[3],
-			 Integer.parseInt(line[4])
-			);
-			backOrders.add(item.toBackOrderArray());
-		}
-		crud.setWorkingTable("back_orders");
-		crud.insertRecords(TransactionItem.BACK_ORDER_COLUMNS, backOrders
-		 .iterator());
+		crud.insertRecords(
+		 Order.BACK_ORDER_COLUMNS,
+		 sales.iterator(), sales.size());
+		crud.insertRecords(
+		 Order.BACK_ORDER_COLUMNS,
+		 backOrders.iterator(), backOrders.size());
+		updateInventoryTable();
 	}
+	
+	public void insertBackOrders(Order order) {
+		crud.setWorkingTable("back_orders");
 
-	public void processOrder(File file) throws FileNotFoundException {
-		Scanner scanner = new Scanner(file);
-		while(scanner.hasNextLine()) {
-			TransactionItem item = new TransactionItem();
-			//date,cust_email,cust_location,product_id,product_quantity
-			String[] line = scanner.nextLine().split(",");
-			item.setFields(
-			 LocalDate.parse(line[0]),
-			 line[1],
-			 line[2],
-			 line[3],
-			 Integer.parseInt(line[4])
-			);
+		ArrayList<Object[]> array = order.toBackOrderArray();
+
+		crud.insertRecords(Order.BACK_ORDER_COLUMNS,
+		 array.iterator(), array.size());
+	}
+	
+	public void processOrder(Order order) {
+		ArrayList<TransactionItem> items = order.getItems();
+		order.setDateAccepted(LocalDate.now());
+		for(TransactionItem item: items) {
 			String productId = item.getProductId();
-			Integer inventoryQuantity = quantityMap.get(productId);
-			int requestedQuantity = item.getQuantity();
-
-			int newQuantity = inventoryQuantity - requestedQuantity;
-			quantityMap.put(productId, newQuantity);
-			sales.add(item.toSalesArray());
+			quantityMap.put(productId, quantityMap.get(productId)
+									   - item.getQuantity());
 		}
-		// Todo: update sales table
-		crud.setWorkingTable("sales");
-		crud.insertRecords(TransactionItem.SALES_COLUMNS, sales.iterator());
-		for(Integer idx: idxList) {
+		sales.addAll(order.toSalesArray());
+	}
+	
+	public void setOrder(Order order) {
+		this.order = order;
+	}
+	
+	private void updateInventoryTable() throws SQLException {
+		StringBuilder sb = new StringBuilder();
+		Iterator<Integer> idxItr = idxList.iterator();
+		while(idxItr.hasNext()) {
+			Integer idx = idxItr.next();
 			String productId = indexMap.get(idx);
-			int quanitiy = quantityMap.get(productId);
+			Integer quantity = quantityMap.get(productId);
+			sb.append("('").append(productId).append("',")
+			  .append(quantity).append(")")
+			  .append(idxItr.hasNext() ? "," : ";");
 		}
-		// Todo: update inventory table
-		// Todo: send an email saying we can do it.
-		// Todo: send an email saying we can't do it.
-		// Todo: put back orders into back_orders table.
+		
+		crud.update(sb.toString());
+		crud.update("CREATE TABLE temp2 SELECT inventory.product_id," +
+					"inventory.wholesale_cost,inventory.sale_price," +
+					"inventory.supplier_id,inventory.idx," +
+					"temp_table.quantity " +
+					"FROM inventory INNER JOIN temp_table " +
+					"ON inventory.product_id = temp_table.product_id");
+		crud.update("drop table inventory");
+		crud.update("alter table temp2 rename to inventory");
+		
+		/*
+		* c1 c2 c3
+		* a   b  c2
+		
+		* 
+		* 
+		* c3
+		* c2
+		* 
+		* c1 c2 c3
+		* a   b  c
+		* * */
+		
+		
+		
 	}
 }
