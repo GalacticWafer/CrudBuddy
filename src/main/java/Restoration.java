@@ -1,67 +1,65 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Scanner;
 
 public class Restoration {
-	public Restoration(Crud crud) throws SQLException, FileNotFoundException {
-		deleteAllTables(crud);
-		Restoration.rebuildInventory(crud);
-		ArrayList<File> files = new ArrayList<>();
-		files.add(new File("customer_orders_A_team4.csv"));
-		//new SalesProcessor(crud).processItems(files.iterator(), LocalDate.now());
-	}
-	
-	public static void rebuildInventory(Crud crud)
+	public static void rebuild(Crud crud, String filePath)
 	throws FileNotFoundException, SQLException {
-		Scanner scanner = new Scanner(new File("inventory_team4.csv"));
-		String[] headers = scanner.nextLine().split(",");
-		headers[0] = crud.removeUTF8BOM(headers[0]);
-		//product_id,quantity,wholesale_cost,sale_price,supplier_id
-		HashMap<Integer, String> types = new HashMap<>();
-		types.put(0, "VARCHAR(12)");
-		types.put(1, "INT(16)");
-		types.put(2, "DECIMAL(13,2)");
-		types.put(3, "DECIMAL(13,2)");
-		types.put(4, "VARCHAR(8)");
-		crud.insertTable("inventory", headers,types );
-		
-		ArrayList<Object[]> list = new ArrayList<>();
-		while(scanner.hasNextLine()) {
-			String[] line = scanner.nextLine().split(",");
-			//IKQHDHWV0FN3,1445,134.22,183.88,DYCUYQFX
-			String productId = line[0];
-			int quantity = Integer.parseInt(line[1]);
-			double wholesaleCost = Double.parseDouble(line[2]);
-			double salePrice = Double.parseDouble(line[3]);
-			String supplierId = line[4];
-			list
-			 .add(new Object[] {productId, quantity, wholesaleCost, salePrice,
-								supplierId});
+		for(String tableName: crud.getTableNames()) {
+			crud.update(" drop table if exists " + tableName);
 		}
-		Object[][] inventory = new Object[list.size()][headers.length];
-		Iterator<Object[]> it = list.iterator();
-		int i = 0;
-		while(it.hasNext()) {
-			inventory[i] = it.next();
+		rebuildTables(crud);
+		Scanner scanner = new Scanner(new File(filePath));
+		StringBuilder sql = new StringBuilder();
+		sql.append("INSERT INTO inventory ("
+				   + Crud.removeUTF8BOM(scanner.nextLine()) + ")VALUES");
+		int i =0 ;
+		
+		while(scanner.hasNextLine()) {
+			String[] l = scanner.nextLine().split(",");
+			sql.append("('").append(l[0]).append("',")
+			   .append(Integer.parseInt(l[1])).append(",")
+			   .append(Double.parseDouble(l[2])).append(",")
+			   .append(Double.parseDouble(l[3])).append(",'").append(l[4])
+			   .append("')").append(scanner.hasNextLine() ? "," : "");
 			i++;
 		}
-		crud.setWorkingTable("inventory");
-		//crud.insertRecords(headers, inventory);
+		System.out.println(i);
+		crud.update(sql.toString());
 	}
 	
-	public static void deleteAllTables(Crud crud) throws SQLException {
-		for(String tableName: crud.getTableNames()) {
-			if(tableName.equals("inventory")) {
-				crud.deleteTable("inventory");
-			} else {
-				crud.setWorkingTable(tableName);
-				crud.deleteAllRecords();
-			}
-		}
+	public static void rebuildTables(Crud crud) throws SQLException {
+		crud.update("CREATE TABLE IF NOT EXISTS inventory(" +
+					"idx INT(16)    	NOT NULL AUTO_INCREMENT," +
+					"product_id     	VARCHAR(12)," +
+					"quantity       	INT(16)," +
+					"wholesale_cost 	DECIMAL(13, 2)," +
+					"sale_price     	DECIMAL(13, 2)," +
+					"supplier_id    	VARCHAR(32)," +
+					"PRIMARY KEY 		(idx))");
+		crud.update("CREATE TABLE IF NOT EXISTS sales(" +
+					"idx int(16) 		NOT NULL AUTO_INCREMENT," +
+					"order_id 			VARCHAR(10)," +
+					"cust_email 		VARCHAR(60)," +
+					"cust_location 		VARCHAR(100)," +
+					"product_id     	VARCHAR(12)," +
+					"product_quantity   INT(16)," +
+					"date_ordered 		DATE," +
+					"date_accepted 		DATE," +
+					"PRIMARY KEY 		(idx))");
+		crud.update("CREATE TABLE IF NOT EXISTS back_orders(" +
+					"idx int(16) 		NOT NULL AUTO_INCREMENT," +
+					"order_id 			VARCHAR(10)," +
+					"cust_email 		VARCHAR(60)," +
+					"cust_location 		VARCHAR(100)," +
+					"product_id			VARCHAR(12)," +
+					"product_quantity   INT(16)," +
+					"date_ordered 		DATE," +
+					"PRIMARY KEY 		(idx))");
 	}
 }

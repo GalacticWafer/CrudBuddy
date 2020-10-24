@@ -6,6 +6,14 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 public class Order {
+	public static final String[] BACK_ORDER_COLUMNS = new String[] {
+	 "order_id",
+	 "date_ordered",
+	 "cust_email",
+	 "cust_location",
+	 "product_id",
+	 "product_quantity"
+	};
 	private static final String CHAR_LOWER = "abcdefghijklmnopqrstuvwxyz";
 	private static final String CHAR_UPPER = CHAR_LOWER.toUpperCase();
 	public static final SimpleDateFormat DATE_FORMAT =
@@ -15,28 +23,47 @@ public class Order {
 	private static final String NUMBER = "0123456789";
 	private static final String DATA_FOR_RANDOM_STRING =
 	 CHAR_LOWER + CHAR_UPPER + NUMBER;
-
+	public static final String[] SALES_COLUMNS = new String[] {
+	 "order_id",
+	 "date_ordered",
+	 "date_accepted",
+	 "cust_email",
+	 "cust_location",
+	 "product_id",
+	 "product_quantity"
+	};
 	private boolean canProcess;
+	ArrayList<Boolean> canProcessItemsArray;
 	private LocalDate dateAccepted;
 	private LocalDate dateOrdered;
-	private final String email;
+	private String email;
 	private boolean isSale;
 	private ArrayList<TransactionItem> items;
 	private final String location;
+	private String messageText;
 	public String orderId;
 	private static final SecureRandom rand = new SecureRandom();
+	private String subject;
 	
 	public Order(LocalDate date,
-				 String email, boolean isSale, String location,
+				  boolean isSale, String location,
 				 String orderId, ArrayList<TransactionItem> items) {
 		dateOrdered = date;
 		this.items = items;
-		this.email = email;
 		this.isSale = isSale;
 		this.location = location;
 		this.orderId = orderId;
+		canProcessItemsArray = null;
 	}
-
+	
+	public void setBoolArray(
+	 ArrayList<Boolean> canProcessItemsArray) {
+		this.canProcessItemsArray = canProcessItemsArray;
+	}
+	
+	public ArrayList<Boolean> getResults() {
+		return canProcessItemsArray;
+	}
 	public void add(TransactionItem item) {
 		items.add(item);
 	}
@@ -55,7 +82,6 @@ public class Order {
 		}
 		return sb.toString();
 	}
-	
 	
 	public LocalDate getDateAccepted() {
 		return dateAccepted;
@@ -79,10 +105,18 @@ public class Order {
 		throw new InputMismatchException();
 	}
 	
+	public String getMessageText() {
+		return messageText;
+	}
+	
 	public String getOrderId() {return orderId;}
 	
 	public String getSqlDate(LocalDate localDate) {
 		return localDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+	}
+	
+	public String getSubject() {
+		return subject;
 	}
 	
 	public boolean isSale() {return isSale;}
@@ -95,18 +129,26 @@ public class Order {
 		this.dateAccepted = today;
 	}
 	
+	public void setEmail(String email) {
+		this.email = email;
+	}
+	
 	public void setItems(ArrayList<TransactionItem> items) {
 		this.items = items;
 	}
 	
-	public static final String[] BACK_ORDER_COLUMNS = new String[] {
-	 "order_id", 
-	 "date_ordered", 
-	 "cust_email", 
-	 "cust_location", 
-	 "product_id", 
-	 "product_quantity"
-	};
+	public void setMessageText(String messageText) {
+		this.messageText = messageText;
+	}
+	
+	public void setSubject(boolean canOrder) {
+		subject = canOrder ? "Order Confirmed" : "Order Cancelled";
+	}
+	
+	public void setText(String s) {
+		this.messageText = s;
+	}
+	
 	public ArrayList<Object[]> toBackOrderArray() {
 		ArrayList<Object[]> array = new ArrayList<>();
 		for(TransactionItem item: items) {
@@ -122,16 +164,6 @@ public class Order {
 		return array;
 	}
 	
-	
-	public static final String[] SALES_COLUMNS = new String[] {
-	 "order_id", 
-	 "date_ordered", 
-	 "date_accepted", 
-	 "cust_email",
-	 "cust_location",
-	 "product_id", 
-	 "product_quantity"
-	};
 	public ArrayList<Object[]> toSalesArray() {
 		ArrayList<Object[]> array = new ArrayList<>();
 		for(TransactionItem item: items) {
@@ -143,7 +175,7 @@ public class Order {
 			 getLocation(),
 			 item.getProductId(),
 			 item.getQuantity(),
-			});
+			 });
 		}
 		return array;
 	}

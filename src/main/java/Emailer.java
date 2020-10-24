@@ -16,8 +16,24 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
 public class Emailer {
+	public Emailer() {}
+	
+	private Message createNewMessage(Session session, String myAccountEmail,
+									 String recipient, String subject)
+	throws MessagingException {
+		Message message = new MimeMessage(session);
+		message.setFrom(new InternetAddress(myAccountEmail));
+		
+		message
+		 .setRecipient(
+		  Message.RecipientType.TO,
+		  new InternetAddress(recipient));
+		message.setSubject(subject);
+		return message;
+	}
+	
 	/** Extract the text content from a message */
-	private static String getTextFromMessage(Message message)
+	private String getTextFromMessage(Message message)
 	throws MessagingException, IOException {
 		String result = "";
 		if(message.isMimeType("text/plain")) {
@@ -30,7 +46,7 @@ public class Emailer {
 	}
 	
 	/** Recurse into email content until message is reached, and return it */
-	private static String getTextFromMimeMultipart(
+	private String getTextFromMimeMultipart(
 	 MimeMultipart mimeMultipart) throws MessagingException, IOException {
 		StringBuilder result = new StringBuilder();
 		int count = mimeMultipart.getCount();
@@ -49,10 +65,10 @@ public class Emailer {
 		return result.toString();
 	}
 	
-	private static Message prepareAttachedMessage(Session session,
-												  String myAccountEmail,
-												  String recepient,
-												  File reportFile) {
+	private Message prepareAttachedMessage(Session session,
+										   String myAccountEmail,
+										   String recipient,
+										   File reportFile, String subject) {
 		try {
 			BodyPart messageBodyPart = new MimeBodyPart();
 			
@@ -60,13 +76,9 @@ public class Emailer {
 			multi.addBodyPart(messageBodyPart);
 			
 			DataSource source = new FileDataSource(reportFile);
-			Message message = new MimeMessage(session);
-			message.setFrom(new InternetAddress(myAccountEmail));
-			message
-			 .setRecipient(
-			  Message.RecipientType.TO,
-			  new InternetAddress(recepient));
-			message.setSubject("Testing");
+			Message message =
+			 createNewMessage(session, myAccountEmail, recipient, subject);
+			
 			messageBodyPart.setDataHandler(new DataHandler(source));
 			message.setFileName(reportFile.toString());
 			
@@ -82,18 +94,12 @@ public class Emailer {
 	}
 	
 	/** Prepare a message to be sent */
-	private static Message prepareMessage(String subject, String content,
-										  Session session,
-										  String myAccountEmail,
-										  String recipient) {
+	private Message prepareMessage
+	(String subject, String content, Session session, 
+	 String myAccountEmail, String recipient) {
 		try {
-			Message message = new MimeMessage(session);
-			message.setFrom(new InternetAddress(myAccountEmail));
-			message
-			 .setRecipient(
-			  Message.RecipientType.TO,
-			  new InternetAddress(recipient));
-			message.setSubject(subject);
+			Message message =
+			 createNewMessage(session, myAccountEmail, recipient, subject);
 			message.setText(content);
 			return message;
 		}
@@ -105,148 +111,75 @@ public class Emailer {
 	}
 	
 	/**
-	 *
+	 * Looks in the emails, and processes all items in each
 	 */
-	public static void processDailyEmails(Crud crud)
+	public void processDailyEmails(Crud crud, boolean bool)
 	throws MessagingException, IOException, SQLException {
-		Folder inbox = Credentials.getInbox();
-		inbox.open(Folder.READ_WRITE);
-		Message[] messages = inbox.getMessages();
-		ArrayList<String> orderIds = new ArrayList<>();
-		HashMap<String, Order> todaysOrders = new HashMap<>();
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-		for(int i = 0; i < messages.length; i++) {
+		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+		SalesProcessor processor = new SalesProcessor(crud);
+		Message[] messages = Credentials.getMessages();
+		for(Message message: messages) {
+			Order order = null;
+			boolean badFormat = false;
 			String[] messageText =
-			 getTextFromMessage(messages[i]).trim().split("\n");
-			if(messageText[0].split(",").length != 4) {
-				messages[i].setFlag(Flags.Flag.DELETED, true);
-				continue;
-			} else {
-				Order order = null;
-				LocalDate date = LocalDate.parse(sdf.format(
-				 messages[i].getSentDate()));
-				
-				Matcher m = Order.EMAIL_PATTERN.matcher(
-				 messages[i].getFrom()[0].toString());
-				String email = m.find() ? m.group("email") : "";
-				
-				orderIds.add(order.getOrderId());
-				for(String textLine: messageText) {
-					String[] s = textLine.split(",");
-					
-					String productId = s[0].trim();
-					int requestedQuantity = Integer.parseInt(s[1].trim());
-					boolean isSale = Boolean.parseBoolean(s[2].trim());
-					String location = s[3].trim();
-					
-					if(order == null) {
-						new Order(date, email, true, location, Order
-						 .generateId(), new ArrayList<>());
-					}
-					order
-					 .add(new TransactionItem(productId, requestedQuantity));
-				}
-				todaysOrders.put(order.getOrderId(), order);
-			}
-		}
-		SalesProcessor salesProcessor = new SalesProcessor(crud);
-		for(String orderId: orderIds) {
-			Order order = todaysOrders.get(orderId);
-			salesProcessor.setOrder(order);
-			if(salesProcessor.canProcessOrder().contains(false)) {
-				salesProcessor.insertBackOrders(order);
-				sendMail(order.getEmail(), "Sorry bruh", "We can't do dis...");
-			} else {
-				salesProcessor.processOrder(order);
-				// Todo: send an email saying we can do it.
-				sendMail(order.getEmail(), "I gotcha bruh!", "u want fast or slow shipping?");
-			}
-		}
-		salesProcessor.close();
-	}
-	
-	/**
-	 * Return a LinkedList<int[]> where
-	 * each int[] represents
-	 * a an array of product that we attempt to sell. Each integer inside the
-	 * array indicates the
-	 * reason for success or failure of that product's order fulfillment.
-	 */
-	/*
-	public static void respondToOrders(
-	 ArrayList<Pair<File, Boolean>> orders)
-	throws MessagingException, IOException {
-		String prefix, suffix;
-		
-		for(Pair<File, Boolean> order: orders) {
-			boolean canComplete = order.getValue();
-			File file = order.getKey();
-			ArrayList<Object[]> sales = new ArrayList<>();
-			if(canComplete) {
-				Scanner scanner = new Scanner(file);
-				scanner.nextLine();
-				while(scanner.hasNextLine()) {
-				}
-			} else {
-				
-			}
+			 getTextFromMessage(message).trim().split("\n");
+			LocalDate date = LocalDate.parse(format.format(
+			 message.getSentDate()));
 			
-			prefix = (canComplete ?
-			 "The following products have been processed:\n\nProduct\tAmount\n"
-			 : "The following products could not be " +
-			   "processed:\n\nProduct\tStock\tRequested\n");
-			suffix = (canComplete ?
-			 "\nThank you for using our service."
-			 :
-			 "\nWe are currently unable to fulfill this order. We will email
-			  " +
-			 "you " +
-			 "when this product is back in stock. Thank you.");
+			Matcher m = Order.EMAIL_PATTERN.matcher(
+			 message.getFrom()[0].toString());
+			String email = m.find() ? m.group("email") : "";
 			
-			String responseSubject =
-			 canComplete ? "Order Confirmed" : "Order Canceled";
-			String response = prefix + orderString + suffix;
-			sendMail(customerEmail, responseSubject, response);
-		}
-		return list;
-	}
-	*/
-	public static void sendAttatchedEmail(String email, File reportFile)
-	throws MessagingException {
-		Properties properties = new Properties();
-		
-		properties.put("mail.smtp.auth", "true");
-		properties.put("mail.smtp.starttls.enable", "true");
-		properties.put("mail.smtp.host", "smtp.gmail.com");
-		properties.put("mail.smtp.port", "587");
-		
-		String myAccountEmail = "mycrowsawftburner@gmail.com";
-		String password = "CS3250TEAM4";
-		
-		Session session = Session.getInstance(properties, new Authenticator() {
-			@Override
-			protected PasswordAuthentication getPasswordAuthentication() {
-				return new PasswordAuthentication(myAccountEmail, password);
+			for(String textLine: messageText) {
+				String[] s = textLine.split(",");
+				if(s.length != 4) {
+					message.setFlag(Flags.Flag.DELETED, true);
+					badFormat = true;
+					break;
+				}
+				String productId = s[0].trim();
+				int requestedQuantity = Integer.parseInt(s[1].trim());
+				boolean isSale = Boolean.parseBoolean(s[2].trim());
+				String location = s[3].trim();
+				
+				if(order == null) {
+					order = new Order(
+					 date, isSale, location, Order
+					 .generateId(), new ArrayList<>());
+					processor.setOrder(order);
+				}
+				order.add(new TransactionItem(productId, requestedQuantity));
 			}
-		});
-		
-		Message message =
-		 prepareAttachedMessage(session, myAccountEmail, email, reportFile);
-		
-		Transport.send(message);
-		System.out.println("");
+			if(badFormat) {
+				// Todo: this email is in an improper format
+				badFormat = false;
+				break;
+			}
+			order.setEmail(email);
+			processor.processOrder();
+			sendMail(order.getEmail(), order.getSubject(), order
+			 .getMessageText(), Credentials.getSession(), null);
+			if(bool) {
+			message.setFlag(Flags.Flag.DELETED, true);
+			}
+		}
+		processor.closeProcessor();
 	}
 	
 	/**
 	 * Send an email to a customer to indicate order confirmation or
 	 * cancellation
 	 */
-	public static void sendMail(String recipient, String subject,
-								String content)
+	public void sendMail(String toAddress, String subject, String content,
+						 Session session, File reportFile)
 	throws MessagingException {
 		Message message =
-		 prepareMessage(subject, content, Credentials.getSession(), Credentials
-		  .getEmail(), recipient);
+		 reportFile == null ?
+		  prepareMessage(subject, content, session, Credentials
+		   .getEmail(), toAddress)
+		  : prepareAttachedMessage(session, Credentials
+		  .getEmail(), toAddress, reportFile, subject);
+		
 		assert message != null;
 		Transport.send(message);
 		System.out.println();
