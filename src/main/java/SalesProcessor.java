@@ -97,7 +97,11 @@ class SalesProcessor {
 			  .append(quantity).append(")")
 			  .append(idxItr.hasNext() ? "," : ";");
 		}
+		crud.update("Drop table if exists temp_table");
 		
+		crud.update("CREATE TEMPORARY TABLE temp_table(" +
+		 "quantity int(16), product_id varchar(16));");
+		sb.append("insert into temp_table(product_id,quantity)values");
 		crud.update(sb.toString());
 		crud.update("CREATE TABLE temp2 SELECT inventory.product_id," +
 					"inventory.wholesale_cost,inventory.sale_price," +
