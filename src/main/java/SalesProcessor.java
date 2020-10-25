@@ -1,3 +1,5 @@
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -75,45 +77,40 @@ class SalesProcessor {
 		acceptedSales.addAll(order.toSalesArray());
 	}
 	
-	/* Update all the tables after orders have been processed. */
-	public void closeProcessor() throws SQLException {
-		crud.setWorkingTable("sales");
-		crud.insertRecords(
-		 Order.SALES_COLUMNS,
-		 acceptedSales.iterator(), acceptedSales.size());
-		crud.insertRecords(
-		 Order.BACK_ORDER_COLUMNS,
-		 backOrders.iterator(), backOrders.size());
-		
-		// update the inventory table to effectively close the processor.
-		StringBuilder sb = new StringBuilder();
-		Iterator<Integer> idxItr = idxList.iterator();
-		while(idxItr.hasNext()) {
-			Integer idx = idxItr.next();
-			String productId = indexMap.get(idx);
-			Integer quantity = quantityMap.get(productId);
-			sb.append("('").append(productId).append("',")
-			  .append(quantity).append(")")
-			  .append(idxItr.hasNext() ? "," : ";");
-		}
-
-		crud.setWorkingTable("temp_table");
-		crud.update("Drop table if exists temp_table");
-		crud.update("CREATE TEMPORARY TABLE temp_table(" +
-			   "quantity int(16), product_id varchar(16));");
-		crud.update(
-		 "insert into temp_table(product_id,quantity)VALUES" + sb.toString());
-		String dbName = crud.getDatabaseName();
-		crud.update
-		 ("UPDATE " + dbName + ".inventory i " +
-		  "INNER JOIN " + dbName + ".temp_table t ON i.product_id = t.product_id " +
-		  "SET i.quantity = t.quantity " +
-		  "WHERE i.product_id = t.product_id");
-	}
-	
 	/* Put all items from an order into the backOrders queue. */
 	private void insertBackOrders() {
 		backOrders.addAll(order.toBackOrderArray());
+	}
+	
+	public static void processFileOrders(Crud crud, String pathname)
+	throws SQLException, FileNotFoundException {
+		SalesProcessor processor = new SalesProcessor(crud);
+		Scanner scanner = new Scanner(new File(pathname));
+		scanner.nextLine();
+		String[] line = scanner.nextLine().split(",");
+		Order order = new Order(LocalDate.parse(line[0]),
+		 true, line[2], Order.generateId());
+		order.setEmail(line[0]);
+		processor.setOrder(order);
+		while(line != null) {
+			TransactionItem item = new TransactionItem(
+			 line[3], Integer.parseInt(line[4]));
+			LocalDate date = LocalDate.parse(line[0]);
+			if(!(order.getEmail().equals(line[0]) &&
+				 order.getLocation().equals(line[2]) &&
+				 order.getDateOrdered().isEqual(date) &&
+				 scanner.hasNextLine())) {
+				processor.processOrder();
+				order = new Order(LocalDate.parse(line[0]),
+				 true, line[2], Order.generateId());
+				order.setEmail(line[0]);
+				processor.setOrder(order);
+			}
+			order.add(item);
+			line = scanner.hasNextLine() ?
+			 scanner.nextLine().split(",") : null;
+		}
+		processor.updateAndClose();
 	}
 	
 	public boolean processOrder() {
@@ -137,5 +134,62 @@ class SalesProcessor {
 	
 	public void setOrder(Order order) {
 		this.order = order;
+	}
+	
+	/* Update all the tables after orders have been processed. */
+	public void updateAndClose() throws SQLException {
+		crud.setWorkingTable("sales");
+		
+		if(acceptedSales.size() > 0) {
+			crud.insertRecords(Order.SALES_COLUMNS,
+			 acceptedSales.iterator(), acceptedSales.size());
+		}
+		
+		if(backOrders.size() > 0) {
+			crud.insertRecords(Order.BACK_ORDER_COLUMNS,
+			 backOrders.iterator(), backOrders.size());
+		}
+		// update the inventory table to effectively close the processor.
+		StringBuilder sb = new StringBuilder();
+		Iterator<Integer> idxItr = idxList.iterator();
+		while(idxItr.hasNext()) {
+			Integer idx = idxItr.next();
+			String productId = indexMap.get(idx);
+			Integer quantity = quantityMap.get(productId);
+			sb.append("('").append(productId).append("',")
+			  .append(quantity).append(")")
+			  .append(idxItr.hasNext() ? "," : ";");
+		}
+		crud.update("Drop table if exists temp_table");
+		crud.update(
+		 "CREATE TEMPORARY TABLE temp_table(" +
+		 "quantity int(16)," +
+		 "product_id varchar(16));");
+		
+		crud.update(
+		 "INSERT INTO temp_table(product_id,quantity)VALUES" + sb.toString());
+		
+		crud.update(
+		 "CREATE TABLE temp2 SELECT " +
+		 "inventory.product_id," +
+		 "inventory.wholesale_cost," +
+		 "inventory.sale_price," +
+		 "inventory.supplier_id," +
+		 "inventory.idx," +
+		 "temp_table.quantity " +
+		 "FROM inventory INNER JOIN temp_table " +
+		 "ON inventory.product_id = temp_table.product_id"
+		);
+		crud.update("DROP TABLE inventory");
+		crud.update("ALTER TABLE temp2 RENAME TO inventory");
+		
+		//
+		//crud.setWorkingTable("temp_table");
+		//String dbName = crud.getDatabaseName();
+		//crud.update
+		// ("UPDATE " + dbName + ".inventory i " +
+		//  "INNER JOIN temp_table ON i.product_id = temp_table.product_id " +
+		//  "SET i.quantity = temp_table.quantity " +
+		//  "WHERE i.product_id = temp_table.product_id");
 	}
 }

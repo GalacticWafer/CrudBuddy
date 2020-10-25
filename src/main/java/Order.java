@@ -47,13 +47,13 @@ public class Order {
 	
 	public Order(LocalDate date,
 				  boolean isSale, String location,
-				 String orderId, ArrayList<TransactionItem> items) {
+				 String orderId) {
 		dateOrdered = date;
-		this.items = items;
 		this.isSale = isSale;
 		this.location = location;
 		this.orderId = orderId;
 		canProcessItemsArray = null;
+		items = new ArrayList<>();
 	}
 	
 	public void setBoolArray(

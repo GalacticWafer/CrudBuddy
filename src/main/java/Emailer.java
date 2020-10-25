@@ -2,7 +2,6 @@ import java.io.*;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -145,7 +144,7 @@ public class Emailer {
 				if(order == null) {
 					order = new Order(
 					 date, isSale, location, Order
-					 .generateId(), new ArrayList<>());
+					 .generateId());
 					processor.setOrder(order);
 				}
 				order.add(new TransactionItem(productId, requestedQuantity));
@@ -163,7 +162,7 @@ public class Emailer {
 			message.setFlag(Flags.Flag.DELETED, true);
 			}
 		}
-		processor.closeProcessor();
+		processor.updateAndClose();
 	}
 	
 	/**
