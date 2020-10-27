@@ -16,8 +16,8 @@ class Crud {
 	public static final String[] INVENTORY_COLUMNS = new String[]
 	 {"product_id", "wholesale_cost", "sale_price", "supplier_id", "quantity"};
 	private static String PORT;
-	private static final Pair<String, String> PRIMARY_KEY =
-	 new Pair("idx", "int(16)");
+	public static String PRIMARY_K = "idx";
+	public static String PRIMARY_V = "int(16)";
 	public static final int QUANTITY_SHORTAGE = -2;
 	public static final int SALES = 0;
 	public static final Map<Integer, String[]> RECORD_STRINGS = Map.ofEntries(
@@ -268,13 +268,13 @@ class Crud {
 		deleteTable(tableName);
 		StringBuilder sb = new StringBuilder(
 		 "CREATE TABLE IF NOT EXISTS " + tableName + "(" +
-		 PRIMARY_KEY.getKey() + " " +
-		 PRIMARY_KEY.getValue() + " NOT NULL AUTO_INCREMENT,");
+		 PRIMARY_K + " " + PRIMARY_V + " NOT NULL AUTO_INCREMENT,");
 		int i = 0;
 		for(; i < typeMap.size(); i++) {
-			sb.append(columnNames[i].trim() + " " + typeMap.get(i) + ",");
+			String line = columnNames[i] + " " + typeMap.get(i) + ",";
+			sb.append(line);
 		}
-		sb.append(" PRIMARY KEY (" + PRIMARY_KEY.getKey() + "))");
+		sb.append(" PRIMARY KEY (").append(PRIMARY_K).append("))");
 		update(sb.toString());
 	}
 	
@@ -330,6 +330,7 @@ class Crud {
 		 ResultSet.CONCUR_UPDATABLE);
 		return st.executeQuery(query);
 	}
+	
 	
 	/** Wraps the given object in quotes if it is a string */
 	static String quoteWrap(Object columnValue) {
@@ -490,7 +491,8 @@ class Crud {
 						 (i < columns.length - 1 ? "," : "");
 			sf.append(str);
 		}
-		sf.append(" where " + columnName + "=" + quoteWrap(columnValue));
+		sf.append(" where ").append(columnName).append("=")
+		  .append(quoteWrap(columnValue));
 		update(sf + "");
 	}
 	

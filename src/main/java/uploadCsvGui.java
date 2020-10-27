@@ -14,9 +14,7 @@ class 	uploadCsvGui {
 	private String[] columns;
 	private String fileName;
 	private final Crud crud;
-	private static final Pair<String, String> PRIMARY_KEY = new Pair("idx", "int(16)");
 	private static HashMap<Integer, String> typeMap;
-	
 	public void setColumns(String[] columns) {
 		this.columns = columns;
 	}
@@ -105,13 +103,13 @@ class 	uploadCsvGui {
 				for(int j = 0; j < radioButtons.length - 1; j++) {
 					JRadioButton radioButton = (JRadioButton)bs.nextElement();
 					if(radioButton.isSelected() && bs.hasMoreElements()) {
-						PRIMARY_KEY.setValue(J_TO_SQL.get(j));
+						Crud.PRIMARY_K = J_TO_SQL.get(j);
 						foundButton = true;
 					}
 				}
-				if(! foundButton) {
-					PRIMARY_KEY.setValue("idx".trim());
-					PRIMARY_KEY.setValue("int(16)".trim());
+				if(!foundButton) {
+					Crud.PRIMARY_K = "idx".trim();
+					Crud.PRIMARY_V = "int(16)".trim();
 				}
 				typeMap = new HashMap<>();
 				for(int j = 0; j < boxes.length; j++) {

@@ -114,9 +114,10 @@ public class Emailer {
 	 */
 	public void processDailyEmails(Crud crud, boolean bool)
 	throws MessagingException, IOException, SQLException {
+		Session sesh = Credentials.getSession();
 		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 		SalesProcessor processor = new SalesProcessor(crud);
-		Message[] messages = Credentials.getMessages();
+		Message[] messages = Credentials.getMessages(sesh);
 		for(Message message: messages) {
 			Order order = null;
 			boolean badFormat = false;
@@ -142,12 +143,10 @@ public class Emailer {
 				String location = s[3].trim();
 				
 				if(order == null) {
-					order = new Order(
-					 date, isSale, location, Order
-					 .generateId());
+					order = new Order(date, isSale, location);
 					processor.setOrder(order);
 				}
-				order.add(new TransactionItem(productId, requestedQuantity));
+				order.add(new Product(productId, requestedQuantity));
 			}
 			if(badFormat) {
 				// Todo: this email is in an improper format
@@ -156,8 +155,8 @@ public class Emailer {
 			}
 			order.setEmail(email);
 			processor.processOrder();
-			sendMail(order.getEmail(), order.getSubject(), order
-			 .getMessageText(), Credentials.getSession(), null);
+			sendMail(order.getCustomerEmail(), order.getSubject(), order
+			 .getMessageText(), sesh, null);
 			if(bool) {
 			message.setFlag(Flags.Flag.DELETED, true);
 			}

@@ -3,23 +3,27 @@ import java.io.FileNotFoundException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Scanner;
+import java.util.*;
 
 public class Restoration {
-	public static void rebuild(Crud crud, String filePath)
+	public Restoration(Crud crud, String filePath, boolean doTableRebuild)
 	throws FileNotFoundException, SQLException {
-		for(String tableName: crud.getTableNames()) {
-			crud.update(" drop table if exists " + tableName);
+		rebuild(crud, filePath, doTableRebuild);
+	}
+	public void rebuild(Crud crud, String filePath, boolean doTableRebuild)
+	throws FileNotFoundException, SQLException {
+		String[] list = crud.getTableNames();
+		for(String tableName: list) {
+			crud.update(" DROP TABLE IF EXISTS " + tableName);
 		}
-		rebuildTables(crud);
+		if(doTableRebuild) {
+			rebuildTables(crud);
+		}
 		Scanner scanner = new Scanner(new File(filePath));
 		StringBuilder sql = new StringBuilder();
-		sql.append("INSERT INTO inventory ("
-				   + Crud.removeUTF8BOM(scanner.nextLine()) + ")VALUES");
-		int i =0 ;
-		
+		String str = "INSERT INTO " + crud.getDatabaseName() + ".inventory ("
+					 + Crud.removeUTF8BOM(scanner.nextLine()) + ")VALUES";
+		sql.append(str);
 		while(scanner.hasNextLine()) {
 			String[] l = scanner.nextLine().split(",");
 			sql.append("('").append(l[0]).append("',")
@@ -27,13 +31,11 @@ public class Restoration {
 			   .append(Double.parseDouble(l[2])).append(",")
 			   .append(Double.parseDouble(l[3])).append(",'").append(l[4])
 			   .append("')").append(scanner.hasNextLine() ? "," : "");
-			i++;
 		}
-		System.out.println(i);
 		crud.update(sql.toString());
 	}
 	
-	public static void rebuildTables(Crud crud) throws SQLException {
+	private void rebuildTables(Crud crud) throws SQLException {
 		crud.update("CREATE TABLE IF NOT EXISTS inventory(" +
 					"idx INT(16)    	NOT NULL AUTO_INCREMENT," +
 					"product_id     	VARCHAR(12)," +
@@ -51,15 +53,7 @@ public class Restoration {
 					"product_quantity   INT(16)," +
 					"date_ordered 		DATE," +
 					"date_accepted 		DATE," +
-					"PRIMARY KEY 		(idx))");
-		crud.update("CREATE TABLE IF NOT EXISTS back_orders(" +
-					"idx int(16) 		NOT NULL AUTO_INCREMENT," +
-					"order_id 			VARCHAR(10)," +
-					"cust_email 		VARCHAR(60)," +
-					"cust_location 		VARCHAR(100)," +
-					"product_id			VARCHAR(12)," +
-					"product_quantity   INT(16)," +
-					"date_ordered 		DATE," +
+					"Status		 		int(1)," +
 					"PRIMARY KEY 		(idx))");
 	}
 }
