@@ -9,7 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TransactionItem {
-	public static final String[] SALES_COLUMNS =  {"date","cust_email","cust_location","product_id","product_quantity"};
+	public static final String[] SALES_COLUMNS =  {"product_id", "order_id", "quantity", "cust_email", "date_ordered", "date_accepted", "location"};
 	private static final String CHAR_LOWER = "abcdefghijklmnopqrstuvwxyz";
 	private static final String CHAR_UPPER = CHAR_LOWER.toUpperCase();
 	public static final SimpleDateFormat DATE_FORMAT =
@@ -131,8 +131,8 @@ public class TransactionItem {
 		}
 	}
 	
-	public void setDate(Date sentDate) {
-		this.dateOrdered = LocalDate.parse(DATE_FORMAT.format(sentDate));
+	public void setDate(LocalDate sentDate) {
+		this.dateOrdered = sentDate;
 	}
 	
 	public void setDateAccepted(LocalDate today) {
