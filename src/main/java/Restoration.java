@@ -10,7 +10,7 @@ public class Restoration {
 	throws FileNotFoundException, SQLException {
 		rebuild(crud, filePath, doTableRebuild);
 	}
-	public void rebuild(Crud crud, String filePath, boolean doTableRebuild)
+	 private void rebuild(Crud crud, String filePath, boolean doTableRebuild)
 	throws FileNotFoundException, SQLException {
 		String[] list = crud.getTableNames();
 		for(String tableName: list) {

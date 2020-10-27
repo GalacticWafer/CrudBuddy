@@ -48,17 +48,7 @@ class Crud {
 		//JOptionPane.showMessageDialog(null, "Connection OK with " + getURL
 		// ());
 	}
-	
-	/** Creates a .csv-compatible line from a String[] array */
-	public String arrayToCSV
-	(String[] array) {
-		return String.join(",", array);
-	}
-	
-	public void commit() throws SQLException {
-		connection.commit();
-	}
-	
+
 	/**
 	 * Creates a gui to get user input on a new table to be uploaded to MySQL
 	 * database.
@@ -69,23 +59,13 @@ class Crud {
 		return gui;
 	}
 	
-	/** Deletes all records from a table, but the table remains */
-	public int deleteAllRecords() throws SQLException {
-		return update("TRUNCATE TABLE " + currentTable);
-	}
-	
 	/** Delete the record in the specified table */
 	public int deleteRecord
-	(String idColumn, Object idValue)
+	(String columnName, Object columnValue)
 	throws SQLException {
 		return update(
-		 "DELETE FROM " + currentTable + " WHERE " + idColumn + " = " +
-		 quoteWrap(idValue));
-	}
-	
-	/** Deletes an entire table */
-	public void deleteTable(String tableName) throws SQLException {
-		update("DROP TABLE IF EXISTS " + getWorkingTable());
+		 "DELETE FROM " + currentTable + " WHERE " + columnName + " = " +
+		 quoteWrap(columnValue));
 	}
 	
 	boolean exists(String columnName, Object columnValue)
@@ -96,21 +76,6 @@ class Crud {
 		ResultSet rs = query(sql);
 		rs.next();
 		return rs.getInt(1) == 1;
-	}
-	
-	/** Find a specific record */
-	public Object[] find(Object idValue, String idColumnName)
-	throws SQLException {
-		var result = query(
-		 "select * from " + currentTable + " where " + idColumnName + " = " +
-		 quoteWrap(idValue));
-		Object[] record = new Object[result.getMetaData().getColumnCount()];
-		while(result.next()) {
-			for(int i = 0; i < record.length; i++) {
-				record[i] = result.getObject(i + 1);
-			}
-		}
-		return record;
 	}
 	
 	public Object getAssetTotal(String onDate)
@@ -216,11 +181,6 @@ class Crud {
 		return tableNames;
 	}
 	
-	/** Get the sql string representing the name of a java data type */
-	public String getType(String name) {
-		return uploadCsvGui.J_TO_SQL2.get(name);
-	}
-	
 	/** Get the URL by joining static variable together. */
 	private static String getURL() {
 		return "jdbc:mysql://" + HOST_IP + ":" + PORT + "/" + DB_NAME;
@@ -265,7 +225,7 @@ class Crud {
 	public void insertTable
 	(String tableName, String[] columnNames, HashMap<Integer, String> typeMap)
 	throws SQLException {
-		deleteTable(tableName);
+		update("DROP TABLE IF EXISTS " + tableName);
 		StringBuilder sb = new StringBuilder(
 		 "CREATE TABLE IF NOT EXISTS " + tableName + "(" +
 		 PRIMARY_K + " " + PRIMARY_V + " NOT NULL AUTO_INCREMENT,");
@@ -319,10 +279,6 @@ class Crud {
 		return getRecords(query(query));
 	}
 	
-	public PreparedStatement prepareStatement(String sql) throws SQLException {
-		return connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-	}
-	
 	/** Sends a sql query string */
 	public ResultSet query(String query) throws SQLException {
 		Statement st = connection.createStatement(
@@ -335,8 +291,6 @@ class Crud {
 	/** Wraps the given object in quotes if it is a string */
 	static String quoteWrap(Object columnValue) {
 		if(columnValue instanceof String
-		   // quoteWrap(999) -> 999     ||   quoteWrap(07-05-1990) ->
-		   // "07-05-1990"
 		   || columnValue instanceof Date) {
 			return "'" + columnValue + "'";
 		}
@@ -357,10 +311,6 @@ class Crud {
 		return rs.getRow();
 	}
 	
-	public void setAutoCommit(boolean b) throws SQLException {
-		connection.setAutoCommit(b);
-	}
-	
 	/**
 	 * Sets the static variable <code>tableName</code> as the table to make
 	 * statements against.
@@ -369,7 +319,7 @@ class Crud {
 		this.currentTable = DB_NAME + "." + tableName;
 	}
 	
-	/** retrieve the number of rows of a column. */
+	/** retrieve the number of rows in a table. */
 	int size() throws SQLException {
 		ResultSet rs = query("SELECT COUNT(*) FROM " + currentTable);
 		rs.next();
@@ -415,7 +365,7 @@ class Crud {
 	(String date, int limit, boolean isDescending, GUI gui)
 	throws SQLException {
 		setWorkingTable("customers");
-		deleteTable("top_customers");
+		update(" DROP TABLE IF EXISTS top_customers");
 		String newTableName = "Top_" + limit + "_Customers";
 		String sql =
 		 " CREATE TEMPORARY TABLE IF NOT EXISTS " + newTableName +
@@ -435,15 +385,6 @@ class Crud {
 		temporaryTables.add(newTableName);
 		gui.addTable(newTableName);
 		return newTableName;
-		/*
-		 *  CREATE TEMPORARY TABLE IF NOT EXISTS Top_2_Customers AS (SELECT
-		 * sales.cust_email, SUM(sales.quantity * (sale_price -
-		 * wholesale_cost))
-		 *  AS revenue  FROM sales WHERE date_accepted = '2020-01-01' INNER
-		 * JOIN customers _customers on sales.customer_email = _customers
-		 * .email  INNER JOIN inventory i on sales.product_id = i.product_id
-		 * GROUP BY customer_email  ORDER BY revenue  DESC LIMIT 2)
-		 * */
 	}
 	
 	/**
@@ -469,7 +410,7 @@ class Crud {
 								 int limit, boolean isDescending,
 								 String orderArg) throws SQLException {
 		return getRecords(query(
-		 "Select * FROM sales WHERE " + columnName + " = '" + date +
+		 "SELECT * FROM sales WHERE " + columnName + " = '" + date +
 		 "' ORDER BY " + orderArg + (isDescending ? " DESC" : "ASC") +
 		 " LIMIT " + limit));
 	}
@@ -491,14 +432,9 @@ class Crud {
 						 (i < columns.length - 1 ? "," : "");
 			sf.append(str);
 		}
-		sf.append(" where ").append(columnName).append("=")
+		sf.append(" WHERE ").append(columnName).append("=")
 		  .append(quoteWrap(columnValue));
 		update(sf + "");
-	}
-	
-	public void use(String DB_NAME, String tableName) {
-		tableName =
-		 DB_NAME + (tableName.substring(tableName.indexOf(".") + 1));
 	}
 	
 	/** Write a table from the database to a file */

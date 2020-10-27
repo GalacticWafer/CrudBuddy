@@ -14,7 +14,7 @@ class CrudTest {
 	@Test
 	void arrayToCSV() {
 		assertEquals(
-		 crud.arrayToCSV(new String[]{"abc", "'123'", "xyz"}),
+		 String.join(",",new String[]{"abc", "'123'", "xyz"}),
 		 "abc,'123',xyz");
 	}
 	
@@ -38,9 +38,9 @@ class CrudTest {
 	
 	@Test
 	void find() throws SQLException {
-		assertTrue(crud.find("ZRDATK9CSM23", "product_id").length > 0);
+		assertTrue(crud.getRecords("SELECT * FROM inventory WHERE product_id = ZRDATK9CSM23").length > 0);
 		
-		assertArrayEquals(crud.find("NOPENOPENOPE", "product_id"), 
+		assertArrayEquals(crud.getRecords("SELECT * FROM inventory WHERE product_id = NOPENOPENOPE"), 
 		 new Object[]{null,null,null,null,null,null});
 	}
 	
