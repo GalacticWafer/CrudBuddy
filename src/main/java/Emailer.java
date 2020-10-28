@@ -157,9 +157,7 @@ public class Emailer {
 			processor.processOrder();
 			sendMail(order.getCustomerEmail(), order.getSubject(), order
 			 .getMessageText(), sesh, null);
-			if(bool) {
 			message.setFlag(Flags.Flag.DELETED, true);
-			}
 		}
 		processor.updateAndClose();
 	}
