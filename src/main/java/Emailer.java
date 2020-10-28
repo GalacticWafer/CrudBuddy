@@ -94,7 +94,7 @@ public class Emailer {
 	
 	/** Prepare a message to be sent */
 	private Message prepareMessage
-	(String subject, String content, Session session, 
+	(String subject, String content, Session session,
 	 String myAccountEmail, String recipient) {
 		try {
 			Message message =
@@ -120,7 +120,6 @@ public class Emailer {
 		Message[] messages = Credentials.getMessages(session);
 		for(Message message: messages) {
 			Order order = null;
-			boolean badFormat = false;
 			String[] messageText =
 			 getTextFromMessage(message).trim().split("\n");
 			LocalDate date = LocalDate.parse(format.format(
@@ -131,28 +130,29 @@ public class Emailer {
 			String email = m.find() ? m.group("email") : "";
 			
 			for(String textLine: messageText) {
-				String[] s = textLine.split(",");
-				if(s.length != 4) {
-					message.setFlag(Flags.Flag.DELETED, true);
-					badFormat = true;
-					break;
+				try {
+					
+					String[] s = textLine.split(",");
+					if(s.length != 4) {
+						message.setFlag(Flags.Flag.DELETED, true);
+						break;
+					}
+					String productId = s[0].trim();
+					int requestedQuantity = Integer.parseInt(s[1].trim());
+					boolean isSale = Boolean.parseBoolean(s[2].trim());
+					String location = s[3].trim();
+					
+					if(order == null) {
+						order = new Order(date, isSale, location);
+						processor.setOrder(order);
+					}
+					order.add(new Product(productId, requestedQuantity));
 				}
-				String productId = s[0].trim();
-				int requestedQuantity = Integer.parseInt(s[1].trim());
-				boolean isSale = Boolean.parseBoolean(s[2].trim());
-				String location = s[3].trim();
-				
-				if(order == null) {
-					order = new Order(date, isSale, location);
-					processor.setOrder(order);
+				catch(Exception e) {
+					// Todo: this email is in an improper format
 				}
-				order.add(new Product(productId, requestedQuantity));
 			}
-			if(badFormat) {
-				// Todo: this email is in an improper format
-				badFormat = false;
-				break;
-			}
+			assert order != null;
 			order.setEmail(email);
 			processor.processOrder();
 			sendMail(order.getCustomerEmail(), order.getSubject(), order
