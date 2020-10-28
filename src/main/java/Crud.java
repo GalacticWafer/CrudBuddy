@@ -1,4 +1,5 @@
 import com.mysql.cj.MysqlType;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -99,20 +100,13 @@ class Crud {
 	
 	/** Gets an arraylist of the column names of a specific table */
 	public String[] getColumnNames() throws SQLException {
-		ResultSet rs =
-		 query("SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS`" +
-			   " WHERE `TABLE_SCHEMA`='" + DB_NAME + "' AND `TABLE_NAME`='" +
-			   currentTable + "'");
-		ArrayList<String> list = new ArrayList<>();
-		while(rs.next()) {
-			if(!rs.getString(1).equals("idx")) {
-				list.add(rs.getString(1));
-			}
-		}
-		String[] columnNames = new String[list.size()];
-		Iterator<String> it = list.iterator();
-		for(int i1 = 0; it.hasNext(); i1++) {
-			columnNames[i1] = it.next();
+		 ResultSet rs = query(
+		 "SELECT column_name FROM information_schema.columns " +
+		 "WHERE table_schema = '" + DB_NAME +
+		 "' AND table_name = '" + getWorkingTable() + "'");
+		String[] columnNames = new String[rowCountResults(rs)];
+		for(int i = 0; i < columnNames.length; i++) {
+			columnNames[i] = rs.getString(1);
 		}
 		return columnNames;
 	}
@@ -177,8 +171,8 @@ class Crud {
 		return "jdbc:mysql://" + HOST_IP + ":" + PORT + "/" + DB_NAME;
 	}
 	
-	protected String getWorkingTable() {
-		return this.currentTable;
+	@NotNull protected String getWorkingTable() {
+		return currentTable.substring(currentTable.indexOf(".") + 1);
 	}
 	
 	/** Insert one or more new records into a table from a 2d array. */
