@@ -110,15 +110,16 @@ class SalesProcessor {
 		for(Iterator<Product> it = order.iterator(); it.hasNext();) {
 			builder.append(it.next().toString()).append("\n");
 		}
-		String prefix = canProcessOrder ?
+		String orderNumber = "Order #" + order.getId() ;
+		String prefix = orderNumber + (canProcessOrder ?
 		 "The following products have been processed:" :
-		 "The following products could not be processed:";
+		 "The following products could not be processed:");
 		String suffix = canProcessOrder ?
 		 "Thank you for using our service." :
 		 "We are currently unable to fulfill this order.";
 		order.setText(prefix + "\n\n" + builder.toString() + "\n" + suffix);
 		order
-		 .setSubject("Order " + order.getId() + " " + order.getStatusString());
+		 .setSubject(orderNumber + " " + order.getStatusString());
 		order.setCanProcess(canProcessOrder);
 		return canProcessOrder;
 	}

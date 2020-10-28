@@ -2,6 +2,7 @@ import java.io.*;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -112,8 +113,9 @@ public class Emailer {
 	/**
 	 * Looks in the emails, and processes all items in each
 	 */
-	public void processDailyEmails(Crud crud)
+	public void processEmails(Crud crud)
 	throws MessagingException, IOException, SQLException {
+		crud.setWorkingTable("sales");
 		Session session = Credentials.getSession();
 		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 		SalesProcessor processor = new SalesProcessor(crud);
@@ -129,11 +131,23 @@ public class Emailer {
 			 message.getFrom()[0].toString());
 			String email = m.find() ? m.group("email") : "";
 			
-			for(String textLine: messageText) {
-				try {
-					
+			try {
+				for(String textLine: messageText) {
 					String[] s = textLine.split(",");
 					if(s.length != 4) {
+						if(message.getSubject().toUpperCase()
+								  .contains("cancel".toUpperCase())) {
+							String orderId = s[0];
+							Object[][] records = crud.getRecords(
+							 "SELECT * FROM sales where order_id = '"
+							 + orderId + "'");
+							System.out.println(
+							 "The following product purchases should be " +
+							 "cancelled:\n\n" +
+							 Arrays.deepToString(records));
+							// Todo  Daniel, roll back the order if it exists.
+							break;
+						}
 						message.setFlag(Flags.Flag.DELETED, true);
 						break;
 					}
@@ -148,16 +162,17 @@ public class Emailer {
 					}
 					order.add(new Product(productId, requestedQuantity));
 				}
-				catch(Exception e) {
-					// Todo: this email is in an improper format
-				}
+				assert order != null;
+				order.setEmail(email);
+				processor.processOrder();
+				sendMail(order.getCustomerEmail(), order.getSubject(), order
+				 .getMessageText(), session, null);
+				message.setFlag(Flags.Flag.DELETED, true);
 			}
-			assert order != null;
-			order.setEmail(email);
-			processor.processOrder();
-			sendMail(order.getCustomerEmail(), order.getSubject(), order
-			 .getMessageText(), session, null);
-			message.setFlag(Flags.Flag.DELETED, true);
+			catch(Exception e) {
+				System.out.println(e.getMessage());
+				// Todo: this email is in an improper format
+			}
 		}
 		processor.updateAndClose();
 	}

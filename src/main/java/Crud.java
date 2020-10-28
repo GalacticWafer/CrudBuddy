@@ -41,7 +41,7 @@ class Crud {
 		//JOptionPane.showMessageDialog(null, "Connection OK with " + getURL
 		// ());
 	}
-
+	
 	/**
 	 * Creates a gui to get user input on a new table to be uploaded to MySQL
 	 * database.
@@ -100,13 +100,13 @@ class Crud {
 	
 	/** Gets an arraylist of the column names of a specific table */
 	public String[] getColumnNames() throws SQLException {
-		 ResultSet rs = query(
-		 "SELECT column_name FROM information_schema.columns " +
-		 "WHERE table_schema = '" + DB_NAME +
-		 "' AND table_name = '" + getWorkingTable() + "'");
-		String[] columnNames = new String[rowCountResults(rs)];
-		for(int i = 0; i < columnNames.length; i++) {
-			columnNames[i] = rs.getString(1);
+		String query = "SELECT * FROM " + getWorkingTable();
+		ResultSet rs = query(query);
+		ResultSetMetaData rsMetaData = rs.getMetaData();
+		int count = rsMetaData.getColumnCount();
+		String[] columnNames = new String[count];
+		for(int i = 0; i < count; i++) {
+			columnNames[i] = rsMetaData.getColumnName(i + 1);
 		}
 		return columnNames;
 	}
@@ -271,7 +271,6 @@ class Crud {
 		 ResultSet.CONCUR_UPDATABLE);
 		return st.executeQuery(query);
 	}
-	
 	
 	/** Wraps the given object in quotes if it is a string */
 	static String quoteWrap(Object columnValue) {
