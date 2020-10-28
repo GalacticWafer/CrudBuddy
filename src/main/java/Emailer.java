@@ -112,12 +112,12 @@ public class Emailer {
 	/**
 	 * Looks in the emails, and processes all items in each
 	 */
-	public void processDailyEmails(Crud crud, boolean bool)
+	public void processDailyEmails(Crud crud)
 	throws MessagingException, IOException, SQLException {
-		Session sesh = Credentials.getSession();
+		Session session = Credentials.getSession();
 		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 		SalesProcessor processor = new SalesProcessor(crud);
-		Message[] messages = Credentials.getMessages(sesh);
+		Message[] messages = Credentials.getMessages(session);
 		for(Message message: messages) {
 			Order order = null;
 			boolean badFormat = false;
@@ -156,10 +156,8 @@ public class Emailer {
 			order.setEmail(email);
 			processor.processOrder();
 			sendMail(order.getCustomerEmail(), order.getSubject(), order
-			 .getMessageText(), sesh, null);
-			if(bool) {
+			 .getMessageText(), session, null);
 			message.setFlag(Flags.Flag.DELETED, true);
-			}
 		}
 		processor.updateAndClose();
 	}
