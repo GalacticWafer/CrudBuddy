@@ -12,20 +12,12 @@ class Crud {
 	public static final int CUSTOMERS = 2;
 	private static String DB_NAME;
 	private static String HOST_IP;
-	public static final int INVENTORY = 1;
 	public static final String[] INVENTORY_COLUMNS = new String[]
 	 {"product_id", "wholesale_cost", "sale_price", "supplier_id", "quantity"};
 	private static String PORT;
 	public static String PRIMARY_K = "idx";
 	public static String PRIMARY_V = "int(16)";
-	public static final int QUANTITY_SHORTAGE = -2;
 	public static final int SALES = 0;
-	public static final Map<Integer, String[]> RECORD_STRINGS = Map.ofEntries(
-	 Map.entry(SALES, new String[] {"sales", "order_id"}),
-	 Map.entry(INVENTORY, new String[] {"inventory", "product_id"}),
-	 Map.entry(CUSTOMERS, new String[] {"customers", "email"})
-	);
-	public static final int UNKNOWN_PRODUCT = -1;
 	private static Connection connection;
 	private String currentTable = "inventory";
 	public static TreeSet<String> temporaryTables = new TreeSet<>();
@@ -53,10 +45,9 @@ class Crud {
 	 * Creates a gui to get user input on a new table to be uploaded to MySQL
 	 * database.
 	 */
-	private uploadCsvGui csvGuiLoad(String[] columns, String fileName) {
+	private void csvGuiLoad(String[] columns, String fileName) {
 		uploadCsvGui gui = new uploadCsvGui(columns, fileName, this);
 		gui.invoke();
-		return gui;
 	}
 	
 	/** Delete the record in the specified table */
@@ -129,7 +120,7 @@ class Crud {
 	/** Gets an arrayList of column types from a table */
 	public String[] getColumnTypes(String tableName)
 	throws SQLException {
-		ResultSet rs = query("select * from " + tableName + " where 1<0");
+		ResultSet rs = query("SELECT * FROM " + tableName + " WHERE 1<0");
 		ResultSetMetaData data = rs.getMetaData();
 		data.getColumnCount();
 		String[] list = new String[data.getColumnCount()];
@@ -212,13 +203,13 @@ class Crud {
 		}
 	}
 	
-	public int insertRecords(String[] columnNames,
-							 Iterator<Object[]> tableValues, int size) {
+	public void insertRecords(String[] columnNames,
+							  Iterator<Object[]> tableValues, int size) {
 		Object[][] array = new Object[size][columnNames.length];
 		for(int i = 0; tableValues.hasNext(); i++) {
 			array[i] = tableValues.next();
 		}
-		return insertRecords(columnNames, array);
+		insertRecords(columnNames, array);
 	}
 	
 	/** Creates a blank Table */
@@ -272,10 +263,10 @@ class Crud {
 	public Object[][] mostValuableCustomers(int n) throws SQLException {
 		String query =
 		 "SELECT cust_email , SUM(sales.quantity * sale_price - " +
-		 "wholesale_cost) as revenue from sales\n" +
-		 "    inner join\n" +
-		 "    inventory i on sales.product_id = i.product_id\n" +
-		 "GROUP BY cust_email ORDER BY revenue desc limit " + n;
+		 "wholesale_cost) AS revenue FROM sales\n" +
+		 "    INNER JOIN\n" +
+		 "    inventory i ON sales.product_id = i.product_id\n" +
+		 "GROUP BY cust_email ORDER BY revenue DESC LIMIT " + n;
 		return getRecords(query(query));
 	}
 	

@@ -193,7 +193,7 @@ class SalesProcessor {
 			Integer quantity = quantityMap.get(productId);
 			sb.append("('").append(productId).append("',")
 			  .append(quantity).append(")")
-			  .append(idxItr.hasNext() ? "," : ";");
+			  .append(idxItr.hasNext()?",":";");
 		}
 		crud.update("Drop table if exists temp_table");
 		crud.update("Drop table if exists temp2");
