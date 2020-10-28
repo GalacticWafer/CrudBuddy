@@ -20,7 +20,7 @@ public class Order {
 	 Pattern.compile(".*<(?<email>\\w+@\\w+.\\w+)>");
 	public static final int INVALID = -2, CANCELLED = -1, UNPROCESSED = 0,
 	 QUANTITY_SHORTAGE = 1,
-	 PROCESSED = 2, FULFILLED = 4;
+	 PROCESSED = 2, SUGGESTED_EMAIL = 3, FULFILLED = 4;
 	private static final String NUMBER = "0123456789";
 	private static final String DATA_FOR_RANDOM_STRING =
 	 CHAR_LOWER + CHAR_UPPER + NUMBER;
