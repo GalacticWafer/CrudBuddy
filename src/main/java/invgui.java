@@ -56,10 +56,10 @@ public class invgui extends CRUDBuddyTest {
         JPanel center = new JPanel();
         if (!closed){ connection = "Connected"; }
         else { connection = "No Connection"; }
-        JLabel status = new JLabel("Status: " + connection);
-        if (closed == true){ status.setForeground(new Color(217, 85, 80));}
-        else { status.setForeground(new Color(131, 224, 158)); }
-        status.setFont(new Font("Aharoni", Font.BOLD, 22));
+        JLabel getStatus = new JLabel("Status: " + connection);
+        if (closed == true){ getStatus.setForeground(new Color(217, 85, 80));}
+        else { getStatus.setForeground(new Color(131, 224, 158)); }
+        getStatus.setFont(new Font("Aharoni", Font.BOLD, 22));
 
         center.setBackground(new Color(50,50,50));
         north.setBackground(new Color(20,20,20));
@@ -241,7 +241,7 @@ public class invgui extends CRUDBuddyTest {
         east.add(orderinv, c);
 
         frame.setBounds(200, 400, 1300, 620);
-        north.add(status);
+        north.add(getStatus);
         frame.add(north, BorderLayout.NORTH);
         frame.add(east, BorderLayout.EAST);
         frame.add(west, BorderLayout.WEST);
