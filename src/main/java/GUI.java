@@ -90,7 +90,7 @@ public class GUI {
 		MIDDLE_CONSTRAINTS.insets = new Insets(0, 0, 10, 0);
 		CENTER_PANEL.add(tableSelections, MIDDLE_CONSTRAINTS);
 		crud.setWorkingTable("inventory");
-		System.out.println(crud.getWorkingTable());
+		System.out.println(crud.getCurrentTable());
 		createTable();
 		sorter = new TableRowSorter<>(model);
 		table.setRowSorter(sorter);
@@ -493,7 +493,7 @@ public class GUI {
 	}
 	
 	private void setFromDatabase(String[] columnNames) throws SQLException {
-		ResultSet rs = crud.query("SELECT * FROM " + crud.getWorkingTable());
+		ResultSet rs = crud.query("SELECT * FROM " + crud.getCurrentTable());
 		data = new Object[crud.size()][columnNames.length];
 		for(int i = 0; rs.next() && i < data.length; i++) {
 			data[i] = new Object[columnNames.length];

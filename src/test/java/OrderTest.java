@@ -11,21 +11,21 @@ class OrderTest {
 	@Test
 	void add() {
 		buyerOd = new Order(LocalDate.now(), true, "55555");
-		buyerOd.add(new Product("TEST1234", 500));
+		buyerOd.addProduct(new Product("TEST1234", 500));
 		assertEquals(1, buyerOd.size());
 	}
 	
 	@Test
 	void canProcess() {
 		buyerOd = new Order(LocalDate.now(), true, "55555");
-		buyerOd.add(new Product("TEST1234", 500));
+		buyerOd.addProduct(new Product("TEST1234", 500));
 		assertTrue(buyerOd.canProcess());
 	}
 	
 	@Test
 	void cancel() {
 		buyerOd = new Order(LocalDate.now(), true, "55555");
-		buyerOd.cancel();
+		buyerOd.setStatus(Order.CANCELLED);
 		assertEquals(buyerOd.getStatus(), Order.CANCELLED);
 	}
 	

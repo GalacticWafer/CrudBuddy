@@ -18,38 +18,44 @@ import javax.mail.internet.MimeMultipart;
 public class Emailer {
 	public Emailer() {}
 	
-	private Message createNewMessage(Session session, String myAccountEmail,
-									 String recipient, String subject)
+	private Message createNewMessage
+	 (Session session, String myAccountEmail, String recipient, String subject)
 	throws MessagingException {
+		
 		Message message = new MimeMessage(session);
 		message.setFrom(new InternetAddress(myAccountEmail));
 		
-		message
-		 .setRecipient(
-		  Message.RecipientType.TO,
-		  new InternetAddress(recipient));
+		message.setRecipient(
+		 Message.RecipientType.TO,
+		 new InternetAddress(recipient)
+		);
+		
 		message.setSubject(subject);
 		return message;
-	}
+	} // End createNewMessage
 	
 	/** Extract the text content from a message */
 	private String getTextFromMessage(Message message)
 	throws MessagingException, IOException {
+		
 		String result = "";
+		
 		if(message.isMimeType("text/plain")) {
 			result = message.getContent().toString();
 		} else if(message.isMimeType("multipart/*")) {
 			MimeMultipart mimeMultipart = (MimeMultipart)message.getContent();
 			result = getTextFromMimeMultipart(mimeMultipart);
-		}
+		} // End if
 		return result;
-	}
+	} // End getTextFromMessage
 	
 	/** Recurse into email content until message is reached, and return it */
 	private String getTextFromMimeMultipart(
 	 MimeMultipart mimeMultipart) throws MessagingException, IOException {
+		
 		StringBuilder result = new StringBuilder();
 		int count = mimeMultipart.getCount();
+		
 		for(int i = 0; i < count; i++) {
 			BodyPart bodyPart = mimeMultipart.getBodyPart(i);
 			if(bodyPart.isMimeType("text/plain")) {
@@ -60,15 +66,15 @@ public class Emailer {
 			} else if(bodyPart.getContent() instanceof MimeMultipart) {
 				result.append(getTextFromMimeMultipart((MimeMultipart)bodyPart
 				 .getContent()));
-			}
-		}
+			} // End if
+		} // End for
 		return result.toString();
-	}
+	} // End getTextFromMimeMultipart
 	
-	private Message prepareAttachedMessage(Session session,
-										   String myAccountEmail,
-										   String recipient,
-										   File reportFile, String subject) {
+	private Message prepareAttachedMessage
+	 (Session session, String myAccountEmail, String recipient,
+	  File reportFile, String subject) {
+		
 		try {
 			BodyPart messageBodyPart = new MimeBodyPart();
 			
@@ -85,58 +91,72 @@ public class Emailer {
 			message.setContent(multi);
 			
 			return message;
-		}
-		catch(Exception ex) {
+		} catch(Exception ex) {
 			Logger.getLogger(Emailer.class.getName())
 				  .log(Level.SEVERE, null, ex);
-		}
+		} // End try-catch
 		return null;
-	}
+	} // End prepareAttachedMessage
 	
 	/** Prepare a message to be sent */
 	private Message prepareMessage
 	(String subject, String content, Session session,
 	 String myAccountEmail, String recipient) {
+		
 		try {
 			Message message =
 			 createNewMessage(session, myAccountEmail, recipient, subject);
 			message.setText(content);
 			return message;
-		}
-		catch(Exception ex) {
+		} catch(Exception ex) {
 			Logger.getLogger(Emailer.class.getName())
 				  .log(Level.SEVERE, null, ex);
-		}
+		} // End try-catch
 		return null;
-	}
+	} // End prepareMessage
 	
 	/**
-	 * Looks in the emails, and processes all items in each
+	 * <p>
+	 * Looks in the company inbox, and processes all product requests in each
+	 * message body.
+	 * Valid email orders should have each line in the csv format with
+	 * <code>date,email,location,product_id,quantity</code>.
+	 * for example:
+	 * <code>2020-01-02,saust@hotmail.com,38813,3R8YXZCS820Y,2</code>
+	 * </p>
+	 * <p>
+	 * @param crud the Crud object to use for calls to the database.
+	 * </p>
 	 */
 	public void processEmails(Crud crud)
 	throws MessagingException, IOException, SQLException {
+		
 		crud.setWorkingTable("sales");
 		Session session = Credentials.getSession();
-		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-		SalesProcessor processor = new SalesProcessor(crud);
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		OrderProcessor orderProcessor = new OrderProcessor(crud);
 		Message[] messages = Credentials.getMessages(session);
-		for(Message message: messages) {
+		
+		for(Message currentMessage: messages) {
 			Order order = null;
+			
 			String[] messageText =
-			 getTextFromMessage(message).trim().split("\n");
-			LocalDate date = LocalDate.parse(format.format(
-			 message.getSentDate()));
+			 getTextFromMessage(currentMessage).trim().split("\n");
+			
+			LocalDate date = LocalDate.parse(dateFormat.format(
+			 currentMessage.getSentDate()));
 			
 			Matcher m = Order.EMAIL_PATTERN.matcher(
-			 message.getFrom()[0].toString());
+			 currentMessage.getFrom()[0].toString());
+			
 			String email = m.find() ? m.group("email") : "";
 			
 			try {
 				for(String textLine: messageText) {
 					String[] s = textLine.split(",");
 					if(s.length != 4) {
-						if(message.getSubject().toUpperCase()
-								  .contains("cancel".toUpperCase())) {
+						if(currentMessage.getSubject().toUpperCase()
+										 .contains("cancel".toUpperCase())) {
 							String orderId = s[0];
 							Object[][] records = crud.getRecords(
 							 "SELECT * FROM sales where order_id = '"
@@ -147,10 +167,11 @@ public class Emailer {
 							 Arrays.deepToString(records));
 							// Todo  Daniel, roll back the order if it exists.
 							break;
-						}
-						message.setFlag(Flags.Flag.DELETED, true);
+						} // End if
+						currentMessage.setFlag(Flags.Flag.DELETED, true);
 						break;
-					}
+					} // End if
+					
 					String productId = s[0].trim();
 					int requestedQuantity = Integer.parseInt(s[1].trim());
 					boolean isSale = Boolean.parseBoolean(s[2].trim());
@@ -158,41 +179,64 @@ public class Emailer {
 					
 					if(order == null) {
 						order = new Order(date, isSale, location);
-						processor.setOrder(order);
-					}
-					order.add(new Product(productId, requestedQuantity));
-				}
+						orderProcessor.setCurrentOrder(order);
+					} // End if
+					
+					order.addProduct(new Product(
+					 productId,
+					 requestedQuantity));
+				} // End for
 				assert order != null;
 				order.setEmail(email);
-				processor.processOrder();
-				sendMail(order.getCustomerEmail(), order.getSubject(), order
+				orderProcessor.processOrder();
+				
+				sendMail(order.getCustomerEmail(), order
+				 .getResponseSubject(), order
 				 .getMessageText(), session, null);
-				message.setFlag(Flags.Flag.DELETED, true);
-			}
-			catch(Exception e) {
+				
+				currentMessage.setFlag(Flags.Flag.DELETED, true);
+			} catch(Exception e) {
 				System.out.println(e.getMessage());
 				// Todo: this email is in an improper format
-			}
-		}
-		processor.updateAndClose();
+			} // End try-catch
+		} // End for
+		orderProcessor.updateAndClose();
 	}
 	
 	/**
 	 * Send an email to a customer to indicate order confirmation or
 	 * cancellation
+	 *
+	 * @param recipientAddress
+	 *  the email address to send the message to.
+	 * @param messageSubject
+	 *  the subject of the email.
+	 * @param messageContent
+	 *  the main body of text in the email.
+	 * @param emailSession
+	 *  the session object to facilitate sending the message.
+	 * @param reportFile
+	 *  optional file to send, such as a report(leave null if not sending any
+	 *  reports).
+	 *
+	 * @throws MessagingException if the messaging service encounters an error.
 	 */
-	public void sendMail(String toAddress, String subject, String content,
-						 Session session, File reportFile)
+	public void sendMail(String recipientAddress, String messageSubject,
+						 String messageContent,
+						 Session emailSession, File reportFile)
+	
 	throws MessagingException {
+		
 		Message message =
 		 reportFile == null ?
-		  prepareMessage(subject, content, session, Credentials
-		   .getEmail(), toAddress)
-		  : prepareAttachedMessage(session, Credentials
-		  .getEmail(), toAddress, reportFile, subject);
+		  prepareMessage(messageSubject, messageContent, emailSession,
+		   Credentials
+		   .getEmail(), recipientAddress)
+		  : prepareAttachedMessage(emailSession, Credentials
+		  .getEmail(), recipientAddress, reportFile, messageSubject);
 		
 		assert message != null;
 		Transport.send(message);
 		System.out.println();
-	}
-}
+	} // End processEmails
+} // End Emailer

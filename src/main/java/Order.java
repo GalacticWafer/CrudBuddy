@@ -1,6 +1,5 @@
 import org.jetbrains.annotations.NotNull;
 
-import java.io.PrintWriter;
 import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -24,6 +23,7 @@ public class Order {
 	private static final String NUMBER = "0123456789";
 	private static final String DATA_FOR_RANDOM_STRING =
 	 CHAR_LOWER + CHAR_UPPER + NUMBER;
+	
 	public static final String[] SALES_COLUMNS = new String[] {
 	 "order_id",
 	 "date_ordered",
@@ -34,15 +34,12 @@ public class Order {
 	 "product_quantity",
 	 "status",
 	 };
-	private Boolean canProcess;
-	private Product current;
+	
 	private LocalDate dateAccepted;
 	private LocalDate dateOrdered;
 	private String email;
 	private boolean isSale;
 	private ArrayList<Product> products;
-	private Iterator<Product> iterator;
-	private Iterator<Product> itr;
 	private final String location;
 	private String messageText;
 	public String orderId;
@@ -50,30 +47,26 @@ public class Order {
 	private int status;
 	private String subject;
 	
+	
 	public Order(LocalDate date,
 				 boolean isSale, String location) {
 		dateOrdered = date;
 		this.isSale = isSale;
 		this.location = location;
 		this.orderId = generateId();
-		canProcess = null;
 		status = UNPROCESSED;
 		products = new ArrayList<>();
-	}
+	} // End constructor
 	
 	/** Add an item to this order. */
-	public void add(Product item) {
+	public void addProduct(Product item) {
 		products.add(item);
-	}
+	} // End addProduct
 	
 	/** @return true if the order can be processed. */
 	public boolean canProcess() {
 		return status == UNPROCESSED;
-	}
-	
-	public void cancel() {
-		status = CANCELLED;
-	}
+	} // End canProcess
 	
 	private String generateId() {
 		int ORDER_ID_LENGTH = 10;
@@ -84,54 +77,50 @@ public class Order {
 			sb.append((randomChar + "").toUpperCase());
 		}
 		return sb.toString();
-	}
+	} // End generateId 
 	
-	public String getCustomerEmail() {return email;}
+	public String getCustomerEmail() {return email;} // End getCustomerEmail
 	
 	/** @return null if the order has not been processed or accepted. */
 	public LocalDate getDateAccepted() {
 		return dateAccepted;
-	}
+	} // End getDateAccepted
 	
-	public LocalDate getDateOrdered() {return dateOrdered;}
+	public LocalDate getDateOrdered() {return dateOrdered;} // End getDateOrdered
 	
 	/** @return the unique order ID for all items in this Order. */
-	public String getId() {return orderId;}
+	public String getId() {return orderId;} // End getId
 	
-	public ArrayList<Product> getProducts() { return products; }
+	public String getLocation() {return location;} // End getLocation
 	
-	public String getLocation() {return location;}
-	
-	public String getMessageText() { return messageText; }
+	public String getMessageText() { return messageText; } // End getMessageText 
 	
 	public int getStatus() {
 		return status;
-	}
+	} // End getStatus
 	
 	@NotNull public String getStatusString() {
 		return isCancelled() ? "Cancelled" :
 		 isProcessed() ? "Processed" :
 		  canProcess() ? "Being Processed" :
 		   "Cannot Be Processed";
-	}
+	} // End getStatusString
 	
-	public String getSubject() { return subject; }
+	public String getResponseSubject() { return subject; } // End getResponseSubject
 	
-	private boolean isCancelled() { return status == CANCELLED; }
+	private boolean isCancelled() { return status == CANCELLED; } // isCancelled
 	
-	public boolean isProcessed() { return status == PROCESSED; }
+	public boolean isProcessed() { return status == PROCESSED; } // End isProcessed
 	
-	public boolean isSale() {return isSale;}
+	public boolean isSale() {return isSale;} // End isSale
 	
-	public Iterator<Product> iterator() {
+	public Iterator<Product> productIterator() {
 		return products.iterator();
-	}
+	} // End productIterator
 	
-	public void setCanProcess(boolean bool) { canProcess = bool; }
+	public void setDateAccepted(LocalDate today) { this.dateAccepted = today; } // End setDateAccepted
 	
-	public void setDateAccepted(LocalDate today) { this.dateAccepted = today; }
-	
-	public void setEmail(String email) {this.email = email;}
+	public void setEmail(String email) {this.email = email;} // End setEmail
 	
 	public void setStatus(int status) {
 		if(status == INVALID || status == CANCELLED) {
@@ -146,26 +135,26 @@ public class Order {
 			return;
 		}
 		this.status = Math.max(status, this.status);
-	}
+	} // End setEmail
 	
 	public void setSubject(String subject) {
 		this.subject = subject;
-	}
+	} // End setSubject
 	
 	public void setText(String s) {
 		this.messageText = s;
-	}
+	} // End setText 
 	
 	public int size() {
 		return products.size();
-	}
+	} // End size
 	
 	/** @return the Object array to use as an new row in the SQL sales table
 	 * . */
 	public ArrayList<Object[]> toArray() {
 		ArrayList<Object[]> array = new ArrayList<>();
 		ArrayList<Object> test = new ArrayList<>();
-		for(Iterator<Product> it = iterator(); it.hasNext();) {
+		for(Iterator<Product> it = productIterator(); it.hasNext();) {
 			Product p = it.next();
 			test.add(getId());
 			test.add(dateOrdered.plusDays(1).toString());
@@ -187,7 +176,7 @@ public class Order {
 			 });
 		}
 		return array;
-	}
+	} // End toArray
 	
 	@Override public String toString() {
 		return
@@ -201,5 +190,5 @@ public class Order {
 		 "dateOrdered: " + dateOrdered +
 		 "dateAccepted: " + dateAccepted +
 		 "location: " + location;
-	}
-}
+	} // End toString
+} // Ond class Order

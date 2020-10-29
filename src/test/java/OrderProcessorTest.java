@@ -10,10 +10,10 @@ import java.util.Scanner;
 
 import static org.junit.Assert.*;
 
-public class SalesProcessorTest {
+public class OrderProcessorTest {
 	private Restoration rest;
 	
-	SalesProcessorTest() throws SQLException, ClassNotFoundException {}
+	OrderProcessorTest() throws SQLException, ClassNotFoundException {}
 	int[] buyerQuantities = new int[] {2, 1, 1, 2};
 	private final Crud crud = Credentials.databaseLogin();
 	private final LocalDate date = LocalDate.parse("2020-01-02");
@@ -28,7 +28,7 @@ public class SalesProcessorTest {
 	int[] sellerQuantities = new int[] {90, 400, 760, 25};
 	
 	@Test
-	public void assertRestock() throws SQLException, FileNotFoundException {
+	public void assertRestock() {
 		Order sellerEventOrder =
 		 new Order(date, false, location);
 		sellerEventOrder.setEmail("some_supplier@somewhere.com");
@@ -37,7 +37,7 @@ public class SalesProcessorTest {
 	}
 	
 	@Test
-	public void assertSold() throws SQLException, FileNotFoundException {
+	public void assertSold() {
 		Order buyerEventOrder =
 		 new Order(date, true, location);
 		buyerEventOrder.setEmail("some_buyer@somewhere.com");
@@ -76,7 +76,7 @@ public class SalesProcessorTest {
 	void runFileOrders()
 	throws SQLException, FileNotFoundException, ClassNotFoundException {
 		new Restoration(Credentials.databaseLogin(), "little_inventory.csv", true);
-		SalesProcessor processor = new SalesProcessor(crud);
+		OrderProcessor processor = new OrderProcessor(crud);
 		HashMap<String, Integer> oldQuantities = getInts(productIds.length);
 		processor.runFileOrders("little_order_test.csv");
 		HashMap<String, Integer> newQuantities = getInts(productIds.length);
@@ -102,16 +102,15 @@ public class SalesProcessorTest {
 	void setOrder() {
 	}
 	
-	private void simulateOrder(String filePath, int[] eventQuantities,
-							   Order eventOrder)
-	throws FileNotFoundException, SQLException {
+	private void simulateOrder
+	 (String filePath, int[] eventQuantities, Order eventOrder) {
 	/*	Restoration.rebuild(crud, filePath);
 		SalesProcessor salesProcessor = new SalesProcessor(crud);
-		salesProcessor.setOrder(eventOrder);
+		salesProcessor.setCurrentOrder(eventOrder);
 		crud.setWorkingTable("inventory");
 		//int[] oldQuantities = getInts(eventQuantities.length);
 		for(int i = 0; i < eventQuantities.length; i++) {
-			eventOrder.add(new Product(productIds[i], eventQuantities[i]));
+			eventOrder.addProduct(new Product(productIds[i], eventQuantities[i]));
 		}
 		salesProcessor.runFileOrders("little_order_test.csv");
 		salesProcessor.updateAndClose();
