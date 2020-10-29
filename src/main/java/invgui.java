@@ -56,10 +56,10 @@ public class invgui extends CRUDBuddyTest {
         JPanel center = new JPanel();
         if (!closed){ connection = "Connected"; }
         else { connection = "No Connection"; }
-        JLabel status = new JLabel("Status: " + connection);
-        if (closed == true){ status.setForeground(new Color(217, 85, 80));}
-        else { status.setForeground(new Color(131, 224, 158)); }
-        status.setFont(new Font("Aharoni", Font.BOLD, 22));
+        JLabel getStatus = new JLabel("Status: " + connection);
+        if (closed == true){ getStatus.setForeground(new Color(217, 85, 80));}
+        else { getStatus.setForeground(new Color(131, 224, 158)); }
+        getStatus.setFont(new Font("Aharoni", Font.BOLD, 22));
 
         center.setBackground(new Color(50,50,50));
         north.setBackground(new Color(20,20,20));
@@ -80,7 +80,7 @@ public class invgui extends CRUDBuddyTest {
         middle.gridx = 0;
         middle.gridy = 0;
         middle.insets = new Insets(5,40,0,50);  //top padding
-        center.add(tname, middle);
+        center.addProduct(tname, middle);
 
         CRUDBuddy crud = new CRUDBuddy(userName, password, ipAddress, portNumber, databaseName);
         closed = crud.isClosed();
@@ -100,11 +100,11 @@ public class invgui extends CRUDBuddyTest {
             Object sale_price = rs.getDouble("sale_price");
             String supplier_id = rs.getString("supplier_id");
 
-            rows.add(new Object[] {
+            rows.addProduct(new Object[] {
                     idx, product_id, quantity, wholesale_cost, sale_price, supplier_id
             });
         }
-        Iterator<Object[]> row_it = rows.iterator();
+        Iterator<Object[]> row_it = rows.productIterator();
         Object[][] data = new Object[i][6];
         for(int i1 = 0; i1 < data.length; i1++) {
             data[i1] = row_it.next();
@@ -124,7 +124,7 @@ public class invgui extends CRUDBuddyTest {
         inv.setGridColor(new Color(110,110,110));
         inv.setForeground(new Color(125, 211, 224));
         inv.setFont(new Font("Aharoni", Font.BOLD, 15));
-        center.add(inv, middle);
+        center.addProduct(inv, middle);
 
         scrollPane = new JScrollPane(inv);
         scrollPane.setVisible(true);
@@ -132,7 +132,7 @@ public class invgui extends CRUDBuddyTest {
         scrollPane.setBorder(new LineBorder(new Color(110, 110, 110),2));
         scrollPane.getVerticalScrollBar().setUI(new BasicScrollBarUI() );
         scrollPane.getHorizontalScrollBar().setUI(new BasicScrollBarUI());
-        center.add(scrollPane, middle);
+        center.addProduct(scrollPane, middle);
 
         GridBagConstraints c = new GridBagConstraints();
         JLabel pid = new JLabel("Product ID ");
@@ -141,7 +141,7 @@ public class invgui extends CRUDBuddyTest {
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridx = 0;
         c.gridy = 0;
-        east.add(pid, c);
+        east.addProduct(pid, c);
         JTextField productid  = new JTextField(10); //creates textfield with 10 columns
         productid.setBackground(new Color(110, 110, 110));
         productid.setForeground(new Color(255, 255, 255));
@@ -150,7 +150,7 @@ public class invgui extends CRUDBuddyTest {
         c.gridx = 1;
         c.gridy = 0;
         c.insets = new Insets(0,0,0,20);  //top padding
-        east.add(productid, c);
+        east.addProduct(productid, c);
 
         productid.addActionListener(
                 new ActionListener() {
@@ -167,7 +167,7 @@ public class invgui extends CRUDBuddyTest {
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridx = 0;
         c.gridy = 2;
-        east.add(sid, c);
+        east.addProduct(sid, c);
         JTextField supplierid  = new JTextField(10); //creates textfield with 10 columns
         supplierid.setBackground(new Color(110, 110, 110));
         supplierid.setForeground(new Color(255, 255, 255));
@@ -175,7 +175,7 @@ public class invgui extends CRUDBuddyTest {
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridx = 1;
         c.gridy = 2;
-        east.add(supplierid, c);
+        east.addProduct(supplierid, c);
 
         JLabel qty = new JLabel("Quantity ");
         qty.setForeground(new Color(110, 110, 110));
@@ -183,7 +183,7 @@ public class invgui extends CRUDBuddyTest {
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridx = 0;
         c.gridy = 3;
-        east.add(qty, c);
+        east.addProduct(qty, c);
         JTextField quantity  = new JTextField(10); //creates textfield with 10 columns
         quantity.setBackground(new Color(110, 110, 110));
         quantity.setForeground(new Color(255, 255, 255));
@@ -191,7 +191,7 @@ public class invgui extends CRUDBuddyTest {
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridx = 1;
         c.gridy = 3;
-        east.add(quantity, c);
+        east.addProduct(quantity, c);
 
         JLabel wholesale = new JLabel("Wholesale ");
         wholesale.setForeground(new Color(110, 110, 110));
@@ -199,14 +199,14 @@ public class invgui extends CRUDBuddyTest {
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridx = 0;
         c.gridy = 4;
-        east.add(wholesale, c);
+        east.addProduct(wholesale, c);
         JLabel wsamount = new JLabel("temp");
         wsamount.setForeground(new Color(125, 211, 224));
         wsamount.setFont(new Font("Aharoni", Font.BOLD, 22));
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridx = 1;
         c.gridy = 4;
-        east.add(wsamount, c);
+        east.addProduct(wsamount, c);
 
         JLabel sale = new JLabel("Set Sale Price ");
         sale.setForeground(new Color(110, 110, 110));
@@ -214,7 +214,7 @@ public class invgui extends CRUDBuddyTest {
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridx = 0;
         c.gridy = 5;
-        east.add(sale, c);
+        east.addProduct(sale, c);
         JTextField saleprice = new JTextField(10); //creates textfield with 10 columns
         saleprice.setBackground(new Color(110, 110, 110));
         saleprice.setForeground(new Color(255, 255, 255));
@@ -222,7 +222,7 @@ public class invgui extends CRUDBuddyTest {
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridx = 1;
         c.gridy = 5;
-        east.add(saleprice, c);
+        east.addProduct(saleprice, c);
 
         JLabel inventory = new JLabel("Order Inventory ");
         inventory.setForeground(new Color(110, 110, 110));
@@ -230,7 +230,7 @@ public class invgui extends CRUDBuddyTest {
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridx = 0;
         c.gridy = 6;
-        east.add(inventory, c);
+        east.addProduct(inventory, c);
         JTextField orderinv = new JTextField(10); //creates textfield with 10 columns
         orderinv.setBackground(new Color(110, 110, 110));
         orderinv.setForeground(new Color(255, 255, 255));
@@ -238,15 +238,15 @@ public class invgui extends CRUDBuddyTest {
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridx = 1;
         c.gridy = 6;
-        east.add(orderinv, c);
+        east.addProduct(orderinv, c);
 
         frame.setBounds(200, 400, 1300, 620);
-        north.add(status);
-        frame.add(north, BorderLayout.NORTH);
-        frame.add(east, BorderLayout.EAST);
-        frame.add(west, BorderLayout.WEST);
-        frame.add(south, BorderLayout.SOUTH);
-        frame.add(center, BorderLayout.CENTER);
+        north.addProduct(getStatus);
+        frame.addProduct(north, BorderLayout.NORTH);
+        frame.addProduct(east, BorderLayout.EAST);
+        frame.addProduct(west, BorderLayout.WEST);
+        frame.addProduct(south, BorderLayout.SOUTH);
+        frame.addProduct(center, BorderLayout.CENTER);
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 

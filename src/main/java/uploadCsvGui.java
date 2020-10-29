@@ -14,9 +14,7 @@ class 	uploadCsvGui {
 	private String[] columns;
 	private String fileName;
 	private final Crud crud;
-	private static final Pair<String, String> PRIMARY_KEY = new Pair("idx", "int(16)");
 	private static HashMap<Integer, String> typeMap;
-	
 	public void setColumns(String[] columns) {
 		this.columns = columns;
 	}
@@ -105,13 +103,13 @@ class 	uploadCsvGui {
 				for(int j = 0; j < radioButtons.length - 1; j++) {
 					JRadioButton radioButton = (JRadioButton)bs.nextElement();
 					if(radioButton.isSelected() && bs.hasMoreElements()) {
-						PRIMARY_KEY.setValue(J_TO_SQL.get(j));
+						Crud.PRIMARY_K = J_TO_SQL.get(j);
 						foundButton = true;
 					}
 				}
-				if(! foundButton) {
-					PRIMARY_KEY.setValue("idx".trim());
-					PRIMARY_KEY.setValue("int(16)".trim());
+				if(!foundButton) {
+					Crud.PRIMARY_K = "idx".trim();
+					Crud.PRIMARY_V = "int(16)".trim();
 				}
 				typeMap = new HashMap<>();
 				for(int j = 0; j < boxes.length; j++) {
@@ -150,12 +148,12 @@ class 	uploadCsvGui {
 	
 	/** Creates one sql string for an entire csv file, to create and populate a table. */
 	private void batchSqlString
-	(String tableName, String[] columns, Scanner scanner)
+	(String tableName, String[] columnNames, Scanner scanner)
 	throws SQLException {
 		if(typeMap != null) {
-			crud.insertTable(tableName, columns, typeMap);
+			crud.insertTable(tableName, columnNames, typeMap);
 			StringBuilder sf = new StringBuilder(String.format("INSERT INTO %s %s VALUES"
-			 , tableName, crud.getColumnsTuple(columns)));
+			 , tableName, "(" + String.join(",", columnNames) + ")"));
 			String sqlDeclaration = sf.toString();
 			if(scanner.hasNextLine()) {
 				scanner.nextLine();
@@ -178,15 +176,13 @@ class 	uploadCsvGui {
 				if(i > 1) {
 					sf.replace(sf.length() - 1, sf.length(), ";");
 					long start = System.nanoTime();
-					crud.updateF(sf.toString());
+					crud.update(sf.toString());
 					long end = System.nanoTime();
 					System.out.println("uploading new csv time: " + (end - start));
 				}
 			}
 			scanner.close();
-			JOptionPane.showMessageDialog(null, crud.format(
-			 "The csv file has been exported to %s in the %s database.",
-			 tableName, crud.getDatabaseName()));
+			JOptionPane.showMessageDialog(null, "The csv file has been exported to " + tableName + " in the " + crud.getDatabaseName() + " database.");
 		}
 	}
 	public static final Map<String, String> J_TO_SQL2 = Map

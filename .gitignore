@@ -24,3 +24,5 @@ hs_err_pid*
 :src/main/java/Credentials.java
 src/main/java/Main.java
 /src/main/java/Credentials.java
+src/main/java/Recommendations.java
+
