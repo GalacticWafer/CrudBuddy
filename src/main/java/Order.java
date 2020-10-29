@@ -26,12 +26,12 @@ public class Order {
 	
 	public static final String[] SALES_COLUMNS = new String[] {
 	 "order_id",
-	 "date_ordered",
-	 "date_accepted",
 	 "cust_email",
 	 "cust_location",
 	 "product_id",
 	 "product_quantity",
+	 "date_ordered",
+	 "date_accepted",
 	 "status",
 	 };
 	
@@ -153,28 +153,19 @@ public class Order {
 	 * . */
 	public ArrayList<Object[]> toArray() {
 		ArrayList<Object[]> array = new ArrayList<>();
-		ArrayList<Object> test = new ArrayList<>();
 		for(Iterator<Product> it = productIterator(); it.hasNext();) {
 			Product p = it.next();
-			test.add(getId());
-			test.add(dateOrdered.plusDays(1).toString());
-			test.add(dateAccepted.plusDays(1).toString());
-			test.add(getCustomerEmail());
-			test.add(getLocation());
-			test.add(p.getId());
-			test.add(p.getQuantity());
-			test.add(status);
-			array.add(new Object[] {
-			 getId(),
-			 dateOrdered.plusDays(1).toString(),
-			 dateAccepted.plusDays(1).toString(),
-			 getCustomerEmail(),
-			 getLocation(),
-			 p.getId(),
-			 p.getQuantity(),
-			 status,
+			array.add(new Object[] {  // public static final String[] SALES_COLUMNS =
+			 getId(),                 // "order_id",
+			 getCustomerEmail(),      // "cust_email",
+			 getLocation(),           // "cust_location",
+			 p.getId(),               // "product_id",
+			 p.getQuantity(),         // "product_quantity",
+			 dateOrdered.toString(),  // "date_ordered",
+			 dateAccepted.toString(), // "date_accepted",
+			 status,                  // "status",
 			 });
-		}
+		} // End for
 		return array;
 	} // End toArray
 	
