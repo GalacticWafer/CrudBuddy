@@ -144,13 +144,13 @@ class SalesProcessor {
 		String[] line = scanner.nextLine().split(",");
 		Order order = new Order(LocalDate.parse(line[0]),
 		 true, line[2]);
-		order.setEmail(line[0]);
+		order.setEmail(line[1]);
 		setOrder(order);
 		while(line != null) {
 			Product item = new Product(
 			 line[3], Integer.parseInt(line[4]));
 			LocalDate date = LocalDate.parse(line[0]);
-			if(!(order.getCustomerEmail().equals(line[0]) &&
+			if(!(order.getCustomerEmail().equals(line[1]) &&
 				 order.getLocation().equals(line[2]) &&
 				 order.getDateOrdered().isEqual(date) &&
 				 scanner.hasNextLine())) {
@@ -158,7 +158,7 @@ class SalesProcessor {
 				processOrder();
 				order = new Order(LocalDate.parse(line[0]),
 				 true, line[2]);
-				order.setEmail(line[0]);
+				order.setEmail(line[1]);
 				setOrder(order);
 			}
 			order.add(item);

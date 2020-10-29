@@ -164,21 +164,12 @@ public class Order {
 	 * . */
 	public ArrayList<Object[]> toArray() {
 		ArrayList<Object[]> array = new ArrayList<>();
-		ArrayList<Object> test = new ArrayList<>();
 		for(Iterator<Product> it = iterator(); it.hasNext();) {
 			Product p = it.next();
-			test.add(getId());
-			test.add(dateOrdered.plusDays(1).toString());
-			test.add(dateAccepted.plusDays(1).toString());
-			test.add(getCustomerEmail());
-			test.add(getLocation());
-			test.add(p.getId());
-			test.add(p.getQuantity());
-			test.add(status);
 			array.add(new Object[] {
 			 getId(),
-			 dateOrdered.plusDays(1).toString(),
-			 dateAccepted.plusDays(1).toString(),
+			 dateOrdered.toString(),
+			 dateAccepted.toString(),
 			 getCustomerEmail(),
 			 getLocation(),
 			 p.getId(),
