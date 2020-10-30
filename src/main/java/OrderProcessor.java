@@ -194,7 +194,7 @@ class OrderProcessor {
 		Order order = new Order(
 		 LocalDate.parse(line[0]), true, line[2]);
 		
-		order.setEmail(line[0]);
+		order.setEmail(line[1]);
 		this.setCurrentOrder(order);
 		
 		while(line != null) {
@@ -204,23 +204,32 @@ class OrderProcessor {
 			
 			LocalDate date = LocalDate.parse(line[0]);
 			
-			boolean isNewEmail = !order.getCustomerEmail().equals(line[0]);
+			boolean isNewEmail = !order.getCustomerEmail().equals(line[1]);
 			boolean isNewLocation = !order.getLocation().equals(line[2]);
 			boolean isNewDate = !order.getDateOrdered().isEqual(date);
 			
-			if(isNewEmail
-			   || isNewLocation
-			   || isNewDate
-			   || scanner.hasNextLine()) {
+			boolean isNewOrder = isNewEmail
+								 || isNewLocation
+								 || isNewDate;
+			
+			if(isNewOrder || !scanner.hasNextLine()) {
 				
-				order.addProduct(nextProduct);
+				if(!scanner.hasNextLine() && isNewOrder) { 
+					order.addProduct(nextProduct);
+				} // End if
+				
 				processOrder();
 				
 				order = new Order(
 				 LocalDate.parse(line[0]), true, line[2]);
 				
-				order.setEmail(line[0]);
+				order.setEmail(line[1]);
 				setCurrentOrder(order);
+				
+				if(!scanner.hasNextLine()) {
+					break;
+				} // End if
+				
 			} // End if
 			
 			order.addProduct(nextProduct);
@@ -228,6 +237,8 @@ class OrderProcessor {
 			if(scanner.hasNextLine()) {
 				line = scanner.nextLine().split(",");
 			} else {
+				nextProduct = new Product(
+				 line[3], Integer.parseInt(line[4]));
 				line = null;
 			} // End if
 		} // End while

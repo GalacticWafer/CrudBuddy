@@ -380,8 +380,8 @@ class Crud {
 	throws SQLException {
 		
 		String query =
-		 "select product_id, sum(quantity) as totalQuantity from sales " +
-		 " group by \nproduct_id order by sum(quantity) desc limit " + limit;
+		 "select product_id, sum(product_quantity) as totalQuantity from sales " +
+		 " group by \nproduct_id order by sum(product_quantity) desc limit " + limit;
 		return getRecords(query(query));
 	} // End mostOrderedProducts
 	
@@ -398,7 +398,7 @@ class Crud {
 	public Object[][] mostValuableCustomers(int rowResultLimit) throws SQLException {
 		
 		String query =
-		 "SELECT cust_email , SUM(sales.quantity * sale_price - " +
+		 "SELECT cust_email , SUM(sales.product_quantity * sale_price - " +
 		 "wholesale_cost) AS revenue FROM sales\n" +
 		 "    INNER JOIN\n" +
 		 "    inventory i ON sales.product_id = i.product_id\n" +
@@ -591,7 +591,7 @@ class Crud {
 		
 		String sql =
 		 " CREATE TEMPORARY TABLE IF NOT EXISTS " + newTableName +
-		 " AS (SELECT customer_email, SUM(sales.quantity * " +
+		 " AS (SELECT customer_email, SUM(sales.product_quantity * " +
 		 "(sale_price - wholesale_cost)) AS revenue " +
 		 " FROM sales " +
 		 
