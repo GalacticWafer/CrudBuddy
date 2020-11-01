@@ -105,22 +105,21 @@ class Crud {
 	 * @throws SQLException
 	 *  if there is an issue with the sql command or connection.
 	 */
-	public Object getAssetTotal(String onDate)
+	public Object[][] getAssetTotal(String onDate)
 	throws SQLException {
 		
 		String query = (onDate == null) ?
 		 "SELECT SUM(quantity * (sale_price - wholesale_cost))" +
-		 "as assets from cs3250_project.inventory" :
-		 "SELECT date_accepted, SUM(cs3250_project.sales.quantity * " +
+		 "as assets from inventory" :
+		 "SELECT date_accepted, SUM(sales.product_quantity * " +
 		 "(sale_price - wholesale_cost)) \n" +
 		 "        as assets from sales\n" +
-		 "INNER JOIN inventory _inventory on sales.product_id = _inventory" +
-		 ".product_id\n" +
+		 "INNER JOIN inventory on sales.product_id = inventory.product_id\n" +
 		 "WHERE date_accepted = '" + onDate + "' GROUP BY date_accepted";
 		
 		ResultSet rs = query(query);
 		rs.next();
-		return rs.getObject(1);
+		return getRecords(rs);
 	} // End getAssetTotal
 	
 	/**

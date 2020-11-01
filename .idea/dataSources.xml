@@ -7,5 +7,11 @@
       <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://45.79.55.190:3306/ubello</jdbc-url>
     </data-source>
+    <data-source source="LOCAL" name="dbowling21" uuid="d3e0c7fa-8425-4ee3-9662-655932c27bb8">
+      <driver-ref>mysql.8</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://45.79.55.190:3306/dbowling21</jdbc-url>
+    </data-source>
   </component>
 </project>
