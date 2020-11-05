@@ -1,3 +1,5 @@
+import org.jfree.ui.RefineryUtilities;
+
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.UIManager;
@@ -8,10 +10,15 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -379,22 +386,50 @@ public class GUI {
 			}
 		}); //end of search filter
 		
-		JButton analyzer = new JButton("Analyze");
-		analyzer.setBackground(GREY_110x3);
-		analyzer.setFont(FONT);
-		analyzer.setForeground(TABLE_FOREGROUND);
-		analyzer.setBorder(new LineBorder(DARK_GREY, 2));
+		JButton assetsOT = new JButton("Assets OT");
+		assetsOT.setBackground(GREY_110x3);
+		assetsOT.setFont(FONT);
+		assetsOT.setForeground(TABLE_FOREGROUND);
+		assetsOT.setBorder(new LineBorder(DARK_GREY, 2));
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 6;
-		east.add(analyzer, c);
+		east.add(assetsOT, c);
+		assetsOT.addActionListener(e -> {
+			Object[][] data = new Object[0][];
+			try {
+				data = crud.getAssetTotal("");
+			} catch (SQLException throwables) {
+				throwables.printStackTrace();
+			}
+			System.out.println(data[0][0]);
+			java.util.List<Object[]> yearToDateData = new ArrayList<>();
+			List<Date> dates = new ArrayList<>();
+			Date Jan = StringToDate("2020-02-31");
+			for (int i = 0; i < data.length; i++) {
+				yearToDateData.add(data[i]);
+				dates.add((Date)data[i][0]);
+				if (dates.get(i).compareTo(Jan) > 0){
+					try {
+						makePlot("MYCROWSAWFT", "Assets", yearToDateData, dates.get(i));
+					} catch (SQLException | IOException throwables) {
+						throwables.printStackTrace();
+					}
+					//save();
+				}
+			}
+			LinePlot ytd = new LinePlot("MYCROWSAWFT", "Assets", yearToDateData);
+			ytd.pack();
+			RefineryUtilities.positionFrameRandomly(ytd);
+			ytd.setVisible(true);
+		});
 		/*analyzer.addActionListener(e -> {
-			
+
 			String newTableName = null;
 			try {
 				int count = Integer.parseInt(JOptionPane.showInputDialog(
 				 "Please enter the amount records you would like to see"));
-				
+
 				String d = JOptionPane.showInputDialog(
 				 null,
 				 "what date would you like to see results for? (leave blank " +
@@ -403,12 +438,12 @@ public class GUI {
 				if(d != "") {
 					date = LocalDate.parse(d);
 				}
-				
+
 				boolean isDescending =
 				 JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog
 				  (null, "Should the results be ascending?\"",
 				   "Is Descending", JOptionPane.YES_NO_OPTION);
-				
+
 				newTableName =
 				 crud.mostOrderedProducts((date == null ? null :date.toString
 				 ()), count, isDescending, this);
@@ -425,7 +460,7 @@ public class GUI {
 			catch(SQLException throwables) {
 				throwables.printStackTrace();
 			}
-			
+
 			*//*JOptionPane
 			 .showMessageDialog
 			  (null,
@@ -444,7 +479,34 @@ public class GUI {
 			   "call crud.setWorkingTable(<some_other_table_string_name)");*//*
 		});*/
 	}
-	
+
+	private static void makePlot(String title, String chartTitle, List<Object[]> list, Date date)
+			throws SQLException, IOException {
+
+		LinePlot plot = new LinePlot(title, chartTitle, list);
+		plot.pack();
+		RefineryUtilities.positionFrameRandomly(plot);
+		plot.setVisible(false);
+		plot.save(chartTitle + "_" + DateToString(date) + ".png");
+	}
+
+	public static Date StringToDate(String s){
+		Date result = null;
+		try{
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			result  = dateFormat.parse(s);
+		}
+		catch(ParseException e){
+			e.printStackTrace();
+		}
+		return result ;
+	}
+
+	public static String DateToString(Date d){
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		String date = dateFormat.format(d);
+		return date;
+	}
 	private void refresh() throws SQLException {
 		setFromDatabase(crud.getColumnNames());
 		DefaultTableModel dm = (DefaultTableModel)table.getModel();
