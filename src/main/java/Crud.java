@@ -112,10 +112,12 @@ class Crud {
 				"SELECT SUM(quantity * (sale_price - wholesale_cost))" +
 						"as assets from inventory" :
 				"SELECT date_accepted, SUM(sales.product_quantity * " +
-						"(sale_price - wholesale_cost)) \n" +
-						"        as assets from sales\n" +
-						"INNER JOIN inventory on sales.product_id = inventory.product_id\n" +
-						"WHERE date_accepted = '" + onDate + "' GROUP BY date_accepted";
+						"(sale_price - wholesale_cost)) " +
+						"        as assets from sales " +
+						"INNER JOIN inventory on sales.product_id = inventory.product_id " +
+						"GROUP BY date_accepted " +
+						"ORDER BY date_accepted ASC";
+					//	"WHERE date_accepted = '" + onDate + "' GROUP BY date_accepted";
 
 		ResultSet rs = query(query);
 		rs.next();
@@ -591,17 +593,17 @@ class Crud {
 		
 		String sql =
 		 " CREATE TEMPORARY TABLE IF NOT EXISTS " + newTableName +
-		 " AS (SELECT customer_email, SUM(sales.product_quantity * " +
+		 " AS (SELECT cust_email, SUM(sales.product_quantity * " +
 		 "(sale_price - wholesale_cost)) AS revenue " +
 		 " FROM sales " +
 		 
 		 dateClause +
 		 
-		 " INNER JOIN customers _customers on sales.customer_email" +
-		 " = _customers.email " +
-		 " INNER JOIN inventory i on sales.product_id = i" +
-		 ".product_id " +
-		 " GROUP BY customer_email " +
+		 " INNER JOIN customers on sales.cust_email" +
+		 " = customers.cust_email " +
+		 " INNER JOIN inventory on sales.product_id = " +
+		 "inventory.product_id " +
+		 " GROUP BY cust_email " +
 		 " ORDER BY revenue " + (isDescending ? " DESC" : "ASC") +
 		 " LIMIT " + limit + ")";
 		

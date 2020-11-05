@@ -51,8 +51,8 @@ public class Restoration {
 					"cust_location 		VARCHAR(100)," +
 					"product_id     	VARCHAR(12)," +
 					"product_quantity   INT(16)," +
-					"date_ordered 		DATE," +
-					"date_accepted 		DATE," +
+					"date_ordered 		DATETIME," +
+					"date_accepted 		DATETIME," +
 					"Status		 		int(1)," +
 					"PRIMARY KEY 		(idx))");
 	}
