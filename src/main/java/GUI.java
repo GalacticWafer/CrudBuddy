@@ -1,5 +1,3 @@
-import org.jfree.ui.RefineryUtilities;
-
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.UIManager;
@@ -10,15 +8,10 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -45,6 +38,7 @@ public class GUI {
 	private static JPanel WEST_PANEL = new JPanel();
 	private static final Color centerBackground = GREY_50x3;
 	private final Crud crud;
+	private final Analytics analyze;
 	private Object[][] data;
 	private static JFrame frame;
 	private DefaultTableModel model;
@@ -57,8 +51,9 @@ public class GUI {
 	private DefaultTableModel tempDataModel;
 	String tempTable = "";
 	
-	public GUI(Crud crud) throws SQLException {
+	public GUI(Crud crud, Analytics analyze) throws SQLException {
 		this.crud = crud;
+		this.analyze = analyze;
 		setUIManager();
 		scrollPane = new JScrollPane();
 		table = new JTable();
@@ -396,7 +391,10 @@ public class GUI {
 		c.gridy = 6;
 		east.add(assetsOT, c);
 		assetsOT.addActionListener(e -> {
-			Object[][] data = new Object[0][];
+			analyze.generateTimePlot();
+		});
+
+			/*Object[][] data = new Object[0][];
 			try {
 				data = crud.getAssetTotal("");
 			} catch (SQLException throwables) {
@@ -422,7 +420,7 @@ public class GUI {
 			ytd.pack();
 			RefineryUtilities.positionFrameRandomly(ytd);
 			ytd.setVisible(true);
-		});
+		}); */
 		/*analyzer.addActionListener(e -> {
 
 			String newTableName = null;
@@ -480,33 +478,9 @@ public class GUI {
 		});*/
 	}
 
-	private static void makePlot(String title, String chartTitle, List<Object[]> list, Date date)
-			throws SQLException, IOException {
 
-		LinePlot plot = new LinePlot(title, chartTitle, list);
-		plot.pack();
-		RefineryUtilities.positionFrameRandomly(plot);
-		plot.setVisible(false);
-		plot.save(chartTitle + "_" + DateToString(date) + ".png");
-	}
 
-	public static Date StringToDate(String s){
-		Date result = null;
-		try{
-			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-			result  = dateFormat.parse(s);
-		}
-		catch(ParseException e){
-			e.printStackTrace();
-		}
-		return result ;
-	}
 
-	public static String DateToString(Date d){
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-		String date = dateFormat.format(d);
-		return date;
-	}
 	private void refresh() throws SQLException {
 		setFromDatabase(crud.getColumnNames());
 		DefaultTableModel dm = (DefaultTableModel)table.getModel();

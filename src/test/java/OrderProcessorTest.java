@@ -3,6 +3,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -74,8 +75,9 @@ public class OrderProcessorTest {
 	
 	@Test
 	void runFileOrders()
-	throws SQLException, FileNotFoundException, ClassNotFoundException {
-		new Restoration(Credentials.databaseLogin(), "little_inventory.csv", true);
+			throws SQLException, IOException, ClassNotFoundException {
+		new Restoration(Credentials.databaseLogin(), "little_inventory.csv", true,
+				null, false);
 		OrderProcessor processor = new OrderProcessor(crud);
 		HashMap<String, Integer> oldQuantities = getInts(productIds.length);
 		processor.runFileOrders("little_order_test.csv");
