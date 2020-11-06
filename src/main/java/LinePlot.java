@@ -13,26 +13,30 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class LinePlot extends ApplicationFrame {
     String dateAxis = "Month";
     private JFreeChart chart;
     private File directory;
+    String chartTitle;
+    String title;
+    List data;
+    ChartPanel chartPanel;
 
-    public LinePlot(final String title, String chartTitle, List<Object[]> data) {
+    public LinePlot(final String title, String chartTitle) {
 
         super(title);
+        this.data = data;
+        this.title = title;
+        this.chartTitle = chartTitle;
+        data = new ArrayList<>();
+       // ChartUtilities save = null;
+        //ChartUtilities.save
+    }
 
-        directory = new File("charts");
-        if (!directory.exists()) {
-            if (directory.mkdir()) {
-                System.out.println("Directory is created!");
-            } else {
-                System.out.println("Failed to create directory!");
-            }
-        }
-
+    public JFreeChart updateChart() {
         String valueAxisLabel;
         switch(chartTitle) {
             case "Assets":
@@ -44,19 +48,15 @@ public class LinePlot extends ApplicationFrame {
             default:
                 valueAxisLabel = "Total";
         }
-
         final XYDataset dataset = createDataset(data, chartTitle);
-        chart = createChart(dataset, chartTitle, dateAxis, valueAxisLabel);
-        final ChartPanel chartPanel = new ChartPanel(chart);
-
+        return createChart(dataset, chartTitle, dateAxis, valueAxisLabel);
+    }
+    public void displayChart() {
+        chartPanel = new ChartPanel(chart);
         chartPanel.setPreferredSize(new java.awt.Dimension(560, 370));
         chartPanel.setMouseZoomable(true, false);
         setContentPane(chartPanel);
-       // ChartUtilities save = null;
-
-        //ChartUtilities.save
     }
-
     private JFreeChart createChart(final XYDataset dataset, String title,
                                    String timeAxisLabel,
                                    String valueAxisLabel) {
@@ -85,15 +85,17 @@ public class LinePlot extends ApplicationFrame {
         return new TimeSeriesCollection(series);
     }
 
-    public void save(String filename) throws IOException {
-        final File output = new File(directory + "/" +filename);
-        final ChartRenderingInfo info = new ChartRenderingInfo(new StandardEntityCollection());
-        try{
-            ChartUtilities.saveChartAsPNG(output, chart, 560, 370, info );
-        }
-        catch(Exception e){
-            e.printStackTrace();
-        }
-        System.out.println("-- saved");
+    public void setChartTitle(String chartTitle) {
+        this.chartTitle = chartTitle;
     }
+
+    @Override
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void addData(Object[] data) {
+        this.data.add(data);
+    }
+
 }
