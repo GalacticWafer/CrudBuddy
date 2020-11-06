@@ -18,10 +18,21 @@ import java.util.List;
 public class LinePlot extends ApplicationFrame {
     String dateAxis = "Month";
     private JFreeChart chart;
+    private File directory;
 
     public LinePlot(final String title, String chartTitle, List<Object[]> data) {
 
         super(title);
+
+        directory = new File("charts");
+        if (!directory.exists()) {
+            if (directory.mkdir()) {
+                System.out.println("Directory is created!");
+            } else {
+                System.out.println("Failed to create directory!");
+            }
+        }
+
         String valueAxisLabel;
         switch(chartTitle) {
             case "Assets":
@@ -75,14 +86,14 @@ public class LinePlot extends ApplicationFrame {
     }
 
     public void save(String filename) throws IOException {
+        final File output = new File(directory + "/" +filename);
+        final ChartRenderingInfo info = new ChartRenderingInfo(new StandardEntityCollection());
         try{
-            final ChartRenderingInfo info = new ChartRenderingInfo(new StandardEntityCollection());
-            final File input = new File("charts/" +filename);
-            ChartUtilities.saveChartAsPNG(input, chart, 560, 370, info );
-            System.out.println("-- saved");
+            ChartUtilities.saveChartAsPNG(output, chart, 560, 370, info );
         }
         catch(Exception e){
             e.printStackTrace();
         }
+        System.out.println("-- saved");
     }
 }
