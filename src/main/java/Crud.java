@@ -95,36 +95,7 @@ class Crud {
 		return rs.getInt(1) == 1;
 	} // End exits
 	
-	/**
-	 * TODO: David & Uriel
-	 *
-	 * @param onDate TODO: David & Uriel
-	 *
-	 * @return TODO: David & Uriel
-	 *
-	 * @throws SQLException
-	 *  if there is an issue with the sql command or connection.
-	 */
-	public Object[][] getAssetTotal(String onDate)
-			throws SQLException {
 
-		String query = (onDate == null) ?
-				"SELECT SUM(quantity * (sale_price - wholesale_cost))" +
-						"as assets from inventory" :
-				"SELECT date_accepted, SUM(sales.product_quantity * " +
-						"(sale_price - wholesale_cost)) " +
-						"        as assets from sales " +
-						"INNER JOIN inventory on sales.product_id = inventory.product_id " +
-						"GROUP BY date_accepted " +
-						"ORDER BY date_accepted ASC";
-					//	"WHERE date_accepted = '" + onDate + "' GROUP BY date_accepted";
-
-		ResultSet rs = query(query);
-		rs.next();
-
-		return getRecords(rs);
-	} // End getAssetTotal
-	
 	/**
 	 * Gets the number of columns in a table.
 	 *
@@ -195,7 +166,7 @@ class Crud {
 	} // End getRecords
 	
 	/** Private helper for public getRecords() method. */
-	private Object[][] getRecords(ResultSet rs) throws SQLException {
+	public Object[][] getRecords(ResultSet rs) throws SQLException {
 		
 		int columnCount = rs.getMetaData().getColumnCount();
 		int rowCount = rowCountResults(rs);
@@ -474,7 +445,9 @@ class Crud {
 	int rowCountResults(ResultSet resultSet) throws SQLException {
 		
 		resultSet.last();
-		return resultSet.getRow();
+		int length = resultSet.getRow();
+		resultSet.beforeFirst();
+		return length;
 	} // End rowCountResults
 	
 	/**

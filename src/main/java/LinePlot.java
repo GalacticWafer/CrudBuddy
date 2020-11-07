@@ -25,7 +25,7 @@ public class LinePlot extends ApplicationFrame {
     List data;
     ChartPanel chartPanel;
 
-    public LinePlot(final String title, String chartTitle) {
+    public LinePlot(final String title) {
 
         super(title);
         this.data = data;
@@ -77,10 +77,19 @@ public class LinePlot extends ApplicationFrame {
             int day = time.getDayOfMonth();
             int month = time.getMonthValue();
             int year = time.getYear();
-            series.add(
-                    new Minute(minute, hour, day, month, year),
-                    ((BigDecimal)datum[1]).round(context)
-            );
+            if(datum[1] instanceof Long){
+                series.add(
+                        new Minute(minute, hour, day, month, year),
+                        ((Long)datum[1])
+                );
+            }
+            else{
+                series.add(
+                        new Minute(minute, hour, day, month, year),
+                        ((BigDecimal)datum[1]).round(context)
+                );
+            }
+
         }
         return new TimeSeriesCollection(series);
     }

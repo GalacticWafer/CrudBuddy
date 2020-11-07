@@ -391,7 +391,11 @@ public class GUI {
 		c.gridy = 6;
 		east.add(assetsOT, c);
 		assetsOT.addActionListener(e -> {
-			analyze.generateTimePlot();
+			try {
+				analyze.generateTimePlot();
+			} catch (SQLException throwables) {
+				throwables.printStackTrace();
+			}
 		});
 
 			/*Object[][] data = new Object[0][];
