@@ -1,3 +1,5 @@
+package customerrelationsmanagement;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.ResultSet;
@@ -5,7 +7,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
 
-class OrderProcessor {
+public class OrderProcessor {
 	private final ArrayList<Object[]> acceptedOrders;
 	private final Crud crud;
 	private Order currentOrder;

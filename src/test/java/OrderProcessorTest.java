@@ -1,3 +1,4 @@
+import customerrelationsmanagement.*;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +16,8 @@ public class OrderProcessorTest {
 	
 	OrderProcessorTest() throws SQLException, ClassNotFoundException {}
 	int[] buyerQuantities = new int[] {2, 1, 1, 2};
-	private final Crud crud = Credentials.databaseLogin();
+	private final Crud crud = new Credentials().getCrud();
+
 	private final LocalDate date = LocalDate.parse("2020-01-02");
 	private final String location = "27934";
 	String[] productIds = new String[] {
@@ -75,7 +77,7 @@ public class OrderProcessorTest {
 	@Test
 	void runFileOrders()
 	throws SQLException, FileNotFoundException, ClassNotFoundException {
-		new Restoration(Credentials.databaseLogin(), "little_inventory.csv", true);
+		new Restoration(new Credentials().getCrud(), "little_inventory.csv", true);
 		OrderProcessor processor = new OrderProcessor(crud);
 		HashMap<String, Integer> oldQuantities = getInts(productIds.length);
 		processor.runFileOrders("little_order_test.csv");

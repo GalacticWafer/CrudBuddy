@@ -1,3 +1,5 @@
+import customerrelationsmanagement.Order;
+import customerrelationsmanagement.Product;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;

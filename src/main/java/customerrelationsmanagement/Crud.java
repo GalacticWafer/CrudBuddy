@@ -1,3 +1,5 @@
+package customerrelationsmanagement;
+
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -8,7 +10,7 @@ import java.sql.*;
 import java.util.*;
 import java.util.Date;
 
-class Crud {
+public class Crud {
 	private static String DB_NAME;
 	private static String HOST_IP;
 	public static final String[] INVENTORY_COLUMNS = new String[]
@@ -83,7 +85,7 @@ class Crud {
 	 * @throws SQLException
 	 *  if there is an issue with the sql command or connection.
 	 */
-	boolean exists(String columnName, Object columnValue)
+	public boolean exists(String columnName, Object columnValue)
 	throws SQLException {
 		
 		String sql =
