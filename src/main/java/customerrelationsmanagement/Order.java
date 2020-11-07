@@ -1,3 +1,5 @@
+package customerrelationsmanagement;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.security.SecureRandom;

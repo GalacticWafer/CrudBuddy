@@ -1,3 +1,5 @@
+package customerrelationsmanagement;
+
 public class Product {
 	private Boolean canProcess;
 	private int currentQuantity;

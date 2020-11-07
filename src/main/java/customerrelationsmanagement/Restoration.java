@@ -1,7 +1,7 @@
+package customerrelationsmanagement;
+
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
