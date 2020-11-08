@@ -6,6 +6,14 @@ import java.sql.SQLException;
 import java.util.*;
 
 public class Restoration {
+	/**
+	 * <br>
+	 * @param crud
+	 * @param filePath
+	 * @param doTableRebuild
+	 * @throws FileNotFoundException
+	 * @throws SQLException
+	 */
 	public Restoration(Crud crud, String filePath, boolean doTableRebuild)
 	throws FileNotFoundException, SQLException {
 		rebuild(crud, filePath, doTableRebuild);
@@ -34,7 +42,6 @@ public class Restoration {
 		}
 		crud.update(sql.toString());
 	}
-	
 	private void rebuildTables(Crud crud) throws SQLException {
 		crud.update("CREATE TABLE IF NOT EXISTS inventory(" +
 					"idx INT(16)    	NOT NULL AUTO_INCREMENT," +

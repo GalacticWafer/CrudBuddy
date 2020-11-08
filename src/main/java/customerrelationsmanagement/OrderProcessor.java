@@ -16,19 +16,19 @@ public class OrderProcessor {
 	private final HashMap<String, Integer> quantityMap;
 	
 	/**
-	 * SalesProcessor uses an in-memory copy of three inventory columns.
-	 *
-	 * @param crud
-	 *  query and update.
-	 *
-	 * @throws SQLException
-	 *  if you mess up.
-	 *  <code>idxList</code> preserves the order of rows when using HashMaps.
-	 *  <code>indexMap</code> maps idx to product_id.
-	 *  <code>idxList</code> maps product_id to quantity.
-	 *  <code>SalesProcessor</code> is intended to be used by running orders
-	 *  through it,
-	 *  then updating quantities from the inventory upon closure.
+	 *  Intended to be used by running <code>Order</code> objects
+	 *  through it, then calling <code>closeAndUpdate()</code>
+	 *  to write the new inventory quantities and sales records
+	 *  to the database when all orders have been checked.
+	 * <br>
+	 * OrderProcessor uses an in-memory copy of three inventory columns.
+	 *  <br>
+	 * - <code>idxList</code> preserves the order of rows when using 
+	 *  HashMaps.<br>
+	 * - <code>indexMap</code> maps idx to product_id.<p>
+	 * - <code>idxList</code> maps product_id to quantity.<p>
+	 * @param crud to query and update.<br>
+	 * @throws SQLException if you mess up the sql.<br>
 	 */
 	public OrderProcessor(Crud crud) throws SQLException {
 		
@@ -56,7 +56,7 @@ public class OrderProcessor {
 	} // End Constructor
 	
 	/**
-	 * @return true if the entire order can be fulfilled
+	 * @return true if the every Product of currentOrder can be fulfilled
 	 */
 	private Boolean canProcessOrder() {
 		
@@ -181,10 +181,10 @@ public class OrderProcessor {
 	 *  if you mess up.
 	 * @throws FileNotFoundException
 	 *  if the file was not found or
-	 *  TODO: if the file is not a csv file
-	 *  or
-	 *  TODO: if any line in the csv is not in the proper format: 2020-01-02,
-	 *  saust@hotmail.com,38813,3R8YXZCS820Y,2
+	 *  <b>TODO</b>: if the file is not a csv file <br>
+	 *  <b>OR</b><br>
+	 *  <b>TODO</b>: if any line in the csv is not in the proper format<br>
+	 *      <br><i>proper example:<br> 2020-01-02,saust@hotmail.com,38813,3R8YXZCS820Y,2</i>
 	 */
 	public void runFileOrders(String pathname)
 	throws SQLException, FileNotFoundException {
