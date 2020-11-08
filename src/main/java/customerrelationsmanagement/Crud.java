@@ -195,7 +195,7 @@ public class Crud {
 	} // End getRecords
 	
 	/** Private helper for public getRecords() method. */
-	private Object[][] getRecords(ResultSet rs) throws SQLException {
+	public Object[][] getRecords(ResultSet rs) throws SQLException {
 		
 		int columnCount = rs.getMetaData().getColumnCount();
 		int rowCount = rowCountResults(rs);

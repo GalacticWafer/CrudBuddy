@@ -1,0 +1,190 @@
+@import url('https://fonts.googleapis.com/css?family=Anton|Bowlby+One+SC|Fjalla+One|Monoton|Montserrat');
+
+body{
+ font-family: 'Montserrat', sans-serif;
+ color: white;
+ font-size: 16px;
+ font-weight: 500;
+}
+#navbar
+{
+    z-index: 5;
+    position: absolute;
+    display: block;
+    width: 100%;
+    height: 70px;
+
+    background: transparent;
+    
+}
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    text-decoration: none;
+ 
+    font-family: 'Montserrat', sans-serif;
+    
+ 
+  }
+  
+  li {
+    float: left;
+   
+  }
+  
+  li a {
+    display: block;
+    color: rgb(0, 0, 0);
+    text-align: center;
+   padding: 24px;
+    text-decoration: none;
+    height: 50px;
+    font-weight: 500px;
+  }
+  li a:hover {
+    background: -webkit-linear-gradient(rgb(225, 152, 245), rgb(140, 102, 242));
+    text-decoration: none;
+    color: rgb(0, 0, 0);
+    font-weight: bolder;
+    border-radius: 12px; 
+}
+.sm-icon
+{
+    height:70px ;
+    width:70px;
+    float: left;
+    overflow: hidden;
+    padding: 15px;
+    
+}
+#microsoft
+{
+  
+    color: #c95336;  
+    font-size: 70px; 
+    border-radius: 12px;
+    z-index: 12;
+}
+#maincontainer
+{
+    display: block;
+   
+    widows: 100%;
+    height: 100vh;
+     background: url("./projectpictures/macbook.jpeg") no-repeat center center fixed; 
+     -webkit-background-size: cover;
+     -moz-background-size: cover;
+     -o-background-size: cover;
+     background-size: cover;
+     position: fixed;
+     overflow: hidden;
+}
+.row
+{
+    padding-left: 6%; 
+    
+}
+
+
+#helloheading2
+{
+    padding-top: 12%; 
+    font-size: 48px;
+    background: -webkit-linear-gradient(rgb(247, 244, 244), rgb(53, 53, 53));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: -10px;
+}
+
+#heading
+{
+    
+    font-size: 22px;
+    background: -webkit-linear-gradient(rgb(34, 251, 255),rgb(2, 226, 103));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+
+#contactdiv{
+
+    background: url("./projectpictures/b.webp") no-repeat center center fixed;  
+    webkit-background-size: cover;
+     -moz-background-size: cover;
+     -o-background-size: cover;
+     background-size: cover;
+}
+#shophere{
+    
+position: relative;
+top: 0px;
+ display: block;  
+ height: 150px;
+ z-index: 9;
+ font-size: 40px; 
+ color: rgb(89, 89, 89);
+
+
+}
+
+#shoppingcontainer
+{
+
+top: 70px;
+position: relative;
+ display: block;   
+ background: rgba(255, 255, 255, 0.975);
+ height: auto;
+ width: 100%;
+ padding-top: 70px;
+ min-height: 750px;
+
+}
+
+#productCard
+{
+    position: relative;
+    display: inline-block;
+    height: 250px;
+    width: 240px;
+    background: #fa8e1a;
+}
+#logorow{
+    position: relative;
+    color: rgb(101, 97, 97);
+    text-align: center;
+}
+#github
+{
+    position: relative;
+    top: 10px;
+    display: inline-block;
+    height: 68px;
+    width: 68px;
+    overflow: hidden;
+    padding: 2px;
+    transition: 2ms;
+
+    
+}
+#productcard
+{
+    text-align: right;
+    height: 240px;
+    width: 250px;
+    margin: 50px;
+    color: black;
+    z-index: 2;
+    background-color: rgb(238, 238, 238);
+    transition: 0.5s;
+    font-size: 14px;
+}
+
+#buy{
+    background-color:rgb(54, 232, 54);
+    border: 1px;
+    height: 30px;
+    width: 60px;
+}

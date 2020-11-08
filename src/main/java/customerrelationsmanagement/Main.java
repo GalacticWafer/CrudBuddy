@@ -1,11 +1,15 @@
 package customerrelationsmanagement;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.sql.SQLException;
 
 public class Main {
 	public static final String INVENTORY_PATH = "inventory_team4.csv";
 	//public static final String INVENTORY_PATH = "";
+	
+	public static final String analyticsDir = "analytics";
+	//public static final String analyticsDir = null;
 	
 	public static final String ORDERS_PATH = "customer_orders_A_team4.csv";
 	//public static final String ORDERS_PATH = "";
@@ -23,7 +27,7 @@ public class Main {
 	private static Restoration rest;
 	
 	public Main(Credentials credentials, Crud queryMaker)
-	throws FileNotFoundException, SQLException {
+	throws IOException, SQLException {
 		startServices(credentials);
 	}
 	
@@ -34,17 +38,17 @@ public class Main {
 	}
 	
 	public void startServices(Credentials credentials)
-	throws FileNotFoundException, SQLException {
+	throws IOException, SQLException {
 		
 		this.crud = credentials.getCrud();
 		if(START_MAIL) {
 			mailer = new Emailer(credentials);
 		}
 		if(INVENTORY_PATH != null && !INVENTORY_PATH.equals("")) {
-			rest = new Restoration(crud, INVENTORY_PATH, true);
+			rest = new Restoration(crud, INVENTORY_PATH, true, analyticsDir);
 		}
 		if(START_GUI) {
-			new GUI(crud);
+			new GUI(crud, new Analytics(crud));
 		}
 		if(ORDERS_PATH != null && !ORDERS_PATH.equals("")) {
 			orderProcessor = new OrderProcessor(crud);

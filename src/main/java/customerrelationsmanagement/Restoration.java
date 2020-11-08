@@ -1,31 +1,30 @@
 package customerrelationsmanagement;
-
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import org.apache.commons.io.FileUtils;
 import java.util.*;
 
 public class Restoration {
-	/**
-	 * <br>
-	 * @param crud
-	 * @param filePath
-	 * @param doTableRebuild
-	 * @throws FileNotFoundException
-	 * @throws SQLException
-	 */
-	public Restoration(Crud crud, String filePath, boolean doTableRebuild)
-	throws FileNotFoundException, SQLException {
-		rebuild(crud, filePath, doTableRebuild);
+	public Restoration(Crud crud, String filePath, boolean doTableRebuild, String directory)
+			throws IOException, SQLException {
+		rebuild(crud, filePath, doTableRebuild, directory);
 	}
-	 private void rebuild(Crud crud, String filePath, boolean doTableRebuild)
-	throws FileNotFoundException, SQLException {
+	 private void rebuild(Crud crud, String filePath, boolean doTableRebuild,
+						  String directory)
+			 throws IOException, SQLException {
 		String[] list = crud.getTableNames();
 		for(String tableName: list) {
 			crud.update(" DROP TABLE IF EXISTS " + tableName);
 		}
 		if(doTableRebuild) {
 			rebuildTables(crud);
+		}
+		if(directory != null) {
+			 deleteDirectory(directory);
 		}
 		Scanner scanner = new Scanner(new File(filePath));
 		StringBuilder sql = new StringBuilder();
@@ -42,6 +41,7 @@ public class Restoration {
 		}
 		crud.update(sql.toString());
 	}
+	
 	private void rebuildTables(Crud crud) throws SQLException {
 		crud.update("CREATE TABLE IF NOT EXISTS inventory(" +
 					"idx INT(16)    	NOT NULL AUTO_INCREMENT," +
@@ -58,9 +58,15 @@ public class Restoration {
 					"cust_location 		VARCHAR(100)," +
 					"product_id     	VARCHAR(12)," +
 					"product_quantity   INT(16)," +
-					"date_ordered 		DATE," +
-					"date_accepted 		DATE," +
+					"date_ordered 		DATETIME," +
+					"date_accepted 		DATETIME," +
 					"Status		 		int(1)," +
 					"PRIMARY KEY 		(idx))");
+	}
+
+	private void deleteDirectory(String pathname) throws IOException {
+		File directory = new File(pathname);
+		FileUtils.cleanDirectory(directory);
+
 	}
 }
