@@ -182,6 +182,7 @@ public class GUI {
 		table.setFont(FONT);
 		table.setSelectionBackground(GREY_110x3);
 		table.setSelectionForeground(OPEN_STATUS_FOREGROUND);
+		table.setDefaultEditor(Object.class, null);
 		JTableHeader header = table.getTableHeader();
 		header.setBackground(GREY_110x3);
 		header.setBorder(new LineBorder(GREY_110x3));
