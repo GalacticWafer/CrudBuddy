@@ -103,7 +103,7 @@ class OrderProcessor {
 	 and put all items into the acceptedSales list.*/
 	private void changeQuantities() {
 		
-		currentOrder.setDateAccepted(LocalDate.now());
+		currentOrder.setDateAccepted(currentOrder.getDateOrdered().plusDays(new Random().nextInt(5)));
 		Iterator<Product> it = currentOrder.productIterator();
 		
 		while(it.hasNext()) {

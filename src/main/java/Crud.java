@@ -95,34 +95,7 @@ class Crud {
 		return rs.getInt(1) == 1;
 	} // End exits
 	
-	/**
-	 * TODO: David & Uriel
-	 *
-	 * @param onDate TODO: David & Uriel
-	 *
-	 * @return TODO: David & Uriel
-	 *
-	 * @throws SQLException
-	 *  if there is an issue with the sql command or connection.
-	 */
-	public Object[][] getAssetTotal(String onDate)
-			throws SQLException {
 
-		String query = (onDate == null) ?
-				"SELECT SUM(quantity * (sale_price - wholesale_cost))" +
-						"as assets from inventory" :
-				"SELECT date_accepted, SUM(sales.product_quantity * " +
-						"(sale_price - wholesale_cost)) \n" +
-						"        as assets from sales\n" +
-						"INNER JOIN inventory on sales.product_id = inventory.product_id\n" +
-						"WHERE date_accepted = '" + onDate + "' GROUP BY date_accepted";
-
-		ResultSet rs = query(query);
-		rs.next();
-
-		return getRecords(rs);
-	} // End getAssetTotal
-	
 	/**
 	 * Gets the number of columns in a table.
 	 *
@@ -193,7 +166,7 @@ class Crud {
 	} // End getRecords
 	
 	/** Private helper for public getRecords() method. */
-	private Object[][] getRecords(ResultSet rs) throws SQLException {
+	public Object[][] getRecords(ResultSet rs) throws SQLException {
 		
 		int columnCount = rs.getMetaData().getColumnCount();
 		int rowCount = rowCountResults(rs);
@@ -366,45 +339,7 @@ class Crud {
 		return Crud.connection.isClosed();
 	} // End isClosed
 	
-	/**
-	 * TODO: David & Uriel
-	 *
-	 * @param limit TODO: David & Uriel
-	 *
-	 * @return TODO: David & Uriel
-	 *
-	 * @throws SQLException
-	 *  if there is an issue with the sql command or connection.
-	 */
-	public Object[][] mostOrderedProducts(int limit)
-	throws SQLException {
-		
-		String query =
-		 "select product_id, sum(product_quantity) as totalQuantity from sales " +
-		 " group by \nproduct_id order by sum(product_quantity) desc limit " + limit;
-		return getRecords(query(query));
-	} // End mostOrderedProducts
-	
-	/**
-	 * TODO: David & Uriel
-	 *
-	 * @param rowResultLimit TODO: David & Uriel
-	 *
-	 * @return TODO: David & Uriel
-	 *
-	 * @throws SQLException
-	 *  if there is an issue with the sql command or connection.
-	 */
-	public Object[][] mostValuableCustomers(int rowResultLimit) throws SQLException {
-		
-		String query =
-		 "SELECT cust_email , SUM(sales.product_quantity * sale_price - " +
-		 "wholesale_cost) AS revenue FROM sales\n" +
-		 "    INNER JOIN\n" +
-		 "    inventory i ON sales.product_id = i.product_id\n" +
-		 "GROUP BY cust_email ORDER BY revenue DESC LIMIT " + rowResultLimit;
-		return getRecords(query(query));
-	} // End mostValuableCustomers
+
 	
 	/**
 	 * TODO: David & Uriel
@@ -472,7 +407,9 @@ class Crud {
 	int rowCountResults(ResultSet resultSet) throws SQLException {
 		
 		resultSet.last();
-		return resultSet.getRow();
+		int length = resultSet.getRow();
+		resultSet.beforeFirst();
+		return length;
 	} // End rowCountResults
 	
 	/**
@@ -560,90 +497,9 @@ class Crud {
 		} // End for
 		return sb.toString();
 	} // End toValueTuple
-	
-	/**
-	 * TODO: David & Uriel
-	 *
-	 * @param date TODO: David & Uriel
-	 * @param limit TODO: David & Uriel
-	 * @param isDescending TODO: David & Uriel
-	 * @param gui TODO: David & Uriel
-	 *
-	 * @return TODO: David & Uriel
-	 *
-	 * @throws SQLException
-	 *  if there is an issue with the sql command or connection.
-	 */
-	public String topNByCustomer
-	(String date, int limit, boolean isDescending, GUI gui)
-	throws SQLException {
-		
-		setWorkingTable("customers");
-		update(" DROP TABLE IF EXISTS top_customers");
-		String newTableName = "Top_" + limit + "_Customers";
-		
-		String dateClause;
-		if(date != null) {
-			dateClause = "WHERE date_accepted = '" + date + "'";
-		} else {
-			dateClause = "";
-		} // End if
-		
-		String sql =
-		 " CREATE TEMPORARY TABLE IF NOT EXISTS " + newTableName +
-		 " AS (SELECT customer_email, SUM(sales.product_quantity * " +
-		 "(sale_price - wholesale_cost)) AS revenue " +
-		 " FROM sales " +
-		 
-		 dateClause +
-		 
-		 " INNER JOIN customers _customers on sales.customer_email" +
-		 " = _customers.email " +
-		 " INNER JOIN inventory i on sales.product_id = i" +
-		 ".product_id " +
-		 " GROUP BY customer_email " +
-		 " ORDER BY revenue " + (isDescending ? " DESC" : "ASC") +
-		 " LIMIT " + limit + ")";
-		
-		update(sql);
-		temporaryTables.add(newTableName);
-		gui.addTable(newTableName);
-		return newTableName;
-	} // End topNByCustomer 
-	
-	/**
-	 * TODO: David & Uriel
-	 *
-	 * @param date
-	 *  that date you want to produce the analysis for
-	 * @param columnName
-	 *  the column name that identifies the data to analyze
-	 * @param limit
-	 *  where limit is the number of rows you want (i.e., top 5? 10? 1000?)
-	 * @param isDescending
-	 *  top- to bottom if true, bottom to top if false
-	 * @param orderArg
-	 *  if you want to order these results by a specific column,
-	 *  include it here (i.e., "quantity" -> higher quantities will
-	 *  be on the top of the results
-	 *
-	 * @return 2d array of all the results
-	 *
-	 * @throws SQLException
-	 *  if the query was an incorrect string, according to sql syntax
-	 */
-	public Object[][] topNByDate(String date, String columnName,
-								 int limit, boolean isDescending,
-								 String orderArg) throws SQLException {
-		
-		return getRecords(query(
-		 "SELECT * FROM sales WHERE " + columnName + " = '" + date +
-		 "' ORDER BY " + orderArg + (isDescending ? " DESC" : "ASC") +
-		 " LIMIT " + limit));
-	} // End topNByDate
-	
+
 	public int update(String sql) throws SQLException {
-		
+
 		Statement st = connection.createStatement();
 		return st.executeUpdate(sql);
 	} // End update
