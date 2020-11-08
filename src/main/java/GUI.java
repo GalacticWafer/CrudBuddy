@@ -8,6 +8,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -393,7 +394,7 @@ public class GUI {
 		assetsOT.addActionListener(e -> {
 			try {
 				analyze.generateTimePlot();
-			} catch (SQLException throwables) {
+			} catch (SQLException | IOException throwables) {
 				throwables.printStackTrace();
 			}
 		});
