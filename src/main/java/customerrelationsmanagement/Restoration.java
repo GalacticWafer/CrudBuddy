@@ -1,9 +1,6 @@
 package customerrelationsmanagement;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.apache.commons.io.FileUtils;
 import java.util.*;
@@ -66,7 +63,8 @@ public class Restoration {
 
 	private void deleteDirectory(String pathname) throws IOException {
 		File directory = new File(pathname);
-		FileUtils.cleanDirectory(directory);
-
+		if(directory.exists()) {
+			FileUtils.cleanDirectory(directory);
+		}
 	}
 }

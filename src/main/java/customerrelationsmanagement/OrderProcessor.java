@@ -1,5 +1,6 @@
 package customerrelationsmanagement;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.ResultSet;
@@ -93,10 +94,10 @@ class OrderProcessor {
 		if(canProcessOrder || !isSale) {
 			currentOrder.setStatus(Order.PROCESSED);
 			changeQuantities();
-			acceptedOrders.addAll(currentOrder.toArray());
 		} else {
 			currentOrder.setStatus(Order.QUANTITY_SHORTAGE);
 		} // End if
+		acceptedOrders.addAll(currentOrder.toArray());
 		
 		return canProcessOrder;
 	} // End canProcessOrder
@@ -198,17 +199,21 @@ class OrderProcessor {
 		
 		order.setEmail(line[1]);
 		this.setCurrentOrder(order);
-		
+		int i = 2;
 		while(line != null) {
 			
-			Product nextProduct = new Product(
-			 line[3], Integer.parseInt(line[4]));
+			LocalDate currentDate = LocalDate.parse(line[0]);
+			String currentEmail = line[1];
+			String currentLocation = line[2];
+			String currentProductId = line[3];
+			int currentRequestedQuantity = Integer.parseInt(line[4]);
 			
-			LocalDate date = LocalDate.parse(line[0]);
+			Product currentProduct = new Product(
+			 currentProductId, currentRequestedQuantity);
 			
-			boolean isNewEmail = !order.getCustomerEmail().equals(line[1]);
-			boolean isNewLocation = !order.getLocation().equals(line[2]);
-			boolean isNewDate = !order.getDateOrdered().isEqual(date);
+			boolean isNewDate = !order.getDateOrdered().isEqual(currentDate);
+			boolean isNewEmail = !order.getCustomerEmail().equals(currentEmail);
+			boolean isNewLocation = !order.getLocation().equals(currentLocation);
 			
 			boolean isNewOrder = isNewEmail
 								 || isNewLocation
@@ -217,15 +222,15 @@ class OrderProcessor {
 			if(isNewOrder || !scanner.hasNextLine()) {
 				
 				if(!scanner.hasNextLine() && isNewOrder) { 
-					order.addProduct(nextProduct);
+					order.addProduct(currentProduct);
 				} // End if
 				
 				processOrder();
 				
 				order = new Order(
-				 LocalDate.parse(line[0]), true, line[2]);
+				 LocalDate.parse(line[0]), true, currentLocation);
 				
-				order.setEmail(line[1]);
+				order.setEmail(currentEmail);
 				setCurrentOrder(order);
 				
 				if(!scanner.hasNextLine()) {
@@ -234,18 +239,24 @@ class OrderProcessor {
 				
 			} // End if
 			
-			order.addProduct(nextProduct);
+			order.addProduct(currentProduct);
 			
 			if(scanner.hasNextLine()) {
 				line = scanner.nextLine().split(",");
 			} else {
-				nextProduct = new Product(
-				 line[3], Integer.parseInt(line[4]));
+				currentProduct = new Product(
+				 currentProductId, currentRequestedQuantity);
 				line = null;
 			} // End if
+			i++;
 		} // End while
 		updateAndClose();
 	} // End runFileOrders
+	
+	public static void runFileOrders(Crud crud, String ordersPath)
+	throws SQLException, FileNotFoundException {
+		new OrderProcessor(crud).runFileOrders(ordersPath);
+	}
 	
 	/**
 	 * Changes currentOrder to a new Order object which should be processed.
@@ -262,10 +273,11 @@ class OrderProcessor {
 	public void updateAndClose() throws SQLException {
 		
 		crud.setWorkingTable("sales");
-		
+		JOptionPane.showMessageDialog(null, "put the breakpoint on line 269 in Crud.java");
 		if(acceptedOrders.size() > 0) {
 			crud.insertRecords(Order.SALES_COLUMNS,
 			 acceptedOrders.iterator(), acceptedOrders.size());
+			acceptedOrders = new ArrayList<>();
 		} // End if
 		
 		// update the inventory table to effectively close the processor.

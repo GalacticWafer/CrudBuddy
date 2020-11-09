@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 public class Main {
 	public static final String INVENTORY_PATH = "inventory_team4.csv";
-	//public static final String INVENTORY_PATH = "";
+	//public static final String INVENTORY_PATH = null;
 	
 	public static final String analyticsDir = "analytics";
 	//public static final String analyticsDir = null;
@@ -51,9 +51,8 @@ public class Main {
 			new GUI(crud, new Analytics(crud));
 		}
 		if(ORDERS_PATH != null && !ORDERS_PATH.equals("")) {
-			orderProcessor = new OrderProcessor(crud);
-			orderProcessor.runFileOrders(ORDERS_PATH);
-			orderProcessor.updateAndClose();
+			OrderProcessor.runFileOrders(crud, ORDERS_PATH);
+			System.exit(0);
 		}
 	}
 }
