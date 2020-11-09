@@ -474,7 +474,9 @@ public class Crud {
 	int rowCountResults(ResultSet resultSet) throws SQLException {
 		
 		resultSet.last();
-		return resultSet.getRow();
+		int count = resultSet.getRow();
+		resultSet.beforeFirst();
+		return count;
 	} // End rowCountResults
 	
 	/**
