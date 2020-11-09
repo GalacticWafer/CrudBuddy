@@ -2,6 +2,7 @@ package customerrelationsmanagement;
 
 import java.io.*;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -153,8 +154,7 @@ public class Emailer {
 			String[] messageText =
 			 getTextFromMessage(currentMessage).trim().split("\n");
 			
-			LocalDate date = LocalDate.parse(dateFormat.format(
-			 currentMessage.getSentDate()));
+			Timestamp timestamp = new Timestamp(currentMessage.getSentDate().getTime());
 			
 			Matcher m = Order.EMAIL_PATTERN.matcher(
 			 currentMessage.getFrom()[0].toString());
@@ -188,7 +188,7 @@ public class Emailer {
 					String location = s[3].trim();
 					
 					if(order == null) {
-						order = new Order(date, isSale, location);
+						order = new Order(timestamp, isSale, location);
 						orderProcessor.setCurrentOrder(order);
 					} // End if
 					

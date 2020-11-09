@@ -2,6 +2,7 @@ import customerrelationsmanagement.Order;
 import customerrelationsmanagement.Product;
 import org.junit.jupiter.api.Test;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,7 +42,7 @@ class OrderTest {
 	
 	@Test
 	void getDateAccepted() {
-		LocalDate now = LocalDate.now();
+		Timestamp now = Timestamp.valueOf(LocalDate.now() + "");
 		buyerOd = new Order(now, true, "55555");
 		assertNull(buyerOd.getDateAccepted());
 		buyerOd.setDateAccepted(now);

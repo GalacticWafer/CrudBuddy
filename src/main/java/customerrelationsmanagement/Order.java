@@ -3,6 +3,7 @@ package customerrelationsmanagement;
 import org.jetbrains.annotations.NotNull;
 
 import java.security.SecureRandom;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.*;
@@ -22,6 +23,7 @@ public class Order {
 	public static final int INVALID = -2, CANCELLED = -1, UNPROCESSED = 0,
 	 QUANTITY_SHORTAGE = 1,
 	 PROCESSED = 2, SUGGESTED_EMAIL = 3, FULFILLED = 4;
+	public static final int MAX_WAIT_TIME = 5;
 	private static final String NUMBER = "0123456789";
 	private static final String DATA_FOR_RANDOM_STRING =
 	 CHAR_LOWER + CHAR_UPPER + NUMBER;
@@ -37,8 +39,8 @@ public class Order {
 	 "status",
 	 };
 	
-	private LocalDate dateAccepted;
-	private LocalDate dateOrdered;
+	private Timestamp dateAccepted;
+	private final Timestamp dateOrdered;
 	private String email;
 	private boolean isSale;
 	private ArrayList<Product> products;
@@ -49,8 +51,7 @@ public class Order {
 	private int status;
 	private String subject;
 	
-	
-	public Order(LocalDate date,
+	public Order(Timestamp date,
 				 boolean isSale, String location) {
 		dateOrdered = date;
 		this.isSale = isSale;
@@ -84,11 +85,11 @@ public class Order {
 	public String getCustomerEmail() {return email;} // End getCustomerEmail
 	
 	/** @return null if the order has not been processed or accepted. */
-	public LocalDate getDateAccepted() {
+	public Timestamp getDateAccepted() {
 		return dateAccepted;
 	} // End getDateAccepted
 	
-	public LocalDate getDateOrdered() {return dateOrdered;} // End getDateOrdered
+	public Timestamp getDateOrdered() {return dateOrdered;} // End getDateOrdered
 	
 	/** @return the unique order ID for all items in this Order. */
 	public String getId() {return orderId;} // End getId
@@ -120,7 +121,13 @@ public class Order {
 		return products.iterator();
 	} // End productIterator
 	
-	public void setDateAccepted(LocalDate today) { this.dateAccepted = today; } // End setDateAccepted
+	public void setDateAccepted(Timestamp today) { this.dateAccepted = today; } // End setDateAccepted
+	public void setDateAccepted() { 
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(getDateOrdered());
+		cal.add(Calendar.DAY_OF_WEEK, new Random().nextInt(Order.MAX_WAIT_TIME));
+		setDateAccepted(new Timestamp(cal.getTime().getTime()));
+	} // End setDateAccepted
 	
 	public void setEmail(String email) {this.email = email;} // End setEmail
 	

@@ -5,7 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
+import java.sql.Timestamp;
 import java.util.*;
 
 class OrderProcessor {
@@ -14,6 +14,10 @@ class OrderProcessor {
 	private Order currentOrder;
 	private final Queue<Integer> idxList;
 	private final HashMap<Integer, String> indexMap;
+	Stack<Order> orderStack;
+	/* Change relevant quantities from a given order,
+	 and put all items into the acceptedSales list.*/
+	Timestamp orderStamp = currentOrder.getDateOrdered();
 	private final HashMap<String, Integer> quantityMap;
 	
 	/**
@@ -45,6 +49,7 @@ class OrderProcessor {
 		indexMap = new HashMap<>(size); // map from idx -> product_id
 		quantityMap = new HashMap<>(size); // map from product_id -> quantity
 		acceptedOrders = new ArrayList<>(size); // list of Object[]'s for
+		orderStack = new Stack<>();
 		
 		while(rs.next()) {
 			int quantity = rs.getInt(1);
@@ -102,11 +107,9 @@ class OrderProcessor {
 		return canProcessOrder;
 	} // End canProcessOrder
 	
-	/* Change relevant quantities from a given order,
-	 and put all items into the acceptedSales list.*/
 	private void changeQuantities() {
 		
-		currentOrder.setDateAccepted(currentOrder.getDateOrdered().plusDays(new Random().nextInt(5)));
+		currentOrder.setDateAccepted();
 		Iterator<Product> it = currentOrder.productIterator();
 		
 		while(it.hasNext()) {
@@ -169,6 +172,14 @@ class OrderProcessor {
 		currentOrder.setSubject(orderNumber + " "
 								+ currentOrder.getStatusString());
 		
+		if(!orderStack.isEmpty() &&
+		   (orderStack.peek().getDateOrdered()
+					  .before(currentOrder.getDateOrdered()))) {
+			// run analytics on today's orders
+			orderStack.clear();
+		} else {
+			orderStack.push(currentOrder);
+		}
 		return canProcessOrder;
 	} // End processOrder
 	
@@ -195,14 +206,14 @@ class OrderProcessor {
 		String[] line = scanner.nextLine().split(",");
 		
 		Order order = new Order(
-		 LocalDate.parse(line[0]), true, line[2]);
+		 Timestamp.valueOf(line[0]), true, line[2]);
 		
 		order.setEmail(line[1]);
 		this.setCurrentOrder(order);
 		int i = 2;
 		while(line != null) {
 			
-			LocalDate currentDate = LocalDate.parse(line[0]);
+			Timestamp currentTime = Timestamp.valueOf(line[0]);
 			String currentEmail = line[1];
 			String currentLocation = line[2];
 			String currentProductId = line[3];
@@ -211,9 +222,11 @@ class OrderProcessor {
 			Product currentProduct = new Product(
 			 currentProductId, currentRequestedQuantity);
 			
-			boolean isNewDate = !order.getDateOrdered().isEqual(currentDate);
-			boolean isNewEmail = !order.getCustomerEmail().equals(currentEmail);
-			boolean isNewLocation = !order.getLocation().equals(currentLocation);
+			boolean isNewDate = order.getDateOrdered().before(currentTime);
+			boolean isNewEmail =
+			 !order.getCustomerEmail().equals(currentEmail);
+			boolean isNewLocation =
+			 !order.getLocation().equals(currentLocation);
 			
 			boolean isNewOrder = isNewEmail
 								 || isNewLocation
@@ -221,14 +234,14 @@ class OrderProcessor {
 			
 			if(isNewOrder || !scanner.hasNextLine()) {
 				
-				if(!scanner.hasNextLine() && isNewOrder) { 
+				if(!scanner.hasNextLine() && isNewOrder) {
 					order.addProduct(currentProduct);
 				} // End if
 				
 				processOrder();
 				
 				order = new Order(
-				 LocalDate.parse(line[0]), true, currentLocation);
+				 Timestamp.valueOf(line[0]), true, currentLocation);
 				
 				order.setEmail(currentEmail);
 				setCurrentOrder(order);
@@ -236,7 +249,6 @@ class OrderProcessor {
 				if(!scanner.hasNextLine()) {
 					break;
 				} // End if
-				
 			} // End if
 			
 			order.addProduct(currentProduct);
@@ -244,8 +256,6 @@ class OrderProcessor {
 			if(scanner.hasNextLine()) {
 				line = scanner.nextLine().split(",");
 			} else {
-				currentProduct = new Product(
-				 currentProductId, currentRequestedQuantity);
 				line = null;
 			} // End if
 			i++;
@@ -255,6 +265,7 @@ class OrderProcessor {
 	
 	public static void runFileOrders(Crud crud, String ordersPath)
 	throws SQLException, FileNotFoundException {
+		
 		new OrderProcessor(crud).runFileOrders(ordersPath);
 	}
 	
@@ -273,7 +284,9 @@ class OrderProcessor {
 	public void updateAndClose() throws SQLException {
 		
 		crud.setWorkingTable("sales");
-		JOptionPane.showMessageDialog(null, "put the breakpoint on line 269 in Crud.java");
+		JOptionPane
+		 .showMessageDialog(null, "put the breakpoint on line 269 in Crud" +
+								  ".java");
 		if(acceptedOrders.size() > 0) {
 			crud.insertRecords(Order.SALES_COLUMNS,
 			 acceptedOrders.iterator(), acceptedOrders.size());
