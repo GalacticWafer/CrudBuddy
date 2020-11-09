@@ -1,3 +1,4 @@
+import customerrelationsmanagement.Analytics;
 import customerrelationsmanagement.Credentials;
 import customerrelationsmanagement.Crud;
 import customerrelationsmanagement.GUI;
@@ -10,8 +11,7 @@ class GUITest {
 	{
 		Crud crud = new Credentials().getCrud();
 		String FileName = "gui.csv";
-		GUI GUI = new GUI(crud);
-		
+		GUI GUI = new GUI(crud, new Analytics(crud));
 		
 	}
 }
