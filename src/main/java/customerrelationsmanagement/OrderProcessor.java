@@ -277,7 +277,6 @@ class OrderProcessor {
 		if(acceptedOrders.size() > 0) {
 			crud.insertRecords(Order.SALES_COLUMNS,
 			 acceptedOrders.iterator(), acceptedOrders.size());
-			acceptedOrders = new ArrayList<>();
 		} // End if
 		
 		// update the inventory table to effectively close the processor.
