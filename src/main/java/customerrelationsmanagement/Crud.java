@@ -281,7 +281,7 @@ public class Crud {
 	
 	/**
 	 * Overloaded version of <code>insertRecords</code> that takes an
-	 * <code>Iterator<Object[]></code> instead of an <code>Object[][]</code>.
+	 * <code>Iterator&lt;Object[]&gt;</code> instead of an <code>Object[][]</code>.
 	 *
 	 * @param columnNames
 	 *  the columns to insert data into.

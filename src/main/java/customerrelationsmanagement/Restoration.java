@@ -59,6 +59,13 @@ public class Restoration {
 					"date_accepted 		DATETIME," +
 					"Status		 		int(1)," +
 					"PRIMARY KEY 		(idx))");
+		crud.update("CREATE TABLE IF NOT EXISTS stats(" +
+					"idx int(16) 		NOT NULL AUTO_INCREMENT," +
+					"fiscal_date 		DATETIME," +
+					"top_customers  VARCHAR(1000)," +
+					"top_products  	VARCHAR(1000)," +
+					"asset_total   	DECIMAL(13,2)," +
+					"PRIMARY KEY 		(idx))");
 	}
 
 	private void deleteDirectory(String pathname) throws IOException {

@@ -1,15 +1,11 @@
 package customerrelationsmanagement;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.jfree.chart.ChartRenderingInfo;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.entity.StandardEntityCollection;
 
-import javax.crypto.spec.OAEPParameterSpec;
-import javax.swing.text.Position;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
@@ -21,11 +17,11 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class Analytics {
-    private class DailyAnalysis {
+    private static class DailyAnalysis {
         private final Date date;
         private final BigDecimal dailyRevenueArray;
         private final int numberOfOrders;
-        private ArrayList<BigDecimal> assetTotal;
+        private final ArrayList<BigDecimal> assetTotal;
 
         public DailyAnalysis(Date date, BigDecimal dailyRevenueSum) {
             this.date = date;
@@ -51,7 +47,7 @@ public class Analytics {
         }
     }
 
-    private Crud crud;
+    private final Crud crud;
     private final File directory;
     LinePlot assetPlot;
     LinePlot revenuePlot;

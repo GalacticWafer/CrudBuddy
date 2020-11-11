@@ -14,7 +14,7 @@ class OrderProcessor {
 	private Order currentOrder;
 	private final Queue<Integer> idxList;
 	private final HashMap<Integer, String> indexMap;
-	Stack<Order> orderStack;
+	private final Stack<Order> orderStack;
 	/* Change relevant quantities from a given order,
 	 and put all items into the acceptedSales list.*/
 	Timestamp orderStamp = currentOrder.getDateOrdered();
@@ -239,7 +239,26 @@ class OrderProcessor {
 				} // End if
 				
 				processOrder();
-				
+				if(orderStack.isEmpty()) {
+					orderStack.push(order);
+				} else {
+					Timestamp lastOrderTime =
+					 orderStack.peek().getDateOrdered();
+					if(lastOrderTime.compareTo(order.getDateAccepted()) == 0) {
+						orderStack.push(order);
+					} else {
+						// Analyze the all the orders in the stack
+							// record the top ten items of all orders to an ArrayList
+								// if there are ten 
+							// record the top ten customers of all orders to an ArrayList
+							// record the current date to an ArrayList
+							// record the daily sum of assets to a double
+						// save all daily statistics to a Queue<DailyStats>
+						
+						orderStack.clear();
+						orderStack.push(order);
+					}
+				}
 				order = new Order(
 				 Timestamp.valueOf(line[0]), true, currentLocation);
 				
@@ -332,3 +351,4 @@ class OrderProcessor {
 		crud.update("ALTER TABLE temp2 RENAME TO inventory");
 	} // End updateAndClose
 } // End SalesProcessor
+	
