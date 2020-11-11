@@ -11,17 +11,17 @@ import java.util.*;
 class OrderProcessor {
 	private final ArrayList<Object[]> acceptedOrders;
 	private final Crud crud;
-	private Order currentOrder;
+	private Order nextOrder;
 	private final Queue<Integer> idxList;
 	private final HashMap<Integer, String> indexMap;
 	private final Stack<Order> orderStack;
 	/* Change relevant quantities from a given order,
 	 and put all items into the acceptedSales list.*/
-	Timestamp orderStamp = currentOrder.getDateOrdered();
+	Timestamp orderStamp = nextOrder.getTimeOrdered();
 	private final HashMap<String, Integer> quantityMap;
 	
 	/**
-	 * SalesProcessor uses an in-memory copy of three inventory columns.
+	 * OrderProcessor uses an in-memory copy of three inventory columns.
 	 *
 	 * @param crud
 	 *  query and update.
@@ -67,9 +67,9 @@ class OrderProcessor {
 	private Boolean canProcessOrder() {
 		
 		ArrayList<Boolean> canFulfillProducts = new ArrayList<>();
-		boolean isSale = currentOrder.isSale();
+		boolean isSale = nextOrder.isSale();
 		
-		for(Iterator<Product> productIter = currentOrder.productIterator();
+		for(Iterator<Product> productIter = nextOrder.productIterator();
 			productIter.hasNext(); ) {
 			
 			Product product = productIter.next();
@@ -97,60 +97,60 @@ class OrderProcessor {
 		boolean canProcessOrder = !canFulfillProducts.contains(false);
 		
 		if(canProcessOrder || !isSale) {
-			currentOrder.setStatus(Order.PROCESSED);
+			nextOrder.setStatus(Order.PROCESSED);
 			changeQuantities();
 		} else {
-			currentOrder.setStatus(Order.QUANTITY_SHORTAGE);
+			nextOrder.setStatus(Order.QUANTITY_SHORTAGE);
 		} // End if
-		acceptedOrders.addAll(currentOrder.toArray());
+		acceptedOrders.addAll(nextOrder.toArray());
 		
 		return canProcessOrder;
 	} // End canProcessOrder
 	
 	private void changeQuantities() {
 		
-		currentOrder.setDateAccepted();
-		Iterator<Product> it = currentOrder.productIterator();
+		nextOrder.setTimeAccepted();
+		Iterator<Product> it = nextOrder.productIterator();
 		
 		while(it.hasNext()) {
 			Product prod = it.next();
 			String productId = prod.getId();
 			
 			if(prod.isProcessable()) {
-				Integer currentQuantity = quantityMap.get(productId);
+				Integer nextQuantity = quantityMap.get(productId);
 				int eventQuantity =
-				 prod.getQuantity() * (currentOrder.isSale() ? -1 : 1);
-				int newQuantity = currentQuantity + eventQuantity;
+				 prod.getQuantity() * (nextOrder.isSale() ? -1 : 1);
+				int newQuantity = nextQuantity + eventQuantity;
 				quantityMap.put(productId, newQuantity);
 			} // End if
 		} // End while
 	} // End changeQuantities
 	
 	/**
-	 * Processes the <code>currentOrder</code> to set its fields according to
+	 * Processes the <code>nextOrder</code> to set its fields according to
 	 * all Products it contains.
 	 *
-	 * @return true if all <code>Product</code>s from <code>currentOrder
+	 * @return true if all <code>Product</code>s from <code>nextOrder
 	 *  .iterator()</code>
 	 *  can be processed. Otherwise, false.
 	 */
 	public boolean processOrder() {
 		
-		if(currentOrder.isProcessed()) {
+		if(nextOrder.isProcessed()) {
 			return canProcessOrder();
 		} // End if.
 		
 		boolean canProcessOrder = canProcessOrder();
-		assert currentOrder != null;
+		assert nextOrder != null;
 		StringBuilder builder = new StringBuilder();
 		
-		for(Iterator<Product> it = currentOrder.productIterator();
+		for(Iterator<Product> it = nextOrder.productIterator();
 			it.hasNext(); ) {
 			
 			builder.append(it.next().toString()).append("\n");
 		} // End for.
 		
-		String orderNumber = "Order #" + currentOrder.getId();
+		String orderNumber = "Order #" + nextOrder.getId();
 		
 		String responsePrefix = orderNumber;
 		String responseSuffix;
@@ -158,27 +158,27 @@ class OrderProcessor {
 		if(canProcessOrder) {
 			responsePrefix += "The following products have been processed: ";
 			responseSuffix = "Thank you for using our service.";
-			currentOrder.setStatus(Order.PROCESSED);
+			nextOrder.setStatus(Order.PROCESSED);
 		} else {
 			responsePrefix += "The following products could not be processed:";
-			responseSuffix = "We are currently unable to fulfill this order.";
-			currentOrder.setStatus(Order.CANCELLED);
+			responseSuffix = "We are nextly unable to fulfill this order.";
+			nextOrder.setStatus(Order.CANCELLED);
 		} // End if.
 		
-		currentOrder.setText(responsePrefix + "\n\n"
+		nextOrder.setText(responsePrefix + "\n\n"
 							 + builder.toString()
 							 + "\n" + responseSuffix);
 		
-		currentOrder.setSubject(orderNumber + " "
-								+ currentOrder.getStatusString());
+		nextOrder.setSubject(orderNumber + " "
+								+ nextOrder.getStatusString());
 		
 		if(!orderStack.isEmpty() &&
-		   (orderStack.peek().getDateOrdered()
-					  .before(currentOrder.getDateOrdered()))) {
+		   (orderStack.peek().getTimeOrdered()
+					  .before(nextOrder.getTimeOrdered()))) {
 			// run analytics on today's orders
 			orderStack.clear();
 		} else {
-			orderStack.push(currentOrder);
+			orderStack.push(nextOrder);
 		}
 		return canProcessOrder;
 	} // End processOrder
@@ -213,20 +213,20 @@ class OrderProcessor {
 		int i = 2;
 		while(line != null) {
 			
-			Timestamp currentTime = Timestamp.valueOf(line[0]);
-			String currentEmail = line[1];
-			String currentLocation = line[2];
-			String currentProductId = line[3];
-			int currentRequestedQuantity = Integer.parseInt(line[4]);
+			Timestamp nextTime = Timestamp.valueOf(line[0]);
+			String nextEmail = line[1];
+			String nextLocation = line[2];
+			String nextProductId = line[3];
+			int nextRequestedQuantity = Integer.parseInt(line[4]);
 			
-			Product currentProduct = new Product(
-			 currentProductId, currentRequestedQuantity);
+			Product nextProduct = new Product(
+			 nextProductId, nextRequestedQuantity);
 			
-			boolean isNewDate = order.getDateOrdered().before(currentTime);
+			boolean isNewDate = order.getTimeOrdered().before(nextTime);
 			boolean isNewEmail =
-			 !order.getCustomerEmail().equals(currentEmail);
+			 !order.getCustomerEmail().equals(nextEmail);
 			boolean isNewLocation =
-			 !order.getLocation().equals(currentLocation);
+			 !order.getLocation().equals(nextLocation);
 			
 			boolean isNewOrder = isNewEmail
 								 || isNewLocation
@@ -235,7 +235,7 @@ class OrderProcessor {
 			if(isNewOrder || !scanner.hasNextLine()) {
 				
 				if(!scanner.hasNextLine() && isNewOrder) {
-					order.addProduct(currentProduct);
+					order.addProduct(nextProduct);
 				} // End if
 				
 				processOrder();
@@ -243,15 +243,15 @@ class OrderProcessor {
 					orderStack.push(order);
 				} else {
 					Timestamp lastOrderTime =
-					 orderStack.peek().getDateOrdered();
-					if(lastOrderTime.compareTo(order.getDateAccepted()) == 0) {
+					 orderStack.peek().getTimeOrdered();
+					if(lastOrderTime.compareTo(order.getTimeAccepted()) == 0) {
 						orderStack.push(order);
 					} else {
 						// Analyze the all the orders in the stack
 							// record the top ten items of all orders to an ArrayList
 								// if there are ten 
 							// record the top ten customers of all orders to an ArrayList
-							// record the current date to an ArrayList
+							// record the next date to an ArrayList
 							// record the daily sum of assets to a double
 						// save all daily statistics to a Queue<DailyStats>
 						
@@ -260,9 +260,9 @@ class OrderProcessor {
 					}
 				}
 				order = new Order(
-				 Timestamp.valueOf(line[0]), true, currentLocation);
+				 Timestamp.valueOf(line[0]), true, nextLocation);
 				
-				order.setEmail(currentEmail);
+				order.setEmail(nextEmail);
 				setCurrentOrder(order);
 				
 				if(!scanner.hasNextLine()) {
@@ -270,7 +270,7 @@ class OrderProcessor {
 				} // End if
 			} // End if
 			
-			order.addProduct(currentProduct);
+			order.addProduct(nextProduct);
 			
 			if(scanner.hasNextLine()) {
 				line = scanner.nextLine().split(",");
@@ -289,14 +289,14 @@ class OrderProcessor {
 	}
 	
 	/**
-	 * Changes currentOrder to a new Order object which should be processed.
+	 * Changes nextOrder to a new Order object which should be processed.
 	 *
 	 * @param order
 	 *  the next order to be processed.
 	 */
 	public void setCurrentOrder(Order order) {
 		
-		this.currentOrder = order;
+		this.nextOrder = order;
 	} // End seCurrentOrder
 	
 	/* Update all the tables after orders have been processed. */

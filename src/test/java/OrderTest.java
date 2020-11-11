@@ -44,15 +44,15 @@ class OrderTest {
 	void getDateAccepted() {
 		Timestamp now = Timestamp.valueOf(LocalDate.now() + "");
 		buyerOd = new Order(now, true, "55555");
-		assertNull(buyerOd.getDateAccepted());
-		buyerOd.setDateAccepted(now);
-		assertEquals(buyerOd.getDateAccepted(), now);
+		assertNull(buyerOd.getTimeAccepted());
+		buyerOd.setTimeAccepted(now);
+		assertEquals(buyerOd.getTimeAccepted(), now);
 	}
 	
 	@Test
 	void getDateOrdered() {
 		buyerOd = new Order(LocalDate.now(), true, "55555");
-		assertNotNull(buyerOd.getDateOrdered());
+		assertNotNull(buyerOd.getTimeOrdered());
 	}
 	
 	@Test
