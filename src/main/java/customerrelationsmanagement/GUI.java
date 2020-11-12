@@ -1,4 +1,7 @@
 package customerrelationsmanagement;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.UIManager;
@@ -394,6 +397,23 @@ public class GUI {
 		c.gridy = 6;
 		east.add(assetsOT, c);
 		assetsOT.addActionListener(e -> {
+			
+			LinePlot lp = new LinePlot("Assets", crud);
+			try {
+				ChartPanel cp = new ChartPanel(lp.generateAssetPlot(JOptionPane.showInputDialog(null,
+					 "Enter a date"),LinePlot.ASSET));
+				JFrame chartFrame = new JFrame();
+				chartFrame.getContentPane().add(cp);
+				chartFrame.pack();
+				chartFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+				chartFrame.setLocationRelativeTo(null);
+				chartFrame.setVisible(true);
+				
+				//TODO: Store the JFreeChart (assetChart) DO WHATEVER DAVID WITH CP
+			}
+			catch(SQLException throwables) {
+				throwables.printStackTrace();
+			}
 			//try {
 			//	analyze.generateTimePlot();
 			//} catch (SQLException | IOException throwables) {

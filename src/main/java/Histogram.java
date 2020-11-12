@@ -28,6 +28,9 @@ public class Histogram {
 			try {
 				ChartUtilities.saveChartAsPNG(new File("histogram.PNG"), chart, width, height);
 			} catch (IOException e) {}
+			
+			
+			
 		}
 	}
 }

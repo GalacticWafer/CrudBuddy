@@ -7,10 +7,14 @@ import org.jfree.ui.ApplicationFrame;
 import java.io.File;
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.InputMismatchException;
 import java.util.List;
+import java.util.function.ObjDoubleConsumer;
 
 public class LinePlot extends ApplicationFrame {
     String dateAxis = "Month";
@@ -20,14 +24,19 @@ public class LinePlot extends ApplicationFrame {
     String title;
     List data;
     ChartPanel chartPanel;
+    Crud crud;
+    public static final int ASSET = 0;
+    public static final int CUSTOMER = 1;
+    public static final int PRODUCT = 2;
 
-    public LinePlot(final String title) {
+    public LinePlot(final String title,Crud crud) {
 
         super(title);
         this.data = data;
         this.title = title;
         this.chartTitle = chartTitle;
         data = new ArrayList<>();
+        this.crud = crud;
        // ChartUtilities save = null;
         //ChartUtilities.save
     }
@@ -101,8 +110,41 @@ public class LinePlot extends ApplicationFrame {
         this.title = title;
     }
 
-    public void addData(Object[] data) {
-        this.data.add(data);
+    
+        public void addData(Object[] data) {
+            this.data.add(data);
+        }
+    
+        
+        public JFreeChart generateAssetPlot(String time, int type) throws SQLException {
+            //check if time is valid
+            //check if row exists for the "time"
+            //^^ pass both statements, then make the chart
+        
+        switch(type){
+            case ASSET:
+                return getjFreeChart(time, "asset_total");
+            case CUSTOMER:
+                return getjFreeChart(time, "top_customers");
+            case PRODUCT:
+                return getjFreeChart(time, "top_products");
+                
+        }
+            throw new InputMismatchException();
+        }
+    
+    private JFreeChart getjFreeChart(String time, String columnName) throws SQLException {
+        
+        String sql = "SELECT fiscal_date," + columnName + " FROM daily_analysis WHERE fiscal_date <= '" +
+                     time + "'";
+        
+        Object[][] objects = crud.getRecords(sql);
+        List<Object[]> points = new ArrayList<>();
+        
+        points.addAll(Arrays.asList(objects));
+        
+        XYDataset dataset = getDatasets(points, "Assets");
+        return ChartFactory.createTimeSeriesChart(
+         "Assets", "Date", "Total",dataset, false, false, false);
     }
-
 }
