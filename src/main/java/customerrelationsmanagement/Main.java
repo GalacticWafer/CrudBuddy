@@ -9,6 +9,7 @@ import javax.swing.*;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.text.ParseException;
 
 public class Main {
 	public static final String INVENTORY_PATH = "inventory_team4.csv";
@@ -33,7 +34,7 @@ public class Main {
 	private static Restoration rest;
 	
 	public Main(Credentials credentials, Crud queryMaker)
-	throws IOException, SQLException {
+			throws IOException, SQLException, ParseException {
 		startServices(credentials);
 	}
 	
@@ -63,7 +64,7 @@ public class Main {
 	}
 	
 	public void startServices(Credentials credentials)
-	throws IOException, SQLException {
+			throws IOException, SQLException, ParseException {
 		
 		this.crud = credentials.getCrud();
 		if(START_MAIL) {

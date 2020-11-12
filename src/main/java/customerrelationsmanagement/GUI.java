@@ -13,11 +13,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableRowSorter;
+import javax.swing.text.*;
 
 public class GUI {
 	private static GridBagLayout BAG_LAYOUT = new GridBagLayout();
@@ -53,7 +55,7 @@ public class GUI {
 	private DefaultTableModel tempDataModel;
 	String tempTable = "";
 	
-	public GUI(Crud crud, Analytics analyze) throws SQLException {
+	public GUI(Crud crud, Analytics analyze) throws SQLException, ParseException {
 		this.crud = crud;
 		this.analyze = analyze;
 		setUIManager();
@@ -134,7 +136,7 @@ public class GUI {
 	}
 	
 	private void makeComponents(JPanel east, JPanel center,
-								GridBagConstraints middle) {
+								GridBagConstraints middle) throws ParseException {
 		
 		JLabel user = new JLabel("Username:");
 		user.setForeground(GREY_110x3);
@@ -383,106 +385,118 @@ public class GUI {
 				}
 			}
 		}); //end of search filter
-		
+
+		//ASSETS OT Button
 		JButton assetsOT = new JButton("Assets OT");
 		assetsOT.setBackground(GREY_110x3);
 		assetsOT.setFont(FONT);
 		assetsOT.setForeground(TABLE_FOREGROUND);
 		assetsOT.setBorder(new LineBorder(DARK_GREY, 2));
+		assetsOT.setVisible(false);
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 7;
+		east.add(assetsOT, c);
+		assetsOT.addActionListener(e -> {
+
+		});
+		//ORDERS OT Button
+		JButton ordersOT = new JButton("Orders OT");
+		ordersOT.setBackground(GREY_110x3);
+		ordersOT.setFont(FONT);
+		ordersOT.setForeground(TABLE_FOREGROUND);
+		ordersOT.setBorder(new LineBorder(DARK_GREY, 2));
+		ordersOT.setVisible(false);
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 8;
+		east.add(ordersOT, c);
+		assetsOT.addActionListener(e -> {
+
+		});
+		//SALES OT Button
+		JButton salesOT = new JButton("Sales OT");
+		salesOT.setBackground(GREY_110x3);
+		salesOT.setFont(FONT);
+		salesOT.setForeground(TABLE_FOREGROUND);
+		salesOT.setBorder(new LineBorder(DARK_GREY, 2));
+		salesOT.setVisible(false);
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 9;
+		east.add(salesOT, c);
+		assetsOT.addActionListener(e -> {
+
+		});
+
+		JLabel analyzeDate = new JLabel("Analyze YTD:");
+		analyzeDate.setForeground(GREY_110x3);
+		analyzeDate.setFont(FONT);
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
+		c.gridy = 6;
+		east.add(analyzeDate, c);
+		JTextField queryDate = new JFormattedTextField(); //creates textfield with 10 columns
+		queryDate.setDocument(new JTextFieldLimit(10));
+		queryDate.setBackground(GREY_110x3);
+		queryDate.setForeground(PURE_WHITE);
+		queryDate.setBorder(new LineBorder(DARK_GREY, 2));
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 6;
-		east.add(assetsOT, c);
-		assetsOT.addActionListener(e -> {
-			//try {
-			//	analyze.generateTimePlot();
-			//} catch (SQLException | IOException throwables) {
-			//	throwables.printStackTrace();
-			//}
+		east.add(queryDate, c);
+
+		queryDate.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void changedUpdate(DocumentEvent e) {}
+
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				format();
+				if (queryDate.getText().length() == 10) {
+					assetsOT.setVisible(true);
+					ordersOT.setVisible(true);
+					salesOT.setVisible(true);
+				}
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				assetsOT.setVisible(false);
+				ordersOT.setVisible(false);
+				salesOT.setVisible(false);
+			}
+
+			private void format() {
+				Runnable doFormat = new Runnable() {
+					@Override
+					public void run() {
+						if (queryDate.getText().length() == 4 || queryDate.getText().length() == 7) {
+							queryDate.setText(queryDate.getText() + "-");
+						}
+					}
+				};
+				SwingUtilities.invokeLater(doFormat);
+			}
 		});
 
-			/*Object[][] data = new Object[0][];
-			try {
-				data = crud.getAssetTotal("");
-			} catch (SQLException throwables) {
-				throwables.printStackTrace();
+	}
+
+	public class JTextFieldLimit extends PlainDocument {
+		private int limit;
+
+		JTextFieldLimit(int limit) {
+			super();
+			this.limit = limit;
+		}
+
+		public void insertString( int offset, String  str, AttributeSet attr ) throws BadLocationException {
+			if (str == null) return;
+
+			if ((getLength() + str.length()) <= limit) {
+				super.insertString(offset, str, attr);
 			}
-			System.out.println(data[0][0]);
-			java.util.List<Object[]> yearToDateData = new ArrayList<>();
-			List<Date> dates = new ArrayList<>();
-			Date Jan = StringToDate("2020-02-31");
-			for (int i = 0; i < data.length; i++) {
-				yearToDateData.add(data[i]);
-				dates.add((Date)data[i][0]);
-				if (dates.get(i).compareTo(Jan) > 0){
-					try {
-						makePlot("MYCROWSAWFT", "Assets", yearToDateData, dates.get(i));
-					} catch (SQLException | IOException throwables) {
-						throwables.printStackTrace();
-					}
-					//save();
-				}
-			}
-			LinePlot ytd = new LinePlot("MYCROWSAWFT", "Assets", yearToDateData);
-			ytd.pack();
-			RefineryUtilities.positionFrameRandomly(ytd);
-			ytd.setVisible(true);
-		}); */
-		/*analyzer.addActionListener(e -> {
-
-			String newTableName = null;
-			try {
-				int count = Integer.parseInt(JOptionPane.showInputDialog(
-				 "Please enter the amount records you would like to see"));
-
-				String d = JOptionPane.showInputDialog(
-				 null,
-				 "what date would you like to see results for? (leave blank " +
-				 "for all-time");
-				LocalDate date = null;
-				if(d != "") {
-					date = LocalDate.parse(d);
-				}
-
-				boolean isDescending =
-				 JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog
-				  (null, "Should the results be ascending?\"",
-				   "Is Descending", JOptionPane.YES_NO_OPTION);
-
-				newTableName =
-				 crud.mostOrderedProducts((date == null ? null :date.toString
-				 ()), count, isDescending, this);
-				crud.setWorkingTable(newTableName);
-				Object[][] description =
-				 crud.getRecords(crud.query("describe " + newTableName));
-				String[] columnNames = new String[description.length];
-				for(int i = 0; i < columnNames.length; i++) {
-					columnNames[i] = String.valueOf(description[i][0]);
-				}
-				setTempData(columnNames, crud
-				 .getRecords(crud.query("select * from " + newTableName)));
-			}
-			catch(SQLException throwables) {
-				throwables.printStackTrace();
-			}
-
-			*//*JOptionPane
-			 .showMessageDialog
-			  (null,
-			   "Uriel,\n\tPlease make it so that when this button is pressed,
-			   \n " +
-			   "it does the stuff in Main.main() instead of this message." +
-			   "Make sure to take in an 'int' first, to pass into the
-			   topNCustomers() function.\n" +
-			   "That code in main()  is responsible for displaying
-			   topNCustomers() results.\n" +
-			   " seen at the beginning of this program, which is our analytics
-			   .\n" +
-			   "After that, when any other table is selected from the
-			   drop-down menu of\n" +
-				"tables, remove the one associated with this table, and\n" +
-			   "call crud.setWorkingTable(<some_other_table_string_name)");*//*
-		});*/
+		}
 	}
 
 

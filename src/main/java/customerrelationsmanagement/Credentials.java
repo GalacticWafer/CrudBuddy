@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
 import javax.mail.*;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Properties;
 
@@ -158,6 +159,8 @@ public class Credentials {
                             null, "You have not signed in yet");
                 } catch(IOException ioException) {
                     ioException.printStackTrace();
+                } catch (ParseException parseException) {
+                    parseException.printStackTrace();
                 }
             });
         }
