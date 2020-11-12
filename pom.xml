@@ -30,7 +30,18 @@
             <artifactId>jfreechart</artifactId>
             <version>1.0.13</version>
         </dependency>
-
+        <!-- https://mvnrepository.com/artifact/org.rosuda.REngine/REngine -->
+        <dependency>
+            <groupId>org.rosuda.REngine</groupId>
+            <artifactId>REngine</artifactId>
+            <version>2.1.0</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.rosuda.REngine/Rserve -->
+        <dependency>
+            <groupId>org.rosuda.REngine</groupId>
+            <artifactId>Rserve</artifactId>
+            <version>1.8.1</version>
+        </dependency>
 
 
         <dependency>
@@ -74,7 +85,7 @@
         </dependency>
 
 
-    </dependencies> 
+    </dependencies>
 
     <properties>
         <maven.compiler.source>1.14</maven.compiler.source>
