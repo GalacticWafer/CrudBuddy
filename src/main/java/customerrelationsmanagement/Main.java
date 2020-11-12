@@ -46,6 +46,8 @@ public class Main {
 	
 	private static void getHistogram() {
 		HistogramDataset dataset = new HistogramDataset();
+		
+		
 		double[] values = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
 		dataset.addSeries("H1", values, 10, 0.0, 10.0);
 		JFrame frame = new JFrame();
@@ -73,7 +75,7 @@ public class Main {
 			rest = new Restoration(crud, INVENTORY_PATH, "customer_orders_A_team4.csv",true, analyticsDir);
 		}
 		if(START_GUI) {
-			new GUI(crud, new Analytics(crud));
+			new GUI(crud);
 		}
 		if(ORDERS_PATH != null && !ORDERS_PATH.equals("")) {
 			OrderProcessor.runFileOrders(crud, ORDERS_PATH);

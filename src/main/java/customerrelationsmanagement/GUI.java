@@ -1,6 +1,5 @@
 package customerrelationsmanagement;
 import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -12,7 +11,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -43,7 +41,6 @@ public class GUI {
 	private static JPanel WEST_PANEL = new JPanel();
 	private static final Color centerBackground = GREY_50x3;
 	private final Crud crud;
-	private final Analytics analyze;
 	private Object[][] data;
 	private static JFrame frame;
 	private DefaultTableModel model;
@@ -56,9 +53,8 @@ public class GUI {
 	private DefaultTableModel tempDataModel;
 	String tempTable = "";
 	
-	public GUI(Crud crud, Analytics analyze) throws SQLException {
+	public GUI(Crud crud) throws SQLException {
 		this.crud = crud;
-		this.analyze = analyze;
 		setUIManager();
 		scrollPane = new JScrollPane();
 		table = new JTable();
@@ -398,10 +394,12 @@ public class GUI {
 		east.add(assetsOT, c);
 		assetsOT.addActionListener(e -> {
 			
-			LinePlot lp = new LinePlot("Assets", crud);
+			Charts lp = new Charts(crud);
 			try {
-				ChartPanel cp = new ChartPanel(lp.generateAssetPlot(JOptionPane.showInputDialog(null,
-					 "Enter a date"),LinePlot.ASSET));
+				//ChartPanel cp = new ChartPanel(lp.getTimeSeriesChart(JOptionPane.showInputDialog(null,
+				//	 "Enter a date"), Chart.ASSET));
+				ChartPanel cp = new ChartPanel(lp.getChart(JOptionPane.showInputDialog(null,
+					 "Enter a date"), ChartType.BAR_TOP_CUSTOMERS));
 				JFrame chartFrame = new JFrame();
 				chartFrame.getContentPane().add(cp);
 				chartFrame.pack();
