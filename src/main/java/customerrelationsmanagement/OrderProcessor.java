@@ -1,24 +1,30 @@
 package customerrelationsmanagement;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.*;
 
 class OrderProcessor {
+	public static final String[] ANALYTICS_COLUMNS
+	 = {"fiscal_date", "asset_total", "top_customers", "top_products", "order_count", "product_count"};
 	private final ArrayList<Object[]> acceptedOrders;
 	private final Crud crud;
-	private Order nextOrder;
+	private final ArrayList<Object[]> dailyAnalytics;
+	private final Stack<Order> dailyOrderStack;
 	private final Queue<Integer> idxList;
 	private final HashMap<Integer, String> indexMap;
-	private final Stack<Order> orderStack;
+	private Order nextOrder;
 	/* Change relevant quantities from a given order,
 	 and put all items into the acceptedSales list.*/
-	Timestamp orderStamp = nextOrder.getTimeOrdered();
 	private final HashMap<String, Integer> quantityMap;
+	private final HashMap<String, BigDecimal> salePriceMap;
+	private final HashMap<String, BigDecimal> wholesaleMap;
 	
 	/**
 	 * OrderProcessor uses an in-memory copy of three inventory columns.
@@ -42,24 +48,38 @@ class OrderProcessor {
 		crud.setWorkingTable("inventory");
 		
 		ResultSet rs = crud.query(
-		 "SELECT quantity,idx,product_id FROM inventory");
+		 "SELECT quantity,idx,product_id,wholesale_cost,sale_price FROM " +
+		 "inventory");
 		
 		int size = crud.size();
 		idxList = new ArrayDeque<>(size); // ordered list of idx's
 		indexMap = new HashMap<>(size); // map from idx -> product_id
 		quantityMap = new HashMap<>(size); // map from product_id -> quantity
+		wholesaleMap = new HashMap<>(size); // map from product_id -> quantity
+		salePriceMap = new HashMap<>(size); // map from product_id -> quantity
 		acceptedOrders = new ArrayList<>(size); // list of Object[]'s for
-		orderStack = new Stack<>();
-		
+		dailyOrderStack = new Stack<>();
+		dailyAnalytics = new ArrayList<>();
 		while(rs.next()) {
 			int quantity = rs.getInt(1);
 			int idx = rs.getInt(2);
 			String productId = rs.getString(3);
+			BigDecimal wholesaleCost = rs.getBigDecimal(4);
+			BigDecimal salePrice = rs.getBigDecimal(5);
+			
 			quantityMap.put(productId, quantity);
+			wholesaleMap.put(productId, wholesaleCost);
+			salePriceMap.put(productId, salePrice);
 			indexMap.put(idx, productId);
 			idxList.add(idx);
 		} // End while
 	} // End Constructor
+	
+	private void analyzeOrders() throws SQLException {
+		
+		dailyAnalytics.add(new DailyStats().toArray());
+		dailyOrderStack.clear();
+	}
 	
 	/**
 	 * @return true if the entire order can be fulfilled
@@ -134,7 +154,7 @@ class OrderProcessor {
 	 *  .iterator()</code>
 	 *  can be processed. Otherwise, false.
 	 */
-	public boolean processOrder() {
+	public boolean processOrder() throws SQLException {
 		
 		if(nextOrder.isProcessed()) {
 			return canProcessOrder();
@@ -166,20 +186,11 @@ class OrderProcessor {
 		} // End if.
 		
 		nextOrder.setText(responsePrefix + "\n\n"
-							 + builder.toString()
-							 + "\n" + responseSuffix);
+						  + builder.toString()
+						  + "\n" + responseSuffix);
 		
 		nextOrder.setSubject(orderNumber + " "
-								+ nextOrder.getStatusString());
-		
-		if(!orderStack.isEmpty() &&
-		   (orderStack.peek().getTimeOrdered()
-					  .before(nextOrder.getTimeOrdered()))) {
-			// run analytics on today's orders
-			orderStack.clear();
-		} else {
-			orderStack.push(nextOrder);
-		}
+							 + nextOrder.getStatusString());
 		return canProcessOrder;
 	} // End processOrder
 	
@@ -206,14 +217,18 @@ class OrderProcessor {
 		String[] line = scanner.nextLine().split(",");
 		
 		Order order = new Order(
-		 Timestamp.valueOf(line[0]), true, line[2]);
+		 Timestamp.valueOf(LocalDate.parse(line[0]).atStartOfDay()),
+		 true,
+		 line[2]
+		);
 		
 		order.setEmail(line[1]);
 		this.setCurrentOrder(order);
 		int i = 2;
 		while(line != null) {
 			
-			Timestamp nextTime = Timestamp.valueOf(line[0]);
+			Timestamp nextTime =
+			 Timestamp.valueOf(LocalDate.parse(line[0]).atStartOfDay());
 			String nextEmail = line[1];
 			String nextLocation = line[2];
 			String nextProductId = line[3];
@@ -239,28 +254,25 @@ class OrderProcessor {
 				} // End if
 				
 				processOrder();
-				if(orderStack.isEmpty()) {
-					orderStack.push(order);
+				if(dailyOrderStack.isEmpty()) {
+					dailyOrderStack.push(order);
 				} else {
 					Timestamp lastOrderTime =
-					 orderStack.peek().getTimeOrdered();
-					if(lastOrderTime.compareTo(order.getTimeAccepted()) == 0) {
-						orderStack.push(order);
+					 dailyOrderStack.peek().getTimeOrdered();
+					Timestamp nextOrderTime = order.getTimeOrdered();
+					if(lastOrderTime.compareTo(nextOrderTime) == 0) {
+						dailyOrderStack.push(order);
 					} else {
-						// Analyze the all the orders in the stack
-							// record the top ten items of all orders to an ArrayList
-								// if there are ten 
-							// record the top ten customers of all orders to an ArrayList
-							// record the next date to an ArrayList
-							// record the daily sum of assets to a double
-						// save all daily statistics to a Queue<DailyStats>
-						
-						orderStack.clear();
-						orderStack.push(order);
+						analyzeOrders();
+						dailyOrderStack.clear();
+						dailyOrderStack.push(order);
 					}
 				}
 				order = new Order(
-				 Timestamp.valueOf(line[0]), true, nextLocation);
+				 Timestamp.valueOf(LocalDate.parse(line[0]).atStartOfDay()),
+				 true,
+				 nextLocation
+				);
 				
 				order.setEmail(nextEmail);
 				setCurrentOrder(order);
@@ -279,6 +291,10 @@ class OrderProcessor {
 			} // End if
 			i++;
 		} // End while
+		
+		if(!dailyOrderStack.isEmpty()) {
+			analyzeOrders();
+		}
 		updateAndClose();
 	} // End runFileOrders
 	
@@ -299,16 +315,18 @@ class OrderProcessor {
 		this.nextOrder = order;
 	} // End seCurrentOrder
 	
-	/* Update all the tables after orders have been processed. */
+	/** Update all the tables after orders have been processed. */
 	public void updateAndClose() throws SQLException {
 		
-		crud.setWorkingTable("sales");
-		JOptionPane
-		 .showMessageDialog(null, "put the breakpoint on line 269 in Crud" +
-								  ".java");
+		crud.setWorkingTable("statused_sales");
 		if(acceptedOrders.size() > 0) {
 			crud.insertRecords(Order.SALES_COLUMNS,
 			 acceptedOrders.iterator(), acceptedOrders.size());
+		} // End if
+		crud.setWorkingTable("daily_analysis");
+		if(dailyAnalytics.size() > 0) {
+			crud.insertRecords(ANALYTICS_COLUMNS,
+			 dailyAnalytics.iterator(), dailyAnalytics.size());
 		} // End if
 		
 		// update the inventory table to effectively close the processor.
@@ -350,5 +368,141 @@ class OrderProcessor {
 		crud.update("DROP TABLE inventory");
 		crud.update("ALTER TABLE temp2 RENAME TO inventory");
 	} // End updateAndClose
+	
+	private class DailyStats {
+		BigDecimal assetTotal;
+		Date fiscalDate;
+		Object[][] topCustomers; // yo.gmail.com 499.99	nextguy@something.com 
+		Object[][] topProducts;
+		
+		public DailyStats() {
+			
+			this.fiscalDate =
+			 new Date(dailyOrderStack.peek().getTimeOrdered().getTime());
+			this.assetTotal = calculateAssetTotal();
+			this.topCustomers = calculateTopCustomers();
+			this.topProducts = calculateTopProducts();
+		}
+		
+		private BigDecimal calculateAssetTotal() {
+			
+			BigDecimal total = BigDecimal.ZERO;
+			for(Order order: dailyOrderStack) {
+				if(order.getStatus() <= Order.UNPROCESSED) { continue; }
+				var it = order.productIterator();
+				while(it.hasNext()) {
+					Product product = it.next();
+					String id = product.getId();
+					BigDecimal salePrice = salePriceMap.get(id);
+					BigDecimal quantity =
+					 new BigDecimal(product.getQuantity());
+					total = total.add(salePrice.multiply(quantity));
+				}
+			}
+			return total;
+		}
+		
+		private Object[][] calculateTopCustomers() {
+			
+			HashMap<String, BigDecimal> dailyCustomers = new HashMap<>();
+			for(Order order: dailyOrderStack) {
+				if(!(order.getStatus() > Order.UNPROCESSED)) { continue; }
+				
+				BigDecimal orderTotal = BigDecimal.ZERO;
+				Iterator<Product> it = order.productIterator();
+				while(it.hasNext()) {
+					Product product = it.next();
+					BigDecimal salePrice = salePriceMap.get(product.getId());
+					BigDecimal quantity =
+					 BigDecimal.valueOf(product.getQuantity());
+					orderTotal = orderTotal.add(salePrice.multiply(quantity));
+				}
+				dailyCustomers.put(order.getCustomerEmail(), orderTotal);
+			}
+			List<Map.Entry<String, BigDecimal>> list =
+			 new LinkedList<>(dailyCustomers.entrySet());
+			// Sort the list 
+			list.sort(Map.Entry.comparingByValue());
+			
+			Object[][] tops = new Object[list.size()][2];
+			Iterator<Map.Entry<String, BigDecimal>> it = list.iterator();
+			for(int i = 0; i < list.size(); i++) {
+				Map.Entry<String, BigDecimal> entry = it.next();
+				tops[i] = new Object[] {entry.getKey(), entry.getValue()};
+			}
+			return tops;
+		}
+		
+		private Object[][] calculateTopProducts() {
+			
+			HashMap<String, Integer> dailyQuantities = new HashMap<>();
+			for(Order order: dailyOrderStack) {
+				if(!(order.getStatus() > Order.UNPROCESSED)) { continue; }
+				Iterator<Product> it = order.productIterator();
+				while(it.hasNext()) {
+					Product product = it.next();
+					if(dailyQuantities.containsKey(product.getId())) {
+						
+						dailyQuantities.put(
+						 product.getId(),
+						 product.getQuantity() +
+						 dailyQuantities.get(product.getId()));
+					} else {
+						dailyQuantities
+						 .put(product.getId(), product.getQuantity());
+					}
+				}
+			}
+			List<Map.Entry<String, Integer>> list =
+			 new LinkedList<>(dailyQuantities.entrySet());
+			HashMap<String, Integer> temp = new LinkedHashMap<>();
+			// Sort the list 
+			String str = "";
+			Object[][] tops = new Object[list.size()][2];
+			list.sort(Map.Entry.comparingByValue());
+			Iterator<Map.Entry<String, Integer>> it = list.iterator();
+			for(int i = 0; i < list.size() && i < 10; i++) {
+				Map.Entry<String, Integer> entry = it.next();
+				temp.put(entry.getKey(), entry.getValue());
+				tops[i] = new Object[] {entry.getKey(), entry.getValue()};
+			}
+			return tops;
+		}
+		
+		private String getTopCustomers() {
+			
+			String s = "";
+			for(Object[] topCustomer: topCustomers) {
+				s += topCustomer[0] + " " + topCustomer[1] + "\t";
+			}
+			return s;
+		}
+		
+		private String getTopProducts() {
+			
+			String s = "";
+			for(Object[] topProduct: topProducts) {
+				s += topProduct[0] + " " + topProduct[1] + "\t";
+			}
+			return s;
+		}
+		
+		public Object[] toArray() {
+			int dailyProductCount = 0;
+			for(Order order: dailyOrderStack) {
+				if(order.getStatus() <= 0) {continue;}
+				 dailyProductCount += order.size();
+			}
+			return new Object[] {
+			 fiscalDate,              // fiscalDate         
+			 assetTotal,              // assetTotal         
+			 getTopCustomers() + "",  // topCustomers                   
+			 getTopProducts() + "",   // topProducts                   
+			 dailyOrderStack.size(),  // orderCount                     
+			 dailyProductCount,       // productCount              
+			 };
+		}
+	}
 } // End SalesProcessor
+	
 	

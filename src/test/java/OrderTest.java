@@ -9,32 +9,32 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class OrderTest {
 	private Order buyerOd;
-	Order sellerOd = new Order(LocalDate.now(), true, "55555");
+	Order sellerOd = new Order(Timestamp.valueOf(LocalDate.now().atStartOfDay()), true, "55555");
 	
 	@Test
 	void add() {
-		buyerOd = new Order(LocalDate.now(), true, "55555");
+		buyerOd = new Order(Timestamp.valueOf(LocalDate.now().atStartOfDay()), true, "55555");
 		buyerOd.addProduct(new Product("TEST1234", 500));
 		assertEquals(1, buyerOd.size());
 	}
 	
 	@Test
 	void canProcess() {
-		buyerOd = new Order(LocalDate.now(), true, "55555");
+		buyerOd = new Order(Timestamp.valueOf(LocalDate.now().atStartOfDay()), true, "55555");
 		buyerOd.addProduct(new Product("TEST1234", 500));
 		assertTrue(buyerOd.canProcess());
 	}
 	
 	@Test
 	void cancel() {
-		buyerOd = new Order(LocalDate.now(), true, "55555");
+		buyerOd = new Order(Timestamp.valueOf(LocalDate.now().atStartOfDay()), true, "55555");
 		buyerOd.setStatus(Order.CANCELLED);
 		assertEquals(buyerOd.getStatus(), Order.CANCELLED);
 	}
 	
 	@Test
 	void getCustomerEmail() {
-		buyerOd = new Order(LocalDate.now(), true, "55555");
+		buyerOd = new Order(Timestamp.valueOf(LocalDate.now().atStartOfDay()), true, "55555");
 		assertNull(buyerOd.getCustomerEmail());
 		buyerOd.setEmail("whatever");
 		assertEquals("whatever", buyerOd.getCustomerEmail());
@@ -51,13 +51,13 @@ class OrderTest {
 	
 	@Test
 	void getDateOrdered() {
-		buyerOd = new Order(LocalDate.now(), true, "55555");
+		buyerOd = new Order(Timestamp.valueOf(LocalDate.now().atStartOfDay()), true, "55555");
 		assertNotNull(buyerOd.getTimeOrdered());
 	}
 	
 	@Test
 	void getId() {
-		buyerOd = new Order(LocalDate.now(), true, "55555");
+		buyerOd = new Order(Timestamp.valueOf(LocalDate.now().atStartOfDay()), true, "55555");
 		assertNotNull(buyerOd.getId());
 	}
 	

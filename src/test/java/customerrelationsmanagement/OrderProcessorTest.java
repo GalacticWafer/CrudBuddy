@@ -7,6 +7,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Scanner;
@@ -20,7 +22,7 @@ public class OrderProcessorTest {
 	int[] buyerQuantities = new int[] {2, 1, 1, 2};
 	private final Crud crud = new Credentials().getCrud();
 
-	private final LocalDate date = LocalDate.parse("2020-01-02");
+	private final Timestamp date = Timestamp.valueOf("2020-01-02");
 	private final String location = "27934";
 	String[] productIds = new String[] {
 	 "3R8YXZCS820Y",
@@ -79,7 +81,7 @@ public class OrderProcessorTest {
 	@Test
 	void runFileOrders()
 	throws SQLException, IOException {
-		new Restoration(new Credentials().getCrud(), "little_inventory.csv", true, null);
+		new Restoration(new Credentials().getCrud(), "little_inventory.csv", "", true, null);
 		OrderProcessor processor = new OrderProcessor(crud);
 		HashMap<String, Integer> oldQuantities = getInts(productIds.length);
 		processor.runFileOrders("little_order_test.csv");

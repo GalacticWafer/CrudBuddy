@@ -28,16 +28,17 @@ public class Order {
 	 CHAR_LOWER + CHAR_UPPER + NUMBER;
 	
 	public static final String[] SALES_COLUMNS = new String[] {
-	 "order_id",
-	 "cust_email",
-	 "cust_location",
-	 "product_id",
-	 "product_quantity",
-	 "date_ordered",
-	 "date_accepted",
-	 "status",
+	 "order_id", // date_ordered
+	 "cust_email", // cust_email
+	 "cust_location", // cust_location
+	 "product_id", // product_id
+	 "product_quantity", // product_quantity
+	 "date_ordered", // order_status
+	 "date_accepted", // date_accepted
+	 "order_status", // order_id
 	 };
 	
+	public static final String[] ORDER_FILE_COLUMNS = new String[] { "date","cust_email","cust_location","product_id","product_quantity"};
 	private Timestamp timeAccepted;
 	private final Timestamp timeOrdered;
 	private String email;
@@ -175,7 +176,7 @@ public class Order {
 			 });
 		} // End for
 		return array;
-	} // End toArray
+	} // End toString
 	
 	@Override public String toString() {
 		return

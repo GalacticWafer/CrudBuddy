@@ -44,7 +44,7 @@ public class LinePlot extends ApplicationFrame {
             default:
                 valueAxisLabel = "Total";
         }
-        final XYDataset dataset = createDataset(data, chartTitle);
+        final XYDataset dataset = getDatasets(data, chartTitle);
         return createChart(dataset, chartTitle, dateAxis, valueAxisLabel);
     }
     public void displayChart() {
@@ -53,6 +53,7 @@ public class LinePlot extends ApplicationFrame {
         chartPanel.setMouseZoomable(true, false);
         setContentPane(chartPanel);
     }
+    
     private JFreeChart createChart(final XYDataset dataset, String title,
                                    String timeAxisLabel,
                                    String valueAxisLabel) {
@@ -61,7 +62,7 @@ public class LinePlot extends ApplicationFrame {
                 title, timeAxisLabel, valueAxisLabel, dataset, false, false, false);
     }
 
-    private XYDataset createDataset(List<Object[]> data, String name) {
+    private XYDataset getDatasets(List<Object[]> data, String name) {
 
         final TimeSeries series = new TimeSeries(name);
 
@@ -87,6 +88,7 @@ public class LinePlot extends ApplicationFrame {
             }
 
         }
+        
         return new TimeSeriesCollection(series);
     }
 
