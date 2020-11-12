@@ -51,9 +51,6 @@ public class GUI {
 	private JTable table;
 	private String tableName;
 	private final JComboBox tableSelections;
-	Object[][] tempData;
-	private DefaultTableModel tempDataModel;
-	String tempTable = "";
 	
 	public GUI(Crud crud, Analytics analyze) throws SQLException, ParseException {
 		this.crud = crud;
@@ -218,10 +215,7 @@ public class GUI {
 		east.add(search, c);
 		
 		JButton exportButton = new JButton("Export All");
-		exportButton.setBackground(GREY_110x3);
-		exportButton.setFont(FONT);
-		exportButton.setForeground(TABLE_FOREGROUND);
-		exportButton.setBorder(new LineBorder(DARK_GREY, 2));
+		setButtonStyle(exportButton);
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 3;
@@ -239,10 +233,7 @@ public class GUI {
 		});
 		
 		JButton delete = new JButton("Delete Current");
-		delete.setBackground(GREY_110x3);
-		delete.setFont(FONT);
-		delete.setForeground(TABLE_FOREGROUND);
-		delete.setBorder(new LineBorder(DARK_GREY, 2));
+		setButtonStyle(delete);
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 1;
@@ -273,10 +264,7 @@ public class GUI {
 		});
 		
 		JButton exportCurrent = new JButton("Export Current");
-		exportCurrent.setBackground(GREY_110x3);
-		exportCurrent.setFont(FONT);
-		exportCurrent.setForeground(TABLE_FOREGROUND);
-		exportCurrent.setBorder(new LineBorder(DARK_GREY, 2));
+		setButtonStyle(exportCurrent);
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 2;
@@ -307,10 +295,7 @@ public class GUI {
 		});
 		
 		JButton upload = new JButton("Upload Table");
-		upload.setBackground(GREY_110x3);
-		upload.setFont(FONT);
-		upload.setForeground(TABLE_FOREGROUND);
-		upload.setBorder(new LineBorder(DARK_GREY, 2));
+		setButtonStyle(upload);
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 4;
@@ -328,10 +313,7 @@ public class GUI {
 		});
 		
 		JButton send = new JButton("Send Email");
-		send.setBackground(GREY_110x3);
-		send.setFont(FONT);
-		send.setForeground(TABLE_FOREGROUND);
-		send.setBorder(new LineBorder(DARK_GREY, 2));
+		setButtonStyle(send);
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 5;
@@ -388,10 +370,7 @@ public class GUI {
 
 		//ASSETS OT Button
 		JButton assetsOT = new JButton("Assets OT");
-		assetsOT.setBackground(GREY_110x3);
-		assetsOT.setFont(FONT);
-		assetsOT.setForeground(TABLE_FOREGROUND);
-		assetsOT.setBorder(new LineBorder(DARK_GREY, 2));
+		setButtonStyle(assetsOT);
 		assetsOT.setVisible(false);
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
@@ -402,10 +381,7 @@ public class GUI {
 		});
 		//ORDERS OT Button
 		JButton ordersOT = new JButton("Orders OT");
-		ordersOT.setBackground(GREY_110x3);
-		ordersOT.setFont(FONT);
-		ordersOT.setForeground(TABLE_FOREGROUND);
-		ordersOT.setBorder(new LineBorder(DARK_GREY, 2));
+		setButtonStyle(ordersOT);
 		ordersOT.setVisible(false);
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
@@ -416,10 +392,7 @@ public class GUI {
 		});
 		//SALES OT Button
 		JButton salesOT = new JButton("Sales OT");
-		salesOT.setBackground(GREY_110x3);
-		salesOT.setFont(FONT);
-		salesOT.setForeground(TABLE_FOREGROUND);
-		salesOT.setBorder(new LineBorder(DARK_GREY, 2));
+		setButtonStyle(salesOT);
 		salesOT.setVisible(false);
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
@@ -482,8 +455,8 @@ public class GUI {
 
 	}
 
-	public class JTextFieldLimit extends PlainDocument {
-		private int limit;
+	public static class JTextFieldLimit extends PlainDocument {
+		private final int limit;
 
 		JTextFieldLimit(int limit) {
 			super();
@@ -498,9 +471,6 @@ public class GUI {
 			}
 		}
 	}
-
-
-
 
 	private void refresh() throws SQLException {
 		setFromDatabase(crud.getColumnNames());
@@ -527,7 +497,14 @@ public class GUI {
 		}
 		dataWriter.close();
 	}  // End sendFile
-	
+
+	private void setButtonStyle(JButton button){
+		button.setBackground(GREY_110x3);
+		button.setFont(FONT);
+		button.setForeground(TABLE_FOREGROUND);
+		button.setBorder(new LineBorder(DARK_GREY, 2));
+	}
+
 	private void setFrameStyle(JLabel status) {
 		status.setFont(FONT);
 		CENTER_PANEL.setBackground(centerBackground);
@@ -568,16 +545,7 @@ public class GUI {
 		model.fireTableDataChanged();
 		table.repaint();
 	}
-	
-	public void setTempData(String[] columnNames, Object[][] newData)
-	throws SQLException {
-		model = new DefaultTableModel(newData, columnNames);
-		table.setModel(model);
-		model.fireTableDataChanged();
-		table.repaint();
-		//setNewModel(columnNames);
-	}
-	
+
 	private void setUIManager() {
 		UIManager.put("ScrollBar.thumb", new ColorUIResource(GREY_110x3));
 		UIManager
