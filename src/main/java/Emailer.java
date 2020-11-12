@@ -135,7 +135,7 @@ public class Emailer {
 		Session session = Credentials.getSession();
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 		OrderProcessor orderProcessor = new OrderProcessor(crud);
-		Message[] messages = Credentials.getMessages(session);
+		Message[] messages = Credentials.getInbox().getMessages();
 		
 		for(Message currentMessage: messages) {
 			Order order = null;
