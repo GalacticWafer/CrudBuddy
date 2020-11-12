@@ -1,5 +1,8 @@
+package customerrelationsmanagement;
+
 import java.io.*;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -16,7 +19,12 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
 public class Emailer {
-	public Emailer() {}
+	Credentials credentials;
+	
+	public Emailer(
+	 Credentials credentials) {
+		this.credentials = credentials;
+	}
 	
 	private Message createNewMessage
 	 (Session session, String myAccountEmail, String recipient, String subject)
@@ -125,17 +133,20 @@ public class Emailer {
 	 * <code>2020-01-02,saust@hotmail.com,38813,3R8YXZCS820Y,2</code>
 	 * </p>
 	 * <p>
-	 * @param crud the Crud object to use for calls to the database.
-	 * </p>
+	 *
+	 * @param crud
+	 *  the Crud object to use for calls to the database.
+	 *  </p>
 	 */
 	public void processEmails(Crud crud)
 	throws MessagingException, IOException, SQLException {
 		
 		crud.setWorkingTable("sales");
-		Session session = Credentials.getSession();
+		Credentials credentials = new Credentials();
+		Session session = credentials.getSession();
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 		OrderProcessor orderProcessor = new OrderProcessor(crud);
-		Message[] messages = Credentials.getInbox().getMessages();
+		Message[] messages = credentials.getMessages(session);
 		
 		for(Message currentMessage: messages) {
 			Order order = null;
@@ -143,8 +154,7 @@ public class Emailer {
 			String[] messageText =
 			 getTextFromMessage(currentMessage).trim().split("\n");
 			
-			LocalDate date = LocalDate.parse(dateFormat.format(
-			 currentMessage.getSentDate()));
+			Timestamp timestamp = new Timestamp(currentMessage.getSentDate().getTime());
 			
 			Matcher m = Order.EMAIL_PATTERN.matcher(
 			 currentMessage.getFrom()[0].toString());
@@ -178,7 +188,7 @@ public class Emailer {
 					String location = s[3].trim();
 					
 					if(order == null) {
-						order = new Order(date, isSale, location);
+						order = new Order(timestamp, isSale, location);
 						orderProcessor.setCurrentOrder(order);
 					} // End if
 					
@@ -219,7 +229,8 @@ public class Emailer {
 	 *  optional file to send, such as a report(leave null if not sending any
 	 *  reports).
 	 *
-	 * @throws MessagingException if the messaging service encounters an error.
+	 * @throws MessagingException
+	 *  if the messaging service encounters an error.
 	 */
 	public void sendMail(String recipientAddress, String messageSubject,
 						 String messageContent,
@@ -230,10 +241,9 @@ public class Emailer {
 		Message message =
 		 reportFile == null ?
 		  prepareMessage(messageSubject, messageContent, emailSession,
-		   Credentials
-		   .getEmail(), recipientAddress)
-		  : prepareAttachedMessage(emailSession, Credentials
-		  .getEmail(), recipientAddress, reportFile, messageSubject);
+		   credentials.getEmail(), recipientAddress)
+		  : prepareAttachedMessage(emailSession, 
+		credentials.getEmail(), recipientAddress, reportFile, messageSubject);
 		
 		assert message != null;
 		Transport.send(message);

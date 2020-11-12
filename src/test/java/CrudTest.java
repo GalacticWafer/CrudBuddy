@@ -1,13 +1,14 @@
+import customerrelationsmanagement.Credentials;
+import customerrelationsmanagement.Crud;
+import customerrelationsmanagement.Order;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class CrudTest {
-	Crud crud = Credentials.databaseLogin();
+	Crud crud = new Credentials().getCrud();
 
 	CrudTest() throws SQLException, ClassNotFoundException {}
 

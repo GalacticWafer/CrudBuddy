@@ -1,3 +1,5 @@
+package customerrelationsmanagement;
+
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -8,7 +10,7 @@ import java.sql.*;
 import java.util.*;
 import java.util.Date;
 
-class Crud {
+public class Crud {
 	private static String DB_NAME;
 	private static String HOST_IP;
 	public static final String[] INVENTORY_COLUMNS = new String[]
@@ -83,7 +85,7 @@ class Crud {
 	 * @throws SQLException
 	 *  if there is an issue with the sql command or connection.
 	 */
-	boolean exists(String columnName, Object columnValue)
+	public boolean exists(String columnName, Object columnValue)
 	throws SQLException {
 		
 		String sql =
@@ -193,7 +195,7 @@ class Crud {
 	} // End getRecords
 	
 	/** Private helper for public getRecords() method. */
-	private Object[][] getRecords(ResultSet rs) throws SQLException {
+	public Object[][] getRecords(ResultSet rs) throws SQLException {
 		
 		int columnCount = rs.getMetaData().getColumnCount();
 		int rowCount = rowCountResults(rs);
@@ -279,7 +281,7 @@ class Crud {
 	
 	/**
 	 * Overloaded version of <code>insertRecords</code> that takes an
-	 * <code>Iterator<Object[]></code> instead of an <code>Object[][]</code>.
+	 * <code>Iterator&lt;Object[]&gt;</code> instead of an <code>Object[][]</code>.
 	 *
 	 * @param columnNames
 	 *  the columns to insert data into.
@@ -472,7 +474,9 @@ class Crud {
 	int rowCountResults(ResultSet resultSet) throws SQLException {
 		
 		resultSet.last();
-		return resultSet.getRow();
+		int count = resultSet.getRow();
+		resultSet.beforeFirst();
+		return count;
 	} // End rowCountResults
 	
 	/**

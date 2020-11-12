@@ -1,8 +1,10 @@
+package customerrelationsmanagement;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.security.SecureRandom;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -20,23 +22,25 @@ public class Order {
 	public static final int INVALID = -2, CANCELLED = -1, UNPROCESSED = 0,
 	 QUANTITY_SHORTAGE = 1,
 	 PROCESSED = 2, SUGGESTED_EMAIL = 3, FULFILLED = 4;
+	public static final int MAX_WAIT_TIME = 5;
 	private static final String NUMBER = "0123456789";
 	private static final String DATA_FOR_RANDOM_STRING =
 	 CHAR_LOWER + CHAR_UPPER + NUMBER;
 	
 	public static final String[] SALES_COLUMNS = new String[] {
-	 "order_id",
-	 "cust_email",
-	 "cust_location",
-	 "product_id",
-	 "product_quantity",
-	 "date_ordered",
-	 "date_accepted",
-	 "status",
+	 "order_id", // date_ordered
+	 "cust_email", // cust_email
+	 "cust_location", // cust_location
+	 "product_id", // product_id
+	 "product_quantity", // product_quantity
+	 "date_ordered", // order_status
+	 "date_accepted", // date_accepted
+	 "order_status", // order_id
 	 };
 	
-	private LocalDate dateAccepted;
-	private LocalDate dateOrdered;
+	public static final String[] ORDER_FILE_COLUMNS = new String[] { "date","cust_email","cust_location","product_id","product_quantity"};
+	private Timestamp timeAccepted;
+	private final Timestamp timeOrdered;
 	private String email;
 	private boolean isSale;
 	private ArrayList<Product> products;
@@ -47,10 +51,9 @@ public class Order {
 	private int status;
 	private String subject;
 	
-	
-	public Order(LocalDate date,
+	public Order(Timestamp date,
 				 boolean isSale, String location) {
-		dateOrdered = date;
+		timeOrdered = date;
 		this.isSale = isSale;
 		this.location = location;
 		this.orderId = generateId();
@@ -82,11 +85,11 @@ public class Order {
 	public String getCustomerEmail() {return email;} // End getCustomerEmail
 	
 	/** @return null if the order has not been processed or accepted. */
-	public LocalDate getDateAccepted() {
-		return dateAccepted;
-	} // End getDateAccepted
+	public Timestamp getTimeAccepted() {
+		return timeAccepted;
+	} // End getTimeAccepted
 	
-	public LocalDate getDateOrdered() {return dateOrdered;} // End getDateOrdered
+	public Timestamp getTimeOrdered() {return timeOrdered;} // End getTimeOrdered
 	
 	/** @return the unique order ID for all items in this Order. */
 	public String getId() {return orderId;} // End getId
@@ -118,7 +121,13 @@ public class Order {
 		return products.iterator();
 	} // End productIterator
 	
-	public void setDateAccepted(LocalDate today) { this.dateAccepted = today; } // End setDateAccepted
+	public void setTimeAccepted(Timestamp today) { this.timeAccepted = today; } // End setTimeAccepted
+	public void setTimeAccepted() { 
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(getTimeOrdered());
+		cal.add(Calendar.DAY_OF_WEEK, new Random().nextInt(Order.MAX_WAIT_TIME));
+		setTimeAccepted(new Timestamp(cal.getTime().getTime()));
+	} // End setTimeAccepted
 	
 	public void setEmail(String email) {this.email = email;} // End setEmail
 	
@@ -156,18 +165,18 @@ public class Order {
 		for(Iterator<Product> it = productIterator(); it.hasNext();) {
 			Product p = it.next();
 			array.add(new Object[] {  // public static final String[] SALES_COLUMNS =
-			 getId(),                 // "order_id",
-			 getCustomerEmail(),      // "cust_email",
-			 getLocation(),           // "cust_location",
-			 p.getId(),               // "product_id",
-			 p.getQuantity(),         // "product_quantity",
-			 dateOrdered.toString(),  // "date_ordered",
-			 dateAccepted.toString(), // "date_accepted",
-			 status,                  // "status",
+									  getId(),                 // "order_id",
+									  getCustomerEmail(),      // "cust_email",
+									  getLocation(),           // "cust_location",
+									  p.getId(),               // "product_id",
+									  p.getQuantity(),         // "product_quantity",
+									  timeOrdered.toString(),  // "date_ordered",
+									  timeAccepted.toString(), // "date_accepted",
+									  status,                  // "status",
 			 });
 		} // End for
 		return array;
-	} // End toArray
+	} // End toString
 	
 	@Override public String toString() {
 		return
@@ -178,8 +187,8 @@ public class Order {
 		 
 		 "Id: " + orderId + ',' +
 		 email + ',' +
-		 "dateOrdered: " + dateOrdered +
-		 "dateAccepted: " + dateAccepted +
+		 "dateOrdered: " + timeOrdered +
+		 "dateAccepted: " + timeAccepted +
 		 "location: " + location;
 	} // End toString
 } // Ond class Order
