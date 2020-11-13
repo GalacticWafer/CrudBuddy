@@ -1,8 +1,4 @@
 package customerrelationsmanagement;
-
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
-
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.UIManager;
@@ -13,14 +9,17 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableRowSorter;
+import javax.swing.text.*;
 
 public class GUI {
 	private static GridBagLayout BAG_LAYOUT = new GridBagLayout();
@@ -42,17 +41,8 @@ public class GUI {
 	private static final Color TABLE_FOREGROUND = new Color(125, 211, 224);
 	private static JPanel WEST_PANEL = new JPanel();
 	private static final Color centerBackground = GREY_50x3;
-	private JFreeChart chart;
-	private JButton chartBackButton;
-	private JPanel chartContentPane;
-	private JTextField chartDateField;
-	private JFrame chartFrame;
-	private ChartMaker chartMaker;
-	private ChartPanel chartPanel;
-	private JLabel chartPanelLabel;
-	private JPanel chartSelectPanel;
-	private JButton[] chartSelections;
 	private final Crud crud;
+	private final Analytics analyze;
 	private Object[][] data;
 	private static JFrame frame;
 	private DefaultTableModel model;
@@ -61,13 +51,10 @@ public class GUI {
 	private JTable table;
 	private String tableName;
 	private final JComboBox tableSelections;
-	Object[][] tempData;
-	private DefaultTableModel tempDataModel;
-	String tempTable = "";
 	
-	public GUI(Crud crud) throws SQLException {
-		
+	public GUI(Crud crud, Analytics analyze) throws SQLException, ParseException {
 		this.crud = crud;
+		this.analyze = analyze;
 		setUIManager();
 		scrollPane = new JScrollPane();
 		table = new JTable();
@@ -86,7 +73,8 @@ public class GUI {
 			crud.setWorkingTable(tableName);
 			try {
 				refresh();
-			} catch(SQLException throwables) {
+			}
+			catch(SQLException throwables) {
 				throwables.printStackTrace();
 			}
 		});
@@ -115,20 +103,17 @@ public class GUI {
 	}
 	
 	public void addTable(String tableName) {
-		
 		tableSelections.addItem(tableName);
 		tableSelections.setSelectedItem(tableName);
 	}
 	
 	private String checkConnection() throws SQLException {
-		
 		return crud.isClosed() ? "No Connection" : "Connected";
 	}
 	
 	private void createFrame(JPanel north, JPanel east, JPanel west,
 							 JPanel south, JPanel center,
 							 JLabel status) {
-		
 		frame.setBounds(200, 400, 1300, 1007);
 		north.add(status);
 		frame.add(north, BorderLayout.NORTH);
@@ -142,14 +127,13 @@ public class GUI {
 	}
 	
 	private void createTable() throws SQLException {
-		
 		String[] columnNames = crud.getColumnNames();
 		setFromDatabase(columnNames);
 		setNewModel(columnNames);
 	}
 	
 	private void makeComponents(JPanel east, JPanel center,
-								GridBagConstraints middle) {
+								GridBagConstraints middle) throws ParseException {
 		
 		JLabel user = new JLabel("Username:");
 		user.setForeground(GREY_110x3);
@@ -231,10 +215,7 @@ public class GUI {
 		east.add(search, c);
 		
 		JButton exportButton = new JButton("Export All");
-		exportButton.setBackground(GREY_110x3);
-		exportButton.setFont(FONT);
-		exportButton.setForeground(TABLE_FOREGROUND);
-		exportButton.setBorder(new LineBorder(DARK_GREY, 2));
+		setButtonStyle(exportButton);
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 3;
@@ -242,20 +223,17 @@ public class GUI {
 		
 		exportButton.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) {
-				
 				try {
 					sendEmail("gui.csv", data);
-				} catch(FileNotFoundException | SQLException fileNotFoundException) {
+				}
+				catch(FileNotFoundException | SQLException fileNotFoundException) {
 					fileNotFoundException.printStackTrace();
 				}
 			}
 		});
 		
 		JButton delete = new JButton("Delete Current");
-		delete.setBackground(GREY_110x3);
-		delete.setFont(FONT);
-		delete.setForeground(TABLE_FOREGROUND);
-		delete.setBorder(new LineBorder(DARK_GREY, 2));
+		setButtonStyle(delete);
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 1;
@@ -273,7 +251,8 @@ public class GUI {
 						 .quoteWrap(table.getModel().getValueAt(rowIndex, 0));
 						String columnName = table.getColumnName(0);
 						crud.deleteRecord(columnName, columnValue);
-					} catch(SQLException throwables) {
+					}
+					catch(SQLException throwables) {
 						throwables.printStackTrace();
 					}
 					model.removeRow(rowIndex);
@@ -285,10 +264,7 @@ public class GUI {
 		});
 		
 		JButton exportCurrent = new JButton("Export Current");
-		exportCurrent.setBackground(GREY_110x3);
-		exportCurrent.setFont(FONT);
-		exportCurrent.setForeground(TABLE_FOREGROUND);
-		exportCurrent.setBorder(new LineBorder(DARK_GREY, 2));
+		setButtonStyle(exportCurrent);
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 2;
@@ -296,7 +272,6 @@ public class GUI {
 		
 		exportCurrent.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				
 				Object[][] update =
 				 new Object[table.getRowCount()][table.getColumnCount()];
 				for(int row = 0; row < table.getRowCount(); row++) {
@@ -308,9 +283,11 @@ public class GUI {
 				}
 				try {
 					sendEmail("test.csv", update);
-				} catch(FileNotFoundException fileNotFoundException) {
+				}
+				catch(FileNotFoundException fileNotFoundException) {
 					fileNotFoundException.printStackTrace();
-				} catch(SQLException throwables) {
+				}
+				catch(SQLException throwables) {
 					throwables.printStackTrace();
 				}
 				//System.out.println(Arrays.deepToString(update));
@@ -318,10 +295,7 @@ public class GUI {
 		});
 		
 		JButton upload = new JButton("Upload Table");
-		upload.setBackground(GREY_110x3);
-		upload.setFont(FONT);
-		upload.setForeground(TABLE_FOREGROUND);
-		upload.setBorder(new LineBorder(DARK_GREY, 2));
+		setButtonStyle(upload);
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 4;
@@ -329,20 +303,17 @@ public class GUI {
 		
 		upload.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
-				
 				try {
 					crud.insertTableFromGui();
-				} catch(Exception exception) {
+				}
+				catch(Exception exception) {
 					exception.printStackTrace();
 				}
 			}
 		});
 		
 		JButton send = new JButton("Send Email");
-		send.setBackground(GREY_110x3);
-		send.setFont(FONT);
-		send.setForeground(TABLE_FOREGROUND);
-		send.setBorder(new LineBorder(DARK_GREY, 2));
+		setButtonStyle(send);
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 5;
@@ -357,24 +328,20 @@ public class GUI {
 		search.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void changedUpdate(DocumentEvent e) {
-				
 				search(search.getText());
 			}
 			
 			@Override
 			public void insertUpdate(DocumentEvent e) {
-				
 				search(search.getText());
 			}
 			
 			@Override
 			public void removeUpdate(DocumentEvent e) {
-				
 				search(search.getText());
 			}
 			
 			public void search(String str) {
-				
 				RowFilter<DefaultTableModel, Object> rf = null;
 				ArrayList<RowFilter<DefaultTableModel, Object>> rfs =
 				 new ArrayList<RowFilter<DefaultTableModel, Object>>();
@@ -389,7 +356,8 @@ public class GUI {
 					}
 					
 					rf = RowFilter.andFilter(rfs);
-				} catch(java.util.regex.PatternSyntaxException e) {
+				}
+				catch(java.util.regex.PatternSyntaxException e) {
 					return;
 				}
 				if(str.length() == 0) {
@@ -399,131 +367,112 @@ public class GUI {
 				}
 			}
 		}); //end of search filter
-		
+
+		//ASSETS OT Button
 		JButton assetsOT = new JButton("Assets OT");
-		assetsOT.setBackground(GREY_110x3);
-		assetsOT.setFont(FONT);
-		assetsOT.setForeground(TABLE_FOREGROUND);
-		assetsOT.setBorder(new LineBorder(DARK_GREY, 2));
+		setButtonStyle(assetsOT);
+		assetsOT.setVisible(false);
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 7;
+		east.add(assetsOT, c);
+		assetsOT.addActionListener(e -> {
+
+		});
+		//ORDERS OT Button
+		JButton ordersOT = new JButton("Orders OT");
+		setButtonStyle(ordersOT);
+		ordersOT.setVisible(false);
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 8;
+		east.add(ordersOT, c);
+		assetsOT.addActionListener(e -> {
+
+		});
+		//SALES OT Button
+		JButton salesOT = new JButton("Sales OT");
+		setButtonStyle(salesOT);
+		salesOT.setVisible(false);
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 9;
+		east.add(salesOT, c);
+		assetsOT.addActionListener(e -> {
+
+		});
+
+		JLabel analyzeDate = new JLabel("Analyze YTD:");
+		analyzeDate.setForeground(GREY_110x3);
+		analyzeDate.setFont(FONT);
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
+		c.gridy = 6;
+		east.add(analyzeDate, c);
+		JTextField queryDate = new JFormattedTextField(); //creates textfield with 10 columns
+		queryDate.setDocument(new JTextFieldLimit(10));
+		queryDate.setBackground(GREY_110x3);
+		queryDate.setForeground(PURE_WHITE);
+		queryDate.setBorder(new LineBorder(DARK_GREY, 2));
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 6;
-		east.add(assetsOT, c);
-		assetsOT.addActionListener(e -> {
-			
-			ChartMaker lp = new ChartMaker(crud);
-			try {
-				//ChartPanel cp = new ChartPanel(lp.getTimeSeriesChart(JOptionPane.showInputDialog(null,
-				//	 "Enter a date"), Chart.ASSET));
-				ChartPanel cp = new ChartPanel(lp.getChart(JOptionPane.showInputDialog(null,
-					 "Enter a date"), ChartType.BAR_TOP_CUSTOMERS));
-				JFrame chartFrame = new JFrame();
-				chartFrame.getContentPane().add(cp);
-				chartFrame.pack();
-				chartFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-				chartFrame.setLocationRelativeTo(null);
-				chartFrame.setVisible(true);
-				
-				//TODO: Store the JFreeChart (assetChart) DO WHATEVER DAVID WITH CP
+		east.add(queryDate, c);
+
+		queryDate.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void changedUpdate(DocumentEvent e) {}
+
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				format();
+				if (queryDate.getText().length() == 10) {
+					assetsOT.setVisible(true);
+					ordersOT.setVisible(true);
+					salesOT.setVisible(true);
+				}
 			}
-			catch(SQLException throwables) {
-				throwables.printStackTrace();
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				assetsOT.setVisible(false);
+				ordersOT.setVisible(false);
+				salesOT.setVisible(false);
 			}
-			//try {
-			//	analyze.generateTimePlot();
-			//} catch (SQLException | IOException throwables) {
-			//	throwables.printStackTrace();
-			//}
+
+			private void format() {
+				Runnable doFormat = new Runnable() {
+					@Override
+					public void run() {
+						if (queryDate.getText().length() == 4 || queryDate.getText().length() == 7) {
+							queryDate.setText(queryDate.getText() + "-");
+						}
+					}
+				};
+				SwingUtilities.invokeLater(doFormat);
+			}
 		});
 
-			/*Object[][] data = new Object[0][];
-			try {
-				data = crud.getAssetTotal("");
-			} catch (SQLException throwables) {
-				throwables.printStackTrace();
-			}
-			System.out.println(data[0][0]);
-			java.util.List<Object[]> yearToDateData = new ArrayList<>();
-			List<Date> dates = new ArrayList<>();
-			Date Jan = StringToDate("2020-02-31");
-			for (int i = 0; i < data.length; i++) {
-				yearToDateData.add(data[i]);
-				dates.add((Date)data[i][0]);
-				if (dates.get(i).compareTo(Jan) > 0){
-					try {
-						makePlot("MYCROWSAWFT", "Assets", yearToDateData, 
-						dates.get(i));
-					} catch (SQLException | IOException throwables) {
-						throwables.printStackTrace();
-					}
-					//save();
-				}
-			}
-			LinePlot ytd = new LinePlot("MYCROWSAWFT", "Assets", 
-			yearToDateData);
-			ytd.pack();
-			RefineryUtilities.positionFrameRandomly(ytd);
-			ytd.setVisible(true);
-		}); */
-		/*analyzer.addActionListener(e -> {
-
-			String newTableName = null;
-			try {
-				int count = Integer.parseInt(JOptionPane.showInputDialog(
-				 "Please enter the amount records you would like to see"));
-
-				String d = JOptionPane.showInputDialog(
-				 null,
-				 "what date would you like to see results for? (leave blank " +
-				 "for all-time");
-				LocalDate date = null;
-				if(d != "") {
-					date = LocalDate.parse(d);
-				}
-
-				boolean isDescending =
-				 JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog
-				  (null, "Should the results be ascending?\"",
-				   "Is Descending", JOptionPane.YES_NO_OPTION);
-
-				newTableName =
-				 crud.mostOrderedProducts((date == null ? null :date.toString
-				 ()), count, isDescending, this);
-				crud.setWorkingTable(newTableName);
-				Object[][] description =
-				 crud.getRecords(crud.query("describe " + newTableName));
-				String[] columnNames = new String[description.length];
-				for(int i = 0; i < columnNames.length; i++) {
-					columnNames[i] = String.valueOf(description[i][0]);
-				}
-				setTempData(columnNames, crud
-				 .getRecords(crud.query("select * from " + newTableName)));
-			}
-			catch(SQLException throwables) {
-				throwables.printStackTrace();
-			}
-
-			*//*JOptionPane
-			 .showMessageDialog
-			  (null,
-			   "Uriel,\n\tPlease make it so that when this button is pressed,
-			   \n " +
-			   "it does the stuff in Main.main() instead of this message." +
-			   "Make sure to take in an 'int' first, to pass into the
-			   topNCustomers() function.\n" +
-			   "That code in main()  is responsible for displaying
-			   topNCustomers() results.\n" +
-			   " seen at the beginning of this program, which is our analytics
-			   .\n" +
-			   "After that, when any other table is selected from the
-			   drop-down menu of\n" +
-				"tables, remove the one associated with this table, and\n" +
-			   "call crud.setWorkingTable(<some_other_table_string_name)");*//*
-		});*/
 	}
-	
+
+	public static class JTextFieldLimit extends PlainDocument {
+		private final int limit;
+
+		JTextFieldLimit(int limit) {
+			super();
+			this.limit = limit;
+		}
+
+		public void insertString( int offset, String  str, AttributeSet attr ) throws BadLocationException {
+			if (str == null) return;
+
+			if ((getLength() + str.length()) <= limit) {
+				super.insertString(offset, str, attr);
+			}
+		}
+	}
+
 	private void refresh() throws SQLException {
-		
 		setFromDatabase(crud.getColumnNames());
 		DefaultTableModel dm = (DefaultTableModel)table.getModel();
 		dm.setDataVector(data, crud.getColumnNames());
@@ -532,11 +481,10 @@ public class GUI {
 	
 	private void sendEmail(String fileName, Object[][] data)
 	throws FileNotFoundException, SQLException {
-		
 		File report = new File(fileName);
 		
 		PrintWriter dataWriter = new PrintWriter(report);
-		dataWriter.println(String.join(",", crud.getColumnNames()));
+		dataWriter.println(String.join(",",crud.getColumnNames()));
 		for(int i = 0; i < data.length; i++) {
 			Object[] row = data[i];
 			for(int j = 0; j < row.length; j++) {
@@ -549,9 +497,15 @@ public class GUI {
 		}
 		dataWriter.close();
 	}  // End sendFile
-	
+
+	private void setButtonStyle(JButton button){
+		button.setBackground(GREY_110x3);
+		button.setFont(FONT);
+		button.setForeground(TABLE_FOREGROUND);
+		button.setBorder(new LineBorder(DARK_GREY, 2));
+	}
+
 	private void setFrameStyle(JLabel status) {
-		
 		status.setFont(FONT);
 		CENTER_PANEL.setBackground(centerBackground);
 		CENTER_PANEL.setOpaque(true);
@@ -568,13 +522,11 @@ public class GUI {
 	
 	public void setFromArray(Object[][] newData, String[] columnNames)
 	throws SQLException {
-		
 		this.data = newData;
 		setNewModel(columnNames);
 	}
 	
 	private void setFromDatabase(String[] columnNames) throws SQLException {
-		
 		ResultSet rs = crud.query("SELECT * FROM " + crud.getCurrentTable());
 		data = new Object[crud.size()][columnNames.length];
 		for(int i = 0; rs.next() && i < data.length; i++) {
@@ -586,7 +538,6 @@ public class GUI {
 	}
 	
 	private void setNewModel(String[] columnNames) {
-		
 		model = new DefaultTableModel(data, columnNames);
 		model.setDataVector(data, columnNames);
 		table.setModel(model);
@@ -594,19 +545,8 @@ public class GUI {
 		model.fireTableDataChanged();
 		table.repaint();
 	}
-	
-	public void setTempData(String[] columnNames, Object[][] newData)
-	throws SQLException {
-		
-		model = new DefaultTableModel(newData, columnNames);
-		table.setModel(model);
-		model.fireTableDataChanged();
-		table.repaint();
-		//setNewModel(columnNames);
-	}
-	
+
 	private void setUIManager() {
-		
 		UIManager.put("ScrollBar.thumb", new ColorUIResource(GREY_110x3));
 		UIManager
 		 .put("ScrollBar.thumbDarkShadow", new ColorUIResource(GREY_50x3));
