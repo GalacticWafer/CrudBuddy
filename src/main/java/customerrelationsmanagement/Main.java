@@ -1,12 +1,5 @@
 package customerrelationsmanagement;
 
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.data.statistics.HistogramDataset;
-
-import javax.swing.*;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
 
@@ -39,29 +32,8 @@ public class Main {
 	
 	public static void main(String[] args) {
 		
-		//getHistogram();
 		System.out.println("This is the first line of main.");
 		credentials = new Credentials();
-	}
-	
-	private static void getHistogram() {
-		HistogramDataset dataset = new HistogramDataset();
-		
-		
-		double[] values = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
-		dataset.addSeries("H1", values, 10, 0.0, 10.0);
-		JFrame frame = new JFrame();
-		JPanel panel = new JPanel();
-		
-		panel.add(new ChartPanel(ChartFactory.createHistogram(
-		 "histogram title","x label", "y label", dataset, 
-		 PlotOrientation.VERTICAL,true, true, false)));
-		
-		frame.getContentPane().add(panel);
-		frame.pack();
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setLocationRelativeTo(null);
-		frame.setVisible(true);
 	}
 	
 	public void startServices(Credentials credentials)

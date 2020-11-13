@@ -1,5 +1,7 @@
 package customerrelationsmanagement;
+
 import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -40,6 +42,16 @@ public class GUI {
 	private static final Color TABLE_FOREGROUND = new Color(125, 211, 224);
 	private static JPanel WEST_PANEL = new JPanel();
 	private static final Color centerBackground = GREY_50x3;
+	private JFreeChart chart;
+	private JButton chartBackButton;
+	private JPanel chartContentPane;
+	private JTextField chartDateField;
+	private JFrame chartFrame;
+	private ChartMaker chartMaker;
+	private ChartPanel chartPanel;
+	private JLabel chartPanelLabel;
+	private JPanel chartSelectPanel;
+	private JButton[] chartSelections;
 	private final Crud crud;
 	private Object[][] data;
 	private static JFrame frame;
@@ -54,6 +66,7 @@ public class GUI {
 	String tempTable = "";
 	
 	public GUI(Crud crud) throws SQLException {
+		
 		this.crud = crud;
 		setUIManager();
 		scrollPane = new JScrollPane();
@@ -73,8 +86,7 @@ public class GUI {
 			crud.setWorkingTable(tableName);
 			try {
 				refresh();
-			}
-			catch(SQLException throwables) {
+			} catch(SQLException throwables) {
 				throwables.printStackTrace();
 			}
 		});
@@ -103,17 +115,20 @@ public class GUI {
 	}
 	
 	public void addTable(String tableName) {
+		
 		tableSelections.addItem(tableName);
 		tableSelections.setSelectedItem(tableName);
 	}
 	
 	private String checkConnection() throws SQLException {
+		
 		return crud.isClosed() ? "No Connection" : "Connected";
 	}
 	
 	private void createFrame(JPanel north, JPanel east, JPanel west,
 							 JPanel south, JPanel center,
 							 JLabel status) {
+		
 		frame.setBounds(200, 400, 1300, 1007);
 		north.add(status);
 		frame.add(north, BorderLayout.NORTH);
@@ -127,6 +142,7 @@ public class GUI {
 	}
 	
 	private void createTable() throws SQLException {
+		
 		String[] columnNames = crud.getColumnNames();
 		setFromDatabase(columnNames);
 		setNewModel(columnNames);
@@ -226,10 +242,10 @@ public class GUI {
 		
 		exportButton.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) {
+				
 				try {
 					sendEmail("gui.csv", data);
-				}
-				catch(FileNotFoundException | SQLException fileNotFoundException) {
+				} catch(FileNotFoundException | SQLException fileNotFoundException) {
 					fileNotFoundException.printStackTrace();
 				}
 			}
@@ -257,8 +273,7 @@ public class GUI {
 						 .quoteWrap(table.getModel().getValueAt(rowIndex, 0));
 						String columnName = table.getColumnName(0);
 						crud.deleteRecord(columnName, columnValue);
-					}
-					catch(SQLException throwables) {
+					} catch(SQLException throwables) {
 						throwables.printStackTrace();
 					}
 					model.removeRow(rowIndex);
@@ -281,6 +296,7 @@ public class GUI {
 		
 		exportCurrent.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				
 				Object[][] update =
 				 new Object[table.getRowCount()][table.getColumnCount()];
 				for(int row = 0; row < table.getRowCount(); row++) {
@@ -292,11 +308,9 @@ public class GUI {
 				}
 				try {
 					sendEmail("test.csv", update);
-				}
-				catch(FileNotFoundException fileNotFoundException) {
+				} catch(FileNotFoundException fileNotFoundException) {
 					fileNotFoundException.printStackTrace();
-				}
-				catch(SQLException throwables) {
+				} catch(SQLException throwables) {
 					throwables.printStackTrace();
 				}
 				//System.out.println(Arrays.deepToString(update));
@@ -315,10 +329,10 @@ public class GUI {
 		
 		upload.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
+				
 				try {
 					crud.insertTableFromGui();
-				}
-				catch(Exception exception) {
+				} catch(Exception exception) {
 					exception.printStackTrace();
 				}
 			}
@@ -343,20 +357,24 @@ public class GUI {
 		search.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void changedUpdate(DocumentEvent e) {
+				
 				search(search.getText());
 			}
 			
 			@Override
 			public void insertUpdate(DocumentEvent e) {
+				
 				search(search.getText());
 			}
 			
 			@Override
 			public void removeUpdate(DocumentEvent e) {
+				
 				search(search.getText());
 			}
 			
 			public void search(String str) {
+				
 				RowFilter<DefaultTableModel, Object> rf = null;
 				ArrayList<RowFilter<DefaultTableModel, Object>> rfs =
 				 new ArrayList<RowFilter<DefaultTableModel, Object>>();
@@ -371,8 +389,7 @@ public class GUI {
 					}
 					
 					rf = RowFilter.andFilter(rfs);
-				}
-				catch(java.util.regex.PatternSyntaxException e) {
+				} catch(java.util.regex.PatternSyntaxException e) {
 					return;
 				}
 				if(str.length() == 0) {
@@ -394,7 +411,7 @@ public class GUI {
 		east.add(assetsOT, c);
 		assetsOT.addActionListener(e -> {
 			
-			Charts lp = new Charts(crud);
+			ChartMaker lp = new ChartMaker(crud);
 			try {
 				//ChartPanel cp = new ChartPanel(lp.getTimeSeriesChart(JOptionPane.showInputDialog(null,
 				//	 "Enter a date"), Chart.ASSET));
@@ -434,14 +451,16 @@ public class GUI {
 				dates.add((Date)data[i][0]);
 				if (dates.get(i).compareTo(Jan) > 0){
 					try {
-						makePlot("MYCROWSAWFT", "Assets", yearToDateData, dates.get(i));
+						makePlot("MYCROWSAWFT", "Assets", yearToDateData, 
+						dates.get(i));
 					} catch (SQLException | IOException throwables) {
 						throwables.printStackTrace();
 					}
 					//save();
 				}
 			}
-			LinePlot ytd = new LinePlot("MYCROWSAWFT", "Assets", yearToDateData);
+			LinePlot ytd = new LinePlot("MYCROWSAWFT", "Assets", 
+			yearToDateData);
 			ytd.pack();
 			RefineryUtilities.positionFrameRandomly(ytd);
 			ytd.setVisible(true);
@@ -502,11 +521,9 @@ public class GUI {
 			   "call crud.setWorkingTable(<some_other_table_string_name)");*//*
 		});*/
 	}
-
-
-
-
+	
 	private void refresh() throws SQLException {
+		
 		setFromDatabase(crud.getColumnNames());
 		DefaultTableModel dm = (DefaultTableModel)table.getModel();
 		dm.setDataVector(data, crud.getColumnNames());
@@ -515,10 +532,11 @@ public class GUI {
 	
 	private void sendEmail(String fileName, Object[][] data)
 	throws FileNotFoundException, SQLException {
+		
 		File report = new File(fileName);
 		
 		PrintWriter dataWriter = new PrintWriter(report);
-		dataWriter.println(String.join(",",crud.getColumnNames()));
+		dataWriter.println(String.join(",", crud.getColumnNames()));
 		for(int i = 0; i < data.length; i++) {
 			Object[] row = data[i];
 			for(int j = 0; j < row.length; j++) {
@@ -533,6 +551,7 @@ public class GUI {
 	}  // End sendFile
 	
 	private void setFrameStyle(JLabel status) {
+		
 		status.setFont(FONT);
 		CENTER_PANEL.setBackground(centerBackground);
 		CENTER_PANEL.setOpaque(true);
@@ -549,11 +568,13 @@ public class GUI {
 	
 	public void setFromArray(Object[][] newData, String[] columnNames)
 	throws SQLException {
+		
 		this.data = newData;
 		setNewModel(columnNames);
 	}
 	
 	private void setFromDatabase(String[] columnNames) throws SQLException {
+		
 		ResultSet rs = crud.query("SELECT * FROM " + crud.getCurrentTable());
 		data = new Object[crud.size()][columnNames.length];
 		for(int i = 0; rs.next() && i < data.length; i++) {
@@ -565,6 +586,7 @@ public class GUI {
 	}
 	
 	private void setNewModel(String[] columnNames) {
+		
 		model = new DefaultTableModel(data, columnNames);
 		model.setDataVector(data, columnNames);
 		table.setModel(model);
@@ -575,6 +597,7 @@ public class GUI {
 	
 	public void setTempData(String[] columnNames, Object[][] newData)
 	throws SQLException {
+		
 		model = new DefaultTableModel(newData, columnNames);
 		table.setModel(model);
 		model.fireTableDataChanged();
@@ -583,6 +606,7 @@ public class GUI {
 	}
 	
 	private void setUIManager() {
+		
 		UIManager.put("ScrollBar.thumb", new ColorUIResource(GREY_110x3));
 		UIManager
 		 .put("ScrollBar.thumbDarkShadow", new ColorUIResource(GREY_50x3));

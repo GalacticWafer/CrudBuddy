@@ -14,14 +14,14 @@ import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
 
-public class Charts {
+public class ChartMaker {
 	public static final NumberFormat CURRENCY =
 	 NumberFormat.getCurrencyInstance();
 	public static final double BAR_THICCKNESS = 4.0;
 	Crud crud;
 	String title;
 	
-	public Charts(Crud crud) {
+	public ChartMaker(Crud crud) {
 		
 		this.crud = crud;
 	}
@@ -32,7 +32,7 @@ public class Charts {
 		    check if time is valid
 		    check if row exists for the "time"
 		 */
-		return false;
+		return true;
 	}
 	
 	private JFreeChart getBarChart
