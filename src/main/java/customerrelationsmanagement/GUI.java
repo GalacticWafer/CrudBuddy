@@ -42,7 +42,6 @@ public class GUI {
 	private static JPanel WEST_PANEL = new JPanel();
 	private static final Color centerBackground = GREY_50x3;
 	private final Crud crud;
-	private final Analytics analyze;
 	private Object[][] data;
 	private static JFrame frame;
 	private DefaultTableModel model;
@@ -52,9 +51,8 @@ public class GUI {
 	private String tableName;
 	private final JComboBox tableSelections;
 	
-	public GUI(Crud crud, Analytics analyze) throws SQLException, ParseException {
+	public GUI(Crud crud) throws SQLException, ParseException {
 		this.crud = crud;
-		this.analyze = analyze;
 		setUIManager();
 		scrollPane = new JScrollPane();
 		table = new JTable();
