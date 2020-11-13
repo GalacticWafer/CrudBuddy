@@ -1,19 +1,38 @@
+package customerrelationsmanagement;
+
 import customerrelationsmanagement.Credentials;
 import customerrelationsmanagement.Crud;
 import customerrelationsmanagement.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.runner.JUnitCore;
+import org.junit.runner.Result;
+import org.junit.runner.notification.Failure;
 
 import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class CrudTest {
-	Crud crud = new Credentials().getCrud();
-
-	CrudTest() throws SQLException, ClassNotFoundException {}
+public class CrudTest {
+	private static Crud crud;
+	
+	public static void invoke(CredentialsTest credentials)
+	throws SQLException, ClassNotFoundException {
+		crud = credentials.getCrud();
+		Result result = JUnitCore.runClasses(customerrelationsmanagement.CrudTest.class);
+		  for (Failure failure : result.getFailures()) {
+			 System.out.println(failure.toString());
+		  }
+			
+		  System.out.println(result.wasSuccessful());
+	}
+	
+	public CrudTest() throws SQLException, ClassNotFoundException {
+		// put the test methods you want to call in here
+		arrayToCSV();
+	}
 
 	@Test
-	void arrayToCSV() {
+	public void arrayToCSV() {
 		assertEquals(
 		 String.join(",",new String[]{"abc", "'123'", "xyz"}),
 		 "abc,'123',xyz");

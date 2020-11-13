@@ -1,3 +1,5 @@
+package customerrelationsmanagement;
+
 import customerrelationsmanagement.Credentials;
 import customerrelationsmanagement.Crud;
 import customerrelationsmanagement.GUI;
@@ -11,6 +13,13 @@ class GUITest {
 		Crud crud = new Credentials().getCrud();
 		String FileName = "gui.csv";
 		GUI GUI = new GUI(crud);
-		
+	}
+	
+	private static Crud crud;
+	
+	public static void invoke(CredentialsTest credentials)
+	throws SQLException, ClassNotFoundException {
+		crud = credentials.getCrud();
+		new CrudTest();
 	}
 }

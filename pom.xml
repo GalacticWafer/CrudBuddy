@@ -22,31 +22,7 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.21</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/joda-time/joda-time -->
-        <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-            <version>2.10.8</version>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/jfree/jfreechart -->
-        <dependency>
-            <groupId>jfree</groupId>
-            <artifactId>jfreechart</artifactId>
-            <version>1.0.13</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.rosuda.REngine/REngine -->
-        <dependency>
-            <groupId>org.rosuda.REngine</groupId>
-            <artifactId>REngine</artifactId>
-            <version>2.1.0</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.rosuda.REngine/Rserve -->
-        <dependency>
-            <groupId>org.rosuda.REngine</groupId>
-            <artifactId>Rserve</artifactId>
-            <version>1.8.1</version>
-        </dependency>
+        <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
 
 
         <dependency>
@@ -89,6 +65,12 @@
             <version>1.4</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/joda-time/joda-time -->
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>2.10.8</version>
+        </dependency>
 
     </dependencies>
 
