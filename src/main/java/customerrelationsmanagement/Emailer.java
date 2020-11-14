@@ -143,7 +143,7 @@ public class Emailer {
 	public void processEmails(Crud crud)
 	throws MessagingException, IOException, SQLException {
 		
-		crud.setWorkingTable("sales");
+		crud.setWorkingTable("statused_sales");
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 		OrderProcessor orderProcessor = new OrderProcessor(crud);
 		Message[] messages = credentials.getMessages(session);
@@ -169,12 +169,19 @@ public class Emailer {
 										 .contains("cancel".toUpperCase())) {
 							String orderId = s[0];
 							Object[][] records = crud.getRecords(
-							 "SELECT * FROM sales where order_id = '"
-							 + orderId + "'");
+							 "SELECT * FROM statused_sales where order_id = '"
+							 + orderId + "'" + " and order_status = " + Order.PROCESSED);
 							System.out.println(
-							 "The following product purchases should be " +
+							 " The following product purchases should be " +
 							 "cancelled:\n\n" +
 							 Arrays.deepToString(records));
+							if(records.length != 0){
+								crud.update("update statused_sales set order_status = -1 where order_id = '" + orderId + "'");
+								sendMail(email, "Cancellation", " The following product purchases should be " +
+																"cancelled:\n\n" + "fixed up", session, null);
+																//TODO: FIX UP LINE 181
+								continue;
+							}
 							// Todo  Daniel, roll back the order if it exists.
 							break;
 						} // End if
@@ -196,17 +203,19 @@ public class Emailer {
 					 productId,
 					 requestedQuantity));
 				} // End for
-				assert order != null;
-				order.setEmail(email);
-				orderProcessor.processOrder();
-				
-				sendMail(order.getCustomerEmail(), order
-				 .getResponseSubject(), order
-				 .getMessageText(), session, null);
+				if(order != null) {
+					order.setEmail(email);
+					orderProcessor.processOrder();
+					
+					sendMail(order.getCustomerEmail(), order
+					 .getResponseSubject(), order
+					 .getMessageText(), session, null);
+				}
 				
 				currentMessage.setFlag(Flags.Flag.DELETED, true);
 			} catch(Exception e) {
 				System.out.println(e.getMessage());
+				System.out.println(e.getStackTrace());
 				// Todo: this email is in an improper format
 			} // End try-catch
 		} // End for

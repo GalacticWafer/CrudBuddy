@@ -17,8 +17,8 @@ public class Main {
 	//public static final String ORDERS_PATH = "customer_orders_A_team4.csv";
 	public static final String ORDERS_PATH = "";
 	
-	public static final boolean START_GUI = true;
-	//public static final boolean START_GUI = false;
+	//public static final boolean START_GUI = true;
+	public static final boolean START_GUI = false;
 	
 	public static final boolean START_MAIL = true;
 	//public static final boolean START_MAIL = true;
@@ -35,9 +35,7 @@ public class Main {
 	}
 	
 	public static void main(String[] args) {
-		
-		System.out.println("This is the first line of main.");
-		credentials = new Credentials();
+		credentials = new Credentials(); //DON'T WRITE ANYTHING IN THIS MAIN, EMAIL RUNS IN STARTSERVICES
 	}
 	
 	
@@ -45,21 +43,22 @@ public class Main {
 			throws IOException, SQLException, ParseException {
 		
 		this.crud = credentials.getCrud();
+		if(INVENTORY_PATH != null && !INVENTORY_PATH.equals("")) {
+			rest = new Restoration(crud, INVENTORY_PATH, "customer_orders_A_team4.csv",true, analyticsDir);
+		}
 		if(START_MAIL) {
 			mailer = new Emailer(credentials);
 			Timer timer = new Timer();
 			timer.schedule(new TimerTask() {
 				@Override public void run() {
 					try {
+						System.out.println("running");
 						mailer.processEmails(crud);
 					} catch(MessagingException | SQLException | IOException e) {
 						e.printStackTrace();
 					}
 				}
-			}, 5000);
-		}
-		if(INVENTORY_PATH != null && !INVENTORY_PATH.equals("")) {
-			rest = new Restoration(crud, INVENTORY_PATH, "customer_orders_A_team4.csv",true, analyticsDir);
+			}, 50);
 		}
 		if(START_GUI) {
 			new GUI(crud);
@@ -67,5 +66,8 @@ public class Main {
 		if(ORDERS_PATH != null && !ORDERS_PATH.equals("")) {
 			OrderProcessor.runFileOrders(crud, ORDERS_PATH);
 		}
+		
+		
+		
 	}
 }

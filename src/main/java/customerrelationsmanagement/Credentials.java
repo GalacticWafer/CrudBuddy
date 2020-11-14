@@ -20,7 +20,7 @@ public class Credentials {
     private String databaseUserName;
     private String emailAddress;
     private String emailPassword;
-    private Crud queryMaker;
+    private Crud crud;
 
     public Credentials() {
         new Login(this);
@@ -28,7 +28,7 @@ public class Credentials {
 
     public Crud getCrud() {
 
-        return queryMaker;
+        return crud;
     }
 
     /**
@@ -136,12 +136,12 @@ public class Credentials {
 
             loginFrame.getContentPane().add(panel);
             loginFrame.pack();
-            loginFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+            loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             loginFrame.setLocationRelativeTo(null);
             loginFrame.setVisible(true);
             button.addActionListener(e -> {
                 try {
-                    queryMaker =
+                    crud =
                             new Crud(
                                     databaseUserNameField.getText(),
                                     String.valueOf(databasePasswordField.getPassword()),
@@ -151,10 +151,12 @@ public class Credentials {
                             );
                     emailAddress = emailAddressField.getText();
                     emailPassword = String.valueOf(emailPasswordField.getPassword());
-                    new Main(credentials, queryMaker);
+                    //loginFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                    loginFrame.dispose();
+                    new Main(credentials, crud);
                 } catch (SQLException | ClassNotFoundException | FileNotFoundException throwables) {
                     throwables.printStackTrace();
-                    queryMaker = null;
+                    crud = null;
                     JOptionPane.showMessageDialog(
                             null, "You have not signed in yet");
                 } catch(IOException ioException) {
