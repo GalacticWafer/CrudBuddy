@@ -1,8 +1,5 @@
 package customerrelationsmanagement;
 
-import customerrelationsmanagement.Credentials;
-import customerrelationsmanagement.Crud;
-import customerrelationsmanagement.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;

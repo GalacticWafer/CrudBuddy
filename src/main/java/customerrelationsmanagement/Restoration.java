@@ -106,6 +106,8 @@ public class Restoration {
 		crud.update("create table if not exists daily_analysis(" +
 					"fiscal_date  		DATETIME," +
 					"asset_total  		DECIMAL(13, 2)," +
+					"daily_income 		DECIMAL(13, 2)," +
+					"daily_revenue 		DECIMAL(13, 2)," +
 					"top_customers		VARCHAR(1000)," +
 					"top_products 		VARCHAR(1000)," +
 					"order_count  		INT(6)," +

@@ -1,4 +1,7 @@
 package customerrelationsmanagement;
+
+import org.jfree.chart.ChartPanel;
+
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.UIManager;
@@ -9,7 +12,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -40,19 +42,26 @@ public class GUI {
 	private static JPanel SOUTH_PANEL = new JPanel();
 	private static final Color TABLE_FOREGROUND = new Color(125, 211, 224);
 	private static JPanel WEST_PANEL = new JPanel();
+	private JFrame analyticsFrame;
 	private static final Color centerBackground = GREY_50x3;
+	private ChartMaker chartMaker;
+	private ChartPanel chartPanel;
 	private final Crud crud;
 	private Object[][] data;
 	private static JFrame frame;
 	private DefaultTableModel model;
+	private JTextField queryDate;
 	private static JScrollPane scrollPane;
 	private TableRowSorter sorter;
 	private JTable table;
 	private String tableName;
 	private final JComboBox tableSelections;
+	private JButton[] ytdButtons;
 	
 	public GUI(Crud crud) throws SQLException, ParseException {
+		
 		this.crud = crud;
+		chartMaker = new ChartMaker(crud);
 		setUIManager();
 		scrollPane = new JScrollPane();
 		table = new JTable();
@@ -71,8 +80,7 @@ public class GUI {
 			crud.setWorkingTable(tableName);
 			try {
 				refresh();
-			}
-			catch(SQLException throwables) {
+			} catch(SQLException throwables) {
 				throwables.printStackTrace();
 			}
 		});
@@ -101,17 +109,20 @@ public class GUI {
 	}
 	
 	public void addTable(String tableName) {
+		
 		tableSelections.addItem(tableName);
 		tableSelections.setSelectedItem(tableName);
 	}
 	
 	private String checkConnection() throws SQLException {
+		
 		return crud.isClosed() ? "No Connection" : "Connected";
 	}
 	
 	private void createFrame(JPanel north, JPanel east, JPanel west,
 							 JPanel south, JPanel center,
 							 JLabel status) {
+		
 		frame.setBounds(200, 400, 1300, 1007);
 		north.add(status);
 		frame.add(north, BorderLayout.NORTH);
@@ -125,13 +136,33 @@ public class GUI {
 	}
 	
 	private void createTable() throws SQLException {
+		
 		String[] columnNames = crud.getColumnNames();
 		setFromDatabase(columnNames);
 		setNewModel(columnNames);
 	}
 	
+	private void displayChart(ChartPanel chartPanel, String dateString,
+							  ChartType chartType) {
+		
+		try {
+			chartPanel = new ChartPanel(chartMaker
+			 .getChart(dateString, chartType));
+		} catch(SQLException throwables) {
+			throwables.printStackTrace();
+		}
+		analyticsFrame = new JFrame();
+		analyticsFrame.getContentPane().add(chartPanel);
+		analyticsFrame
+		 .setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+		analyticsFrame.setLocationRelativeTo(null);
+		analyticsFrame.pack();
+		analyticsFrame.setVisible(true);
+	}
+	
 	private void makeComponents(JPanel east, JPanel center,
-								GridBagConstraints middle) throws ParseException {
+								GridBagConstraints middle)
+	throws ParseException {
 		
 		JLabel user = new JLabel("Username:");
 		user.setForeground(GREY_110x3);
@@ -221,10 +252,10 @@ public class GUI {
 		
 		exportButton.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) {
+				
 				try {
 					sendEmail("gui.csv", data);
-				}
-				catch(FileNotFoundException | SQLException fileNotFoundException) {
+				} catch(FileNotFoundException | SQLException fileNotFoundException) {
 					fileNotFoundException.printStackTrace();
 				}
 			}
@@ -249,8 +280,7 @@ public class GUI {
 						 .quoteWrap(table.getModel().getValueAt(rowIndex, 0));
 						String columnName = table.getColumnName(0);
 						crud.deleteRecord(columnName, columnValue);
-					}
-					catch(SQLException throwables) {
+					} catch(SQLException throwables) {
 						throwables.printStackTrace();
 					}
 					model.removeRow(rowIndex);
@@ -270,6 +300,7 @@ public class GUI {
 		
 		exportCurrent.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				
 				Object[][] update =
 				 new Object[table.getRowCount()][table.getColumnCount()];
 				for(int row = 0; row < table.getRowCount(); row++) {
@@ -281,11 +312,9 @@ public class GUI {
 				}
 				try {
 					sendEmail("test.csv", update);
-				}
-				catch(FileNotFoundException fileNotFoundException) {
+				} catch(FileNotFoundException fileNotFoundException) {
 					fileNotFoundException.printStackTrace();
-				}
-				catch(SQLException throwables) {
+				} catch(SQLException throwables) {
 					throwables.printStackTrace();
 				}
 				//System.out.println(Arrays.deepToString(update));
@@ -301,10 +330,10 @@ public class GUI {
 		
 		upload.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
+				
 				try {
 					crud.insertTableFromGui();
-				}
-				catch(Exception exception) {
+				} catch(Exception exception) {
 					exception.printStackTrace();
 				}
 			}
@@ -326,20 +355,24 @@ public class GUI {
 		search.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void changedUpdate(DocumentEvent e) {
+				
 				search(search.getText());
 			}
 			
 			@Override
 			public void insertUpdate(DocumentEvent e) {
+				
 				search(search.getText());
 			}
 			
 			@Override
 			public void removeUpdate(DocumentEvent e) {
+				
 				search(search.getText());
 			}
 			
 			public void search(String str) {
+				
 				RowFilter<DefaultTableModel, Object> rf = null;
 				ArrayList<RowFilter<DefaultTableModel, Object>> rfs =
 				 new ArrayList<RowFilter<DefaultTableModel, Object>>();
@@ -354,8 +387,7 @@ public class GUI {
 					}
 					
 					rf = RowFilter.andFilter(rfs);
-				}
-				catch(java.util.regex.PatternSyntaxException e) {
+				} catch(java.util.regex.PatternSyntaxException e) {
 					return;
 				}
 				if(str.length() == 0) {
@@ -365,41 +397,23 @@ public class GUI {
 				}
 			}
 		}); //end of search filter
-
-		//ASSETS OT Button
-		JButton assetsOT = new JButton("Assets OT");
-		setButtonStyle(assetsOT);
-		assetsOT.setVisible(false);
+		
+		ytdButtons = new JButton[ChartType.size()];
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
-		c.gridy = 7;
-		east.add(assetsOT, c);
-		assetsOT.addActionListener(e -> {
-
-		});
-		//ORDERS OT Button
-		JButton ordersOT = new JButton("Orders OT");
-		setButtonStyle(ordersOT);
-		ordersOT.setVisible(false);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridy = 8;
-		east.add(ordersOT, c);
-		assetsOT.addActionListener(e -> {
-
-		});
-		//SALES OT Button
-		JButton salesOT = new JButton("Sales OT");
-		setButtonStyle(salesOT);
-		salesOT.setVisible(false);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridy = 9;
-		east.add(salesOT, c);
-		assetsOT.addActionListener(e -> {
-
-		});
-
+		for(int i = 0; i < ytdButtons.length; i++) {
+			int finalI = i;
+			ChartType type = ChartType.TOP_CUSTOMERS
+			  .get(finalI);
+			ytdButtons[i] = new JButton(type.toString());
+			setButtonStyle(ytdButtons[i]);
+			ytdButtons[i].setVisible(false);
+			c.gridy = i + 7;
+			east.add(ytdButtons[i], c);
+			ytdButtons[i].addActionListener(e -> displayChart(
+			 chartPanel, queryDate.getText(), type));
+		}
+		
 		JLabel analyzeDate = new JLabel("Analyze YTD:");
 		analyzeDate.setForeground(GREY_110x3);
 		analyzeDate.setFont(FONT);
@@ -407,7 +421,8 @@ public class GUI {
 		c.gridx = 0;
 		c.gridy = 6;
 		east.add(analyzeDate, c);
-		JTextField queryDate = new JFormattedTextField(); //creates textfield with 10 columns
+		//creates textfield with 10 columns
+		queryDate = new JFormattedTextField();
 		queryDate.setDocument(new JTextFieldLimit(10));
 		queryDate.setBackground(GREY_110x3);
 		queryDate.setForeground(PURE_WHITE);
@@ -416,61 +431,47 @@ public class GUI {
 		c.gridx = 1;
 		c.gridy = 6;
 		east.add(queryDate, c);
-
+		
 		queryDate.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void changedUpdate(DocumentEvent e) {}
-
-			@Override
-			public void insertUpdate(DocumentEvent e) {
-				format();
-				if (queryDate.getText().length() == 10) {
-					assetsOT.setVisible(true);
-					ordersOT.setVisible(true);
-					salesOT.setVisible(true);
-				}
-			}
-
-			@Override
-			public void removeUpdate(DocumentEvent e) {
-				assetsOT.setVisible(false);
-				ordersOT.setVisible(false);
-				salesOT.setVisible(false);
-			}
-
+			
 			private void format() {
+				
 				Runnable doFormat = new Runnable() {
 					@Override
 					public void run() {
-						if (queryDate.getText().length() == 4 || queryDate.getText().length() == 7) {
+						
+						if(queryDate.getText().length() == 4 ||
+						   queryDate.getText().length() == 7) {
 							queryDate.setText(queryDate.getText() + "-");
 						}
 					}
 				};
 				SwingUtilities.invokeLater(doFormat);
 			}
-		});
-
-	}
-
-	public static class JTextFieldLimit extends PlainDocument {
-		private final int limit;
-
-		JTextFieldLimit(int limit) {
-			super();
-			this.limit = limit;
-		}
-
-		public void insertString( int offset, String  str, AttributeSet attr ) throws BadLocationException {
-			if (str == null) return;
-
-			if ((getLength() + str.length()) <= limit) {
-				super.insertString(offset, str, attr);
+			
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				format();
+				if(queryDate.getText().length() == 10) {
+					for(JButton ytdButton: ytdButtons) {
+						ytdButton.setVisible(true);
+					}
+				}
 			}
-		}
+			
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				for(JButton ytdButton: ytdButtons) {
+					ytdButton.setVisible(false);
+				}
+			}
+		});
 	}
-
+	
 	private void refresh() throws SQLException {
+		
 		setFromDatabase(crud.getColumnNames());
 		DefaultTableModel dm = (DefaultTableModel)table.getModel();
 		dm.setDataVector(data, crud.getColumnNames());
@@ -479,10 +480,11 @@ public class GUI {
 	
 	private void sendEmail(String fileName, Object[][] data)
 	throws FileNotFoundException, SQLException {
+		
 		File report = new File(fileName);
 		
 		PrintWriter dataWriter = new PrintWriter(report);
-		dataWriter.println(String.join(",",crud.getColumnNames()));
+		dataWriter.println(String.join(",", crud.getColumnNames()));
 		for(int i = 0; i < data.length; i++) {
 			Object[] row = data[i];
 			for(int j = 0; j < row.length; j++) {
@@ -495,15 +497,17 @@ public class GUI {
 		}
 		dataWriter.close();
 	}  // End sendFile
-
-	private void setButtonStyle(JButton button){
+	
+	private void setButtonStyle(JButton button) {
+		
 		button.setBackground(GREY_110x3);
 		button.setFont(FONT);
 		button.setForeground(TABLE_FOREGROUND);
 		button.setBorder(new LineBorder(DARK_GREY, 2));
 	}
-
+	
 	private void setFrameStyle(JLabel status) {
+		
 		status.setFont(FONT);
 		CENTER_PANEL.setBackground(centerBackground);
 		CENTER_PANEL.setOpaque(true);
@@ -520,11 +524,13 @@ public class GUI {
 	
 	public void setFromArray(Object[][] newData, String[] columnNames)
 	throws SQLException {
+		
 		this.data = newData;
 		setNewModel(columnNames);
 	}
 	
 	private void setFromDatabase(String[] columnNames) throws SQLException {
+		
 		ResultSet rs = crud.query("SELECT * FROM " + crud.getCurrentTable());
 		data = new Object[crud.size()][columnNames.length];
 		for(int i = 0; rs.next() && i < data.length; i++) {
@@ -536,6 +542,7 @@ public class GUI {
 	}
 	
 	private void setNewModel(String[] columnNames) {
+		
 		model = new DefaultTableModel(data, columnNames);
 		model.setDataVector(data, columnNames);
 		table.setModel(model);
@@ -543,8 +550,9 @@ public class GUI {
 		model.fireTableDataChanged();
 		table.repaint();
 	}
-
+	
 	private void setUIManager() {
+		
 		UIManager.put("ScrollBar.thumb", new ColorUIResource(GREY_110x3));
 		UIManager
 		 .put("ScrollBar.thumbDarkShadow", new ColorUIResource(GREY_50x3));
@@ -552,5 +560,25 @@ public class GUI {
 		UIManager
 		 .put("ScrollBar.thumbHighlight", new ColorUIResource(GREY_50x3));
 		UIManager.put("ScrollBar.track", new ColorUIResource(GREY_50x3));
+	}
+	
+	public static class JTextFieldLimit extends PlainDocument {
+		private final int limit;
+		
+		JTextFieldLimit(int limit) {
+			
+			super();
+			this.limit = limit;
+		}
+		
+		public void insertString(int offset, String str, AttributeSet attr)
+		throws BadLocationException {
+			
+			if(str == null) { return; }
+			
+			if((getLength() + str.length()) <= limit) {
+				super.insertString(offset, str, attr);
+			}
+		}
 	}
 }
