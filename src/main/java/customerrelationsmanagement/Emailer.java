@@ -20,10 +20,12 @@ import javax.mail.internet.MimeMultipart;
 
 public class Emailer {
 	Credentials credentials;
+	private Session session;
 	
 	public Emailer(
 	 Credentials credentials) {
 		this.credentials = credentials;
+		session = credentials.getSession();
 	}
 	
 	private Message createNewMessage
@@ -142,8 +144,6 @@ public class Emailer {
 	throws MessagingException, IOException, SQLException {
 		
 		crud.setWorkingTable("sales");
-		Credentials credentials = new Credentials();
-		Session session = credentials.getSession();
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 		OrderProcessor orderProcessor = new OrderProcessor(crud);
 		Message[] messages = credentials.getMessages(session);
