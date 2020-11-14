@@ -11,8 +11,16 @@ import java.time.LocalDate;
 import java.util.*;
 
 class OrderProcessor {
-	public static final String[] ANALYTICS_COLUMNS
-	 = {"fiscal_date", "asset_total", "top_customers", "top_products", "order_count", "product_count"};
+	public static final String[] ANALYTICS_COLUMNS = {
+	  "fiscal_date", 
+	  "asset_total", 
+	  "daily_income",
+	  "daily_revenue", 
+	  "top_customers",
+	  "top_products", 
+	  "order_count", 
+	  "product_count"
+	};
 	private final ArrayList<Object[]> acceptedOrders;
 	private final Crud crud;
 	private final ArrayList<Object[]> dailyAnalytics;
@@ -25,6 +33,7 @@ class OrderProcessor {
 	private final HashMap<String, Integer> quantityMap;
 	private final HashMap<String, BigDecimal> salePriceMap;
 	private final HashMap<String, BigDecimal> wholesaleMap;
+	private BigDecimal assetTotal;
 	
 	/**
 	 * OrderProcessor uses an in-memory copy of three inventory columns.
@@ -60,6 +69,7 @@ class OrderProcessor {
 		acceptedOrders = new ArrayList<>(size); // list of Object[]'s for
 		dailyOrderStack = new Stack<>();
 		dailyAnalytics = new ArrayList<>();
+		assetTotal = BigDecimal.ZERO;
 		while(rs.next()) {
 			int quantity = rs.getInt(1);
 			int idx = rs.getInt(2);
@@ -72,6 +82,7 @@ class OrderProcessor {
 			salePriceMap.put(productId, salePrice);
 			indexMap.put(idx, productId);
 			idxList.add(idx);
+			assetTotal = assetTotal.add(salePrice.multiply(BigDecimal.valueOf(quantity)));
 		} // End while
 	} // End Constructor
 	
@@ -179,9 +190,29 @@ class OrderProcessor {
 			responsePrefix += "The following products have been processed: ";
 			responseSuffix = "Thank you for using our service.";
 			nextOrder.setStatus(Order.PROCESSED);
+			for(Iterator<Product> it = nextOrder.productIterator();
+				it.hasNext(); ) {
+				Product product = it.next();
+				
+				assetTotal = assetTotal.subtract(
+				 salePriceMap.get(product.getId()).multiply(
+				  BigDecimal.valueOf(product.getQuantity())));
+			}
 		} else {
+			
+			for(Iterator<Product> it = nextOrder.productIterator();
+				it.hasNext(); ) {
+				Product product = it.next();
+				String productId = product.getId();
+				Integer inventoryQuantity = quantityMap.get(productId);
+				Integer requestedQuantity = product.getQuantity();
+				if(inventoryQuantity < requestedQuantity) {
+					quantityMap.put(productId, requestedQuantity 
+					+ new Random().nextInt(450) + 50);
+				}
+			}
 			responsePrefix += "The following products could not be processed:";
-			responseSuffix = "We are nextly unable to fulfill this order.";
+			responseSuffix = "We are currently unable to fulfill this order.";
 			nextOrder.setStatus(Order.CANCELLED);
 		} // End if.
 		
@@ -370,7 +401,8 @@ class OrderProcessor {
 	} // End updateAndClose
 	
 	private class DailyStats {
-		BigDecimal assetTotal;
+		BigDecimal revenueTotal;
+		BigDecimal incomeTotal;
 		Date fiscalDate;
 		Object[][] topCustomers; // yo.gmail.com 499.99	nextguy@something.com 
 		Object[][] topProducts;
@@ -379,14 +411,15 @@ class OrderProcessor {
 			
 			this.fiscalDate =
 			 new Date(dailyOrderStack.peek().getTimeOrdered().getTime());
-			this.assetTotal = calculateAssetTotal();
+			calculateRevenueTotal();
 			this.topCustomers = calculateTopCustomers();
 			this.topProducts = calculateTopProducts();
 		}
 		
-		private BigDecimal calculateAssetTotal() {
+		private void calculateRevenueTotal() {
 			
-			BigDecimal total = BigDecimal.ZERO;
+			revenueTotal = BigDecimal.ZERO;
+			incomeTotal = BigDecimal.ZERO;
 			for(Order order: dailyOrderStack) {
 				if(order.getStatus() <= Order.UNPROCESSED) { continue; }
 				var it = order.productIterator();
@@ -396,10 +429,10 @@ class OrderProcessor {
 					BigDecimal salePrice = salePriceMap.get(id);
 					BigDecimal quantity =
 					 new BigDecimal(product.getQuantity());
-					total = total.add(salePrice.multiply(quantity));
+					revenueTotal = revenueTotal.add((salePrice.subtract(wholesaleMap.get(id))).multiply(quantity));
+					incomeTotal = incomeTotal.add(salePrice);
 				}
 			}
-			return total;
 		}
 		
 		private Object[][] calculateTopCustomers() {
@@ -488,21 +521,33 @@ class OrderProcessor {
 		}
 		
 		public Object[] toArray() {
+			
 			int dailyProductCount = 0;
 			for(Order order: dailyOrderStack) {
 				if(order.getStatus() <= 0) {continue;}
-				 dailyProductCount += order.size();
+				dailyProductCount += order.size();
 			}
 			return new Object[] {
-			 fiscalDate,              // fiscalDate         
-			 assetTotal,              // assetTotal         
-			 getTopCustomers() + "",  // topCustomers                   
-			 getTopProducts() + "",   // topProducts                   
-			 dailyOrderStack.size(),  // orderCount                     
-			 dailyProductCount,       // productCount              
-			 };
+			 fiscalDate,              // "fiscal_date", 
+			 assetTotal,              // "asset_total", 
+			 incomeTotal,             // "daily_income",
+			 revenueTotal,            // "daily_revenue", 
+			 getTopCustomers() + "",  // "top_customers",
+			 getTopProducts() + "",   // "top_products", 
+			 dailyOrderStack.size(),  // "order_count", 
+			 dailyProductCount,       // "product_count"
+			};
 		}
 	}
 } // End SalesProcessor
 	
+	
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	  
 	
