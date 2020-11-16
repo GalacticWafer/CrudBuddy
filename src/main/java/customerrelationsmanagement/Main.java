@@ -8,20 +8,20 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class Main {
-	//public static final String INVENTORY_PATH = "inventory_team4.csv";
-	public static final String INVENTORY_PATH = null;
+	public static final String INVENTORY_PATH = "inventory_team4.csv";
+	//public static final String INVENTORY_PATH = null;
 	
 	//public static final String analyticsDir = "analytics";
 	public static final String analyticsDir = null;
 	
-	//public static final String ORDERS_PATH = "customer_orders_A_team4.csv";
-	public static final String ORDERS_PATH = "";
+	public static final String ORDERS_PATH = "customer_orders_A_team4.csv";
+	//public static final String ORDERS_PATH = "";
 	
 	public static final boolean START_GUI = true;
 	//public static final boolean START_GUI = false;
 	
-	public static final boolean START_MAIL = true;
 	//public static final boolean START_MAIL = true;
+	public static final boolean START_MAIL = true;
 	
 	private static Credentials credentials;
 	private static Crud crud;

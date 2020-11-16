@@ -47,19 +47,6 @@ public class CrudTest {
 	void deleteTable() {
 	}
 	
-	@Test
-	void exists() throws SQLException {
-		assertTrue(crud.exists("product_id","ZRDATK9CSM23"));
-		assertFalse(crud.exists("product_id","ABRA_CADABRA"));
-	}
-	
-	@Test
-	void find() throws SQLException {
-		assertTrue(crud.getRecords("SELECT * FROM inventory WHERE product_id = ZRDATK9CSM23").length > 0);
-		
-		assertArrayEquals(crud.getRecords("SELECT * FROM inventory WHERE product_id = NOPENOPENOPE"), 
-		 new Object[]{null,null,null,null,null,null});
-	}
 	
 	@Test
 	void getAssetTotal() {
@@ -73,11 +60,11 @@ public class CrudTest {
 	void getColumnNames() throws SQLException {
 		crud.setWorkingTable("inventory");
 		assertArrayEquals(crud.getColumnNames(),
-		 Crud.INVENTORY_COLUMNS);
+		 Tables.INVENTORY.columns());
 		
 		crud.setWorkingTable("sales");
 		assertArrayEquals(crud.getColumnNames(),
-		 Order.SALES_COLUMNS);
+		 Tables.STATUSED.columns());
 		
 		crud.setWorkingTable("inventory");
 	}

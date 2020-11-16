@@ -11,17 +11,8 @@ import java.time.LocalDate;
 import java.util.*;
 
 class OrderProcessor {
-	public static final String[] ANALYTICS_COLUMNS = {
-	  "fiscal_date", 
-	  "asset_total", 
-	  "daily_income",
-	  "daily_revenue", 
-	  "top_customers",
-	  "top_products", 
-	  "order_count", 
-	  "product_count"
-	};
 	private final ArrayList<Object[]> acceptedOrders;
+	private final ArrayList<Object[]> supplierEvents;
 	private final Crud crud;
 	private final ArrayList<Object[]> dailyAnalytics;
 	private final Stack<Order> dailyOrderStack;
@@ -34,6 +25,7 @@ class OrderProcessor {
 	private final HashMap<String, BigDecimal> salePriceMap;
 	private final HashMap<String, BigDecimal> wholesaleMap;
 	private BigDecimal assetTotal;
+	private final HashMap<String, String> supplierMap;
 	
 	/**
 	 * OrderProcessor uses an in-memory copy of three inventory columns.
@@ -67,8 +59,10 @@ class OrderProcessor {
 		wholesaleMap = new HashMap<>(size); // map from product_id -> quantity
 		salePriceMap = new HashMap<>(size); // map from product_id -> quantity
 		acceptedOrders = new ArrayList<>(size); // list of Object[]'s for
-		dailyOrderStack = new Stack<>();
-		dailyAnalytics = new ArrayList<>();
+		supplierEvents = new ArrayList<>(); // list of all supplier events
+		dailyOrderStack = new Stack<>(); // list of rows with matching date_ordered
+		dailyAnalytics = new ArrayList<>(); //list of analytics created from dailyOrderStack's contents
+		supplierMap = new HashMap<>(); // map of <product_id, supplier_id> 
 		assetTotal = BigDecimal.ZERO;
 		while(rs.next()) {
 			int quantity = rs.getInt(1);
@@ -83,6 +77,7 @@ class OrderProcessor {
 			indexMap.put(idx, productId);
 			idxList.add(idx);
 			assetTotal = assetTotal.add(salePrice.multiply(BigDecimal.valueOf(quantity)));
+			//Todo Adam, add the product id and the key as the value in supplierMap
 		} // End while
 	} // End Constructor
 	
@@ -177,7 +172,6 @@ class OrderProcessor {
 		
 		for(Iterator<Product> it = nextOrder.productIterator();
 			it.hasNext(); ) {
-			
 			builder.append(it.next().toString()).append("\n");
 		} // End for.
 		
@@ -207,8 +201,22 @@ class OrderProcessor {
 				Integer inventoryQuantity = quantityMap.get(productId);
 				Integer requestedQuantity = product.getQuantity();
 				if(inventoryQuantity < requestedQuantity) {
+					// Todo Adam refactor the code below by introducing
+					//  an int variable (from the nextInt() call)
+					//  check this link for instructions on completing this action
+					// https://www.jetbrains.com/help/idea/extract-variable.html
 					quantityMap.put(productId, requestedQuantity 
 					+ new Random().nextInt(450) + 50);
+					//Todo Adam the productId to get the appropriate 
+					// supplierId from a supplierMap 
+					// use the date, supplierId, and 
+					
+					// Todo Adam add a new Object[] to supplier with:
+					//  the supplierId 
+					//  the productId
+					//  the int variable you introduced,
+					//  the time "order" was ordered (look in Order.java for the appropriate getter method)
+					
 				}
 			}
 			responsePrefix += "The following products could not be processed:";
@@ -235,9 +243,7 @@ class OrderProcessor {
 	 *  if you mess up.
 	 * @throws FileNotFoundException
 	 *  if the file was not found or
-	 *  TODO: if the file is not a csv file
 	 *  or
-	 *  TODO: if any line in the csv is not in the proper format: 2020-01-02,
 	 *  saust@hotmail.com,38813,3R8YXZCS820Y,2
 	 */
 	public void runFileOrders(String pathname)
@@ -349,16 +355,21 @@ class OrderProcessor {
 	/** Update all the tables after orders have been processed. */
 	public void updateAndClose() throws SQLException {
 		
-		crud.setWorkingTable("statused_sales");
+		crud.setWorkingTable(Tables.STATUSED.toString());
 		if(acceptedOrders.size() > 0) {
-			crud.insertRecords(Order.SALES_COLUMNS,
+			crud.insertRecords(Tables.STATUSED.columns(),
 			 acceptedOrders.iterator(), acceptedOrders.size());
 		} // End if
-		crud.setWorkingTable("daily_analysis");
+		
+		crud.setWorkingTable(Tables.ANALYTICS.toString());
 		if(dailyAnalytics.size() > 0) {
-			crud.insertRecords(ANALYTICS_COLUMNS,
+			crud.insertRecords(Tables.ANALYTICS.columns(),
 			 dailyAnalytics.iterator(), dailyAnalytics.size());
 		} // End if
+		
+		// Todo Adam aet the working table to your new suppler table, 
+		//  and insert the records exactly the same way it was done 
+		//  immediately above this comment
 		
 		// update the inventory table to effectively close the processor.
 		StringBuilder builder = new StringBuilder();
@@ -404,7 +415,7 @@ class OrderProcessor {
 		BigDecimal revenueTotal;
 		BigDecimal incomeTotal;
 		Date fiscalDate;
-		Object[][] topCustomers; // yo.gmail.com 499.99	nextguy@something.com 
+		Object[][] topCustomers;
 		Object[][] topProducts;
 		
 		public DailyStats() {

@@ -30,16 +30,6 @@ public class Order {
 	public static final String[] ORDER_FILE_COLUMNS =
 	 new String[] {"date", "cust_email", "cust_location", "product_id", 
 				   "product_quantity"};
-	public static final String[] SALES_COLUMNS = new String[] {
-	 "order_id", // date_ordered
-	 "cust_email", // cust_email
-	 "cust_location", // cust_location
-	 "product_id", // product_id
-	 "product_quantity", // product_quantity
-	 "date_ordered", // order_status
-	 "date_accepted", // date_accepted
-	 "order_status", // order_id
-	};
 	private String email;
 	private boolean isSale;
 	private final String location;
