@@ -1,10 +1,13 @@
 package customerrelationsmanagement;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.logging.Level;
@@ -190,7 +193,8 @@ public class Emailer {
 							 String.join("\n", recordsString);
 							if(records.length != 0) {
 								crud.update(
-								 "update statused_sales set order_status = -1 " +
+								 "update statused_sales set order_status = -1" +
+								 " " +
 								 "where order_id = '" +
 								 orderId + "'");
 								sendMail(
@@ -227,70 +231,26 @@ public class Emailer {
 				if(order != null) {
 					order.setEmail(email);
 					orderProcessor.processOrder();
-					
-					Iterator<Product> products = order.productIterator();
-					
-					TreeSet<Product> productSet = new TreeSet<>();
-					
-					while(products.hasNext()) {
-						Product nextProduct = products.next();
-						productSet.add(nextProduct);
-						// get the recommended
-					}
-					
-					HashMap<String, Integer> productSumMap = new HashMap<>();
-					
-					for(Product product: productSet) {
-						Object[][] result =
-						 recommendations(crud, product.getId(), order.orderId);
-						for(Object[] o: result) {
-							String recommendedProduct = (String)o[0];
-							int associatedQuantity = (Integer)o[1];
-							if(productSumMap.containsKey(recommendedProduct)) {
-								Integer currentSum =
-								 productSumMap.get(recommendedProduct);
-								productSumMap.put(recommendedProduct,
-								 associatedQuantity + currentSum);
-							} else {
-								productSumMap
-								 .put(recommendedProduct, associatedQuantity);
-							}
-						}
-						ArrayList<Map.Entry<String, Integer>> bestRecommendations = new ArrayList<>();
-						int topInt = 0;
-						Iterator<Map.Entry<String, Integer>> it =
-						 productSumMap.entrySet()
-									  .iterator();
-						for(int i = 0; i < productSumMap.size(); i++) {
-							Map.Entry<String, Integer> entry = it.next();
-							int testInt = entry.getValue();
-							if(bestRecommendations.size() > 2) {
-								for(Map.Entry<String, Integer> bestRecommendation:
-								 bestRecommendations) {
-									if(bestRecommendation.getValue() < testInt) {
-										//switch em
-									}
-								}
-							}
-						}
-					}
+					sendMail(order.getCustomerEmail(), order
+					  .getResponseSubject(), order
+											  .getMessageText() + "", session,
+					 null);
+					String recommendPr = recommendProducts(3, order.orderId);
+					sendMail(order.getCustomerEmail(),
+					 "We thought you might like these!", recommendPr + "", session,
+					 null);
 				}
 				
-				sendMail(order.getCustomerEmail(), order
-				 .getResponseSubject(), order
-										 .getMessageText() + "", session,
-				 null);
+				currentMessage.setFlag(Flags.Flag.DELETED, true);
 			}
-			
-			currentMessage.setFlag(Flags.Flag.DELETED, true);
-		} catch(Exception e){
-			System.out.println(e.getMessage());
-			System.out.println(e.getStackTrace());
-			// Todo: this email is in an improper format
-		} // End try-catch
-	} // End for
+			catch(Exception e) {
+				System.out.println(e.getMessage());
+				System.out.println(e.getStackTrace());
+				// Todo: this email is in an improper format
+			} // End try-catch
+		} // End for
 		orderProcessor.updateAndClose();
-}
+	}
 	
 	/**
 	 * Send an email to a customer to indicate order confirmation or
@@ -330,30 +290,25 @@ public class Emailer {
 		System.out.println();
 	} // End processEmails
 	
-	public Object[][] recommendations(Crud crud, String product,
-									  String orderid)
+	@NotNull private String recommendProducts(int limit, String orderId)
 	throws SQLException {
-		
-		String sql = "select s2.product_id, sum(s2.product_quantity) from " +
-					 "statused_sales\n" +
-					 "                                                       " +
-					 " " +
-					 "as s1 inner join statused_sales as s2 on s1.order_id =" +
-					 " " +
-					 "s2.order_id\n" +
-					 "where s1.product_id = '" + product + "'\n" +
-					 "  and s2.product_id not like '" + product + "'\n" +
-					 "  and s1.order_id not like '" + orderid + "'\n" +
-					 "group by s2.product_id;";
-		
-		ResultSet rs = crud.query(sql);
-		Object[][] objects = new Object[crud.rowCountResults(rs)][2];
-		for(int i = 0; rs.next(); i++) {
-			objects[i] = new Object[] {
-			 rs.getString(1),
-			 rs.getInt(2)
-			};
+		String query =
+		 " SELECT product_id as 'We thought you might also like:' " +
+		 " FROM statused_sales " +
+		 " WHERE order_id IN (SELECT order_id FROM statused_sales" +
+		 " WHERE  product_id IN(SELECT product_id FROM statused_sales " +
+		 " WHERE order_id = '" + orderId + "')" +
+		 " AND order_id NOT LIKE '" + orderId + "')" +
+		 " GROUP BY product_id " +
+		 " ORDER BY sum(product_quantity)" +
+		 " DESC LIMIT " + limit;
+		Crud crud = credentials.getCrud();
+		ResultSet rs = crud.query(query);
+		StringBuilder out =
+		 new StringBuilder(rs.getMetaData().getColumnLabel(1) + "\n");
+		while(rs.next()) {
+			out.append(rs.getString(1)).append("\n");
 		}
-		return objects;
+		return out.toString();
 	}
 } // End Emailer
