@@ -97,10 +97,10 @@ public class ChartMaker {
 		}
 		throw new IllegalArgumentException();
 	}
-	public JFreeChart getChart(String time, ChartType type, long[] intervals, int[] numberOfLines){
+	public JFreeChart getChart(String time, ChartType type, long[] intervals, int[] numberOfLines, int count){
 		int maxNumberOfFiles = 0;
 		final TimeSeries series = new TimeSeries(type.toString());
-		for(int i = 0; i < intervals.length; i++){
+		for(int i = 0; i < count; i++){
 			maxNumberOfFiles = Math.max(maxNumberOfFiles, numberOfLines[i]);
 			LocalDateTime t = (new Timestamp(intervals[i])).toLocalDateTime();
 			int minute = t.getMinute();
