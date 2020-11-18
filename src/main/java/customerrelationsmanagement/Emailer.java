@@ -7,8 +7,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,12 +22,16 @@ import javax.mail.internet.MimeMultipart;
 
 public class Emailer {
 	Credentials credentials;
-	private Session session;
 	
+	/**
+	 * Can be used to access the inbox folder to process emails/orders
+	 *
+	 * @param credentials
+	 *  hold relative information for connecting to database and email
+	 */
 	public Emailer(
 	 Credentials credentials) {
 		this.credentials = credentials;
-		session = credentials.getSession();
 	}
 	
 	private Message createNewMessage
@@ -152,7 +154,7 @@ public class Emailer {
 		crud.setWorkingTable("statused_sales");
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 		OrderProcessor orderProcessor = new OrderProcessor(crud);
-		Message[] messages = credentials.getMessages(session);
+		Message[] messages = credentials.getMessages(credentials.getSession());
 		String reccommend1 = null;
 		
 		for(Message currentMessage: messages) {
@@ -193,7 +195,8 @@ public class Emailer {
 							 String.join("\n", recordsString);
 							if(records.length != 0) {
 								crud.update(
-								 "update statused_sales set order_status = -1" +
+								 "update statused_sales set order_status = " +
+								 "-1" +
 								 " " +
 								 "where order_id = '" +
 								 orderId + "'");
@@ -202,7 +205,7 @@ public class Emailer {
 								 " The following product purchases should be" +
 								 " " +
 								 "cancelled:\n\n" +
-								 cancelString, session, null);
+								 cancelString, credentials.getSession(), null);
 								
 								continue;
 							}
@@ -233,11 +236,14 @@ public class Emailer {
 					orderProcessor.processOrder();
 					sendMail(order.getCustomerEmail(), order
 					  .getResponseSubject(), order
-											  .getMessageText() + "", session,
+											  .getMessageText() + "",
+					 credentials
+					  .getSession(),
 					 null);
 					String recommendPr = recommendProducts(3, order.orderId);
 					sendMail(order.getCustomerEmail(),
-					 "We thought you might like these!", recommendPr + "", session,
+					 "We thought you might like these!",
+					 recommendPr + "", credentials.getSession(),
 					 null);
 				}
 				
@@ -290,6 +296,19 @@ public class Emailer {
 		System.out.println();
 	} // End processEmails
 	
+	/**
+	 * Returning a statement for recommendations that will be sent
+	 * in a email after an order has been confirmed
+	 *
+	 * @param limit
+	 *  max of suggestive products
+	 * @param orderId
+	 *  to find matching recommendations against the current order
+	 *
+	 * @return a string for the message body
+	 *
+	 * @throws SQLException
+	 */
 	@NotNull private String recommendProducts(int limit, String orderId)
 	throws SQLException {
 		String query =
