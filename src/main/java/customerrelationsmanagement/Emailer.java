@@ -202,7 +202,7 @@ public class Emailer {
 								 orderId + "'");
 								sendMail(
 								 email, "Cancellation",
-								 " The following product purchases should be" +
+								 " The following product purchases have been cancelled:" +
 								 " " +
 								 "cancelled:\n\n" +
 								 cancelString, credentials.getSession(), null);
