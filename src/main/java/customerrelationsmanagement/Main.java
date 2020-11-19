@@ -29,7 +29,7 @@ public class Main {
 	private static OrderProcessor orderProcessor;
 	private static Restoration rest;
 	
-	public Main(Credentials credentials, Crud queryMaker)
+	public Main(Credentials credentials)
 			throws IOException, SQLException, ParseException {
 		startServices(credentials);
 	}
@@ -66,8 +66,5 @@ public class Main {
 		if(ORDERS_PATH != null && !ORDERS_PATH.equals("")) {
 			OrderProcessor.runFileOrders(crud, ORDERS_PATH);
 		}
-		
-		
-		
 	}
 }
