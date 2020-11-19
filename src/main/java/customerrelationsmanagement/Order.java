@@ -33,25 +33,25 @@ public class Order {
 	  "product_quantity"
 	 };
 	private String email;
-	private boolean isSale;
+	private EventType eventType;
 	private final String location;
 	private String messageText;
 	public String orderId;
 	private ArrayList<Product> products;
 	private static final SecureRandom rand = new SecureRandom();
-	private int status;
+	private Status status;
 	private String subject;
 	private Timestamp timeAccepted;
 	private final Timestamp timeOrdered;
 	
 	public Order(Timestamp date,
-				 boolean isSale, String location) {
+				 EventType eventType, String location) {
 		
 		timeOrdered = date;
-		this.isSale = isSale;
+		this.eventType = eventType;
 		this.location = location;
 		this.orderId = generateId();
-		status = UNPROCESSED;
+		status = Status.UNPROCESSED;
 		products = new ArrayList<>();
 	} // End constructor
 	
@@ -64,7 +64,7 @@ public class Order {
 	/** @return true if the order can be processed. */
 	public boolean canProcess() {
 		
-		return status == UNPROCESSED;
+		return status == Status.UNPROCESSED;
 	} // End canProcess
 	
 	/**
@@ -77,7 +77,7 @@ public class Order {
 		if(dateOneHourBack.isAfter(DateTime.parse(getTimeAccepted() + ""))) {
 			return false;
 		}
-		setStatus(CANCELLED);
+		setStatus(Status.CANCELLED);
 		return true;
 	}
 	
@@ -105,7 +105,7 @@ public class Order {
 	
 	public String getResponseSubject() { return subject; } // End 
 	
-	public int getStatus() {
+	public Status getStatus() {
 		
 		return status;
 	} // End getStatus
@@ -128,14 +128,14 @@ public class Order {
 	public Timestamp getTimeOrdered() {return timeOrdered;} // End 
 	// getResponseSubject
 	
-	private boolean isCancelled() { return status == CANCELLED; } // 
+	private boolean isCancelled() { return status == Status.CANCELLED; } // 
 	// isCancelled
 	
 	public boolean isProcessed() {
-		return status == PROCESSED;
+		return status == Status.PROCESSED;
 	} // End isProcessed
 	
-	public boolean isSale() {return isSale;} // End isSale
+	public EventType eventType() {return eventType;} // End eventType
 	
 	public Iterator<Product> productIterator() {
 		
@@ -144,20 +144,20 @@ public class Order {
 	
 	public void setEmail(String email) {this.email = email;} // End setEmail
 	
-	public void setStatus(int status) {
-		
-		if(status == INVALID || status == CANCELLED) {
-			if(this.status == 0) {
-				this.status = status;
-				return;
+	public void setStatus(Status status) {
+		switch(status){
+			case INVALID, CANCELLED: switch(this.status) {
+				case INVALID: this.status = status; return;
 			}
 		}
-		//JOptionPane.showMessageDialog(null,getStatus + "==" + this.getStatus
-		// + "-> " +(getStatus == INVALID));
-		if(this.status == INVALID || this.status == CANCELLED) {
-			return;
+		switch(this.status) {
+			case INVALID, CANCELLED -> {return;}
+			default -> {
+				if(status.compareTo(this.status) > 0) {
+					this.status = status;
+				}
+			}
 		}
-		this.status = Math.max(status, this.status);
 	} // End setEmail
 	
 	public void setSubject(String subject) {
@@ -218,7 +218,7 @@ public class Order {
 		return
 		 getStatusString() + ',' +
 		 
-		 (isSale ? "sale"
+		 (eventType == EventType.SELLER ? "sale"
 		  : "restock") + ',' +
 		 
 		 "Id: " + orderId + ',' +
