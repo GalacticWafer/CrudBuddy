@@ -142,7 +142,7 @@ public class GUI {
 		setNewModel(columnNames);
 	}
 
-	private void displayChart(ChartPanel chartPanel, String dateString,
+	private void displayChart(String dateString,
 							  ChartType chartType) {
 
 		try {
@@ -161,8 +161,7 @@ public class GUI {
 	}
 
 	private void makeComponents(JPanel east, JPanel center,
-								GridBagConstraints middle)
-			throws ParseException {
+								GridBagConstraints middle) {
 
 		JLabel user = new JLabel("Username:");
 		user.setForeground(GREY_110x3);
@@ -250,14 +249,12 @@ public class GUI {
 		c.gridy = 3;
 		east.add(exportButton, c);
 
-		exportButton.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) {
+		exportButton.addActionListener(e -> {
 
-				try {
-					sendEmail("gui.csv", data);
-				} catch(FileNotFoundException | SQLException fileNotFoundException) {
-					fileNotFoundException.printStackTrace();
-				}
+			try {
+				sendEmail("gui.csv", data);
+			} catch(FileNotFoundException | SQLException fileNotFoundException) {
+				fileNotFoundException.printStackTrace();
 			}
 		});
 
@@ -268,26 +265,23 @@ public class GUI {
 		c.gridy = 1;
 		east.add(delete, c);
 
-		delete.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent ae) {
-				// check for selected row first
-				int selectedRow = table.getSelectedRow();
-				if(table.getSelectedRow() != -1) {
-					int rowIndex = table.convertRowIndexToModel(selectedRow);
-					try {
-						Object columnValue = Crud
-								.quoteWrap(table.getModel().getValueAt(rowIndex, 0));
-						String columnName = table.getColumnName(0);
-						crud.deleteRecord(columnName, columnValue);
-					} catch(SQLException throwables) {
-						throwables.printStackTrace();
-					}
-					model.removeRow(rowIndex);
-					JOptionPane
-							.showMessageDialog(null, "Selected row deleted " +
-									"successfully");
+		delete.addActionListener(ae -> {
+			// check for selected row first
+			int selectedRow = table.getSelectedRow();
+			if(table.getSelectedRow() != -1) {
+				int rowIndex = table.convertRowIndexToModel(selectedRow);
+				try {
+					Object columnValue = Crud
+							.quoteWrap(table.getModel().getValueAt(rowIndex, 0));
+					String columnName = table.getColumnName(0);
+					crud.deleteRecord(columnName, columnValue);
+				} catch(SQLException throwables) {
+					throwables.printStackTrace();
 				}
+				model.removeRow(rowIndex);
+				JOptionPane
+						.showMessageDialog(null, "Selected row deleted " +
+								"successfully");
 			}
 		});
 
@@ -328,14 +322,12 @@ public class GUI {
 		c.gridy = 4;
 		east.add(upload, c);
 
-		upload.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent ae) {
+		upload.addActionListener(ae -> {
 
-				try {
-					crud.insertTableFromGui();
-				} catch(Exception exception) {
-					exception.printStackTrace();
-				}
+			try {
+				crud.insertTableFromGui();
+			} catch(Exception exception) {
+				exception.printStackTrace();
 			}
 		});
 
@@ -346,10 +338,8 @@ public class GUI {
 		c.gridy = 5;
 		east.add(send, c);
 
-		send.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent ae) {
+		send.addActionListener(ae -> {
 
-			}
 		});
 
 		search.getDocument().addDocumentListener(new DocumentListener() {
@@ -375,7 +365,7 @@ public class GUI {
 
 				RowFilter<DefaultTableModel, Object> rf = null;
 				ArrayList<RowFilter<DefaultTableModel, Object>> rfs =
-						new ArrayList<RowFilter<DefaultTableModel, Object>>();
+						new ArrayList<>();
 
 				try {
 					String text = search.getText();
@@ -410,8 +400,8 @@ public class GUI {
 			ytdButtons[i].setVisible(false);
 			c.gridy = i + 7;
 			east.add(ytdButtons[i], c);
-			ytdButtons[i].addActionListener(e -> displayChart(
-					chartPanel, queryDate.getText(), type));
+			ytdButtons[i].addActionListener(e -> 
+			 displayChart(queryDate.getText(), type));
 		}
 
 		JLabel analyzeDate = new JLabel("Analyze YTD:");
@@ -438,14 +428,11 @@ public class GUI {
 
 			private void format() {
 
-				Runnable doFormat = new Runnable() {
-					@Override
-					public void run() {
+				Runnable doFormat = () -> {
 
-						if(queryDate.getText().length() == 4 ||
-								queryDate.getText().length() == 7) {
-							queryDate.setText(queryDate.getText() + "-");
-						}
+					if(queryDate.getText().length() == 4 ||
+							queryDate.getText().length() == 7) {
+						queryDate.setText(queryDate.getText() + "-");
 					}
 				};
 				SwingUtilities.invokeLater(doFormat);
@@ -522,8 +509,7 @@ public class GUI {
 		frame.getContentPane().setBackground(GREY_50x3);
 	}
 
-	public void setFromArray(Object[][] newData, String[] columnNames)
-			throws SQLException {
+	public void setFromArray(Object[][] newData, String[] columnNames) {
 
 		this.data = newData;
 		setNewModel(columnNames);

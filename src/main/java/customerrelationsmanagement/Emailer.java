@@ -217,9 +217,8 @@ public class Emailer {
 					} // End if
 					
 					String productId = s[0].trim();
-					reccommend1 = productId;
 					int requestedQuantity = Integer.parseInt(s[1].trim());
-					boolean isSale = Boolean.parseBoolean(s[2].trim());
+					EventType isSale = EventType.parse(s[2].trim());
 					String location = s[3].trim();
 					
 					if(order == null) {
@@ -307,7 +306,8 @@ public class Emailer {
 	 *
 	 * @return a string for the message body
 	 *
-	 * @throws SQLException
+	 * @throws SQLException if a parameter of the query is wrong or
+	 * the connection is interrupted
 	 */
 	@NotNull private String recommendProducts(int limit, String orderId)
 	throws SQLException {
