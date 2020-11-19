@@ -1,6 +1,7 @@
 package customerrelationsmanagement;
 
 import org.jetbrains.annotations.NotNull;
+import org.joda.time.DateTime;
 
 import java.io.*;
 import java.sql.ResultSet;
@@ -152,10 +153,8 @@ public class Emailer {
 	throws MessagingException, IOException, SQLException {
 		
 		crud.setWorkingTable("statused_sales");
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 		OrderProcessor orderProcessor = new OrderProcessor(crud);
 		Message[] messages = credentials.getMessages(credentials.getSession());
-		String reccommend1 = null;
 		
 		for(Message currentMessage: messages) {
 			Order order = null;
@@ -163,8 +162,8 @@ public class Emailer {
 			String[] messageText =
 			 getTextFromMessage(currentMessage).trim().split("\n");
 			
-			Timestamp timestamp =
-			 new Timestamp(currentMessage.getSentDate().getTime());
+			DateTime timestamp =
+			 new DateTime(currentMessage.getSentDate().getTime());
 			
 			Matcher m = Order.EMAIL_PATTERN.matcher(
 			 currentMessage.getFrom()[0].toString());
@@ -181,7 +180,7 @@ public class Emailer {
 							Object[][] records = crud.getRecords(
 							 "SELECT * FROM statused_sales where order_id = '"
 							 + orderId + "'" + " and order_status = " +
-							 Order.PROCESSED);
+							 Status.PROCESSED);
 							System.out.println(
 							 " The following product purchases should be " +
 							 "cancelled:\n\n" +
@@ -217,9 +216,8 @@ public class Emailer {
 					} // End if
 					
 					String productId = s[0].trim();
-					reccommend1 = productId;
 					int requestedQuantity = Integer.parseInt(s[1].trim());
-					boolean isSale = Boolean.parseBoolean(s[2].trim());
+					EventType isSale = EventType.parse(s[2].trim());
 					String location = s[3].trim();
 					
 					if(order == null) {
@@ -307,7 +305,8 @@ public class Emailer {
 	 *
 	 * @return a string for the message body
 	 *
-	 * @throws SQLException
+	 * @throws SQLException if a parameter of the query is wrong or
+	 * the connection is interrupted
 	 */
 	@NotNull private String recommendProducts(int limit, String orderId)
 	throws SQLException {
