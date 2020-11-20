@@ -1,10 +1,12 @@
 package customerrelationsmanagement;
 
+import org.jetbrains.annotations.NotNull;
+import org.joda.time.DateTime;
+
 import java.io.*;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -19,12 +21,16 @@ import javax.mail.internet.MimeMultipart;
 
 public class Emailer {
 	Credentials credentials;
-	private Session session;
 	
+	/**
+	 * Can be used to access the inbox folder to process emails/orders
+	 *
+	 * @param credentials
+	 *  hold relative information for connecting to database and email
+	 */
 	public Emailer(
 	 Credentials credentials) {
 		this.credentials = credentials;
-		session = credentials.getSession();
 	}
 	
 	private Message createNewMessage
@@ -100,7 +106,8 @@ public class Emailer {
 			message.setContent(multi);
 			
 			return message;
-		} catch(Exception ex) {
+		}
+		catch(Exception ex) {
 			Logger.getLogger(Emailer.class.getName())
 				  .log(Level.SEVERE, null, ex);
 		} // End try-catch
@@ -117,7 +124,8 @@ public class Emailer {
 			 createNewMessage(session, myAccountEmail, recipient, subject);
 			message.setText(content);
 			return message;
-		} catch(Exception ex) {
+		}
+		catch(Exception ex) {
 			Logger.getLogger(Emailer.class.getName())
 				  .log(Level.SEVERE, null, ex);
 		} // End try-catch
@@ -142,10 +150,9 @@ public class Emailer {
 	public void processEmails(Crud crud)
 	throws MessagingException, IOException, SQLException {
 		
-		crud.setWorkingTable("sales");
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		crud.setWorkingTable("statused_sales");
 		OrderProcessor orderProcessor = new OrderProcessor(crud);
-		Message[] messages = credentials.getMessages(session);
+		Message[] messages = credentials.getMessages(credentials.getSession());
 		
 		for(Message currentMessage: messages) {
 			Order order = null;
@@ -153,7 +160,8 @@ public class Emailer {
 			String[] messageText =
 			 getTextFromMessage(currentMessage).trim().split("\n");
 			
-			Timestamp timestamp = new Timestamp(currentMessage.getSentDate().getTime());
+			DateTime time =
+			 new DateTime(currentMessage.getSentDate().getTime());
 			
 			Matcher m = Order.EMAIL_PATTERN.matcher(
 			 currentMessage.getFrom()[0].toString());
@@ -168,13 +176,37 @@ public class Emailer {
 										 .contains("cancel".toUpperCase())) {
 							String orderId = s[0];
 							Object[][] records = crud.getRecords(
-							 "SELECT * FROM sales where order_id = '"
-							 + orderId + "'");
+							 "SELECT * FROM statused_sales where order_id = '"
+							 + orderId + "'" + " and order_status = " +
+							 Status.PROCESSED);
 							System.out.println(
-							 "The following product purchases should be " +
+							 " The following product purchases should be " +
 							 "cancelled:\n\n" +
 							 Arrays.deepToString(records));
-							// Todo  Daniel, roll back the order if it exists.
+							String[] recordsString =
+							 new String[records.length];
+							for(int i = 0; i < recordsString.length; i++) {
+								recordsString[i] = records[i][4].toString();
+							}
+							String cancelString =
+							 String.join("\n", recordsString);
+							if(records.length != 0) {
+								crud.update(
+								 "update statused_sales set order_status = " +
+								 "-1" +
+								 " " +
+								 "where order_id = '" +
+								 orderId + "'");
+								sendMail(
+								 email, "Cancellation",
+								 " The following product purchases have been cancelled:" +
+								 " " +
+								 "cancelled:\n\n" +
+								 cancelString, credentials.getSession(), null);
+								
+								continue;
+							}
+							
 							break;
 						} // End if
 						currentMessage.setFlag(Flags.Flag.DELETED, true);
@@ -183,11 +215,11 @@ public class Emailer {
 					
 					String productId = s[0].trim();
 					int requestedQuantity = Integer.parseInt(s[1].trim());
-					boolean isSale = Boolean.parseBoolean(s[2].trim());
+					EventType isSale = EventType.parse(s[2].trim());
 					String location = s[3].trim();
 					
 					if(order == null) {
-						order = new Order(timestamp, isSale, location);
+						order = new Order(time, isSale, location);
 						orderProcessor.setCurrentOrder(order);
 					} // End if
 					
@@ -195,17 +227,27 @@ public class Emailer {
 					 productId,
 					 requestedQuantity));
 				} // End for
-				assert order != null;
-				order.setEmail(email);
-				orderProcessor.processOrder();
-				
-				sendMail(order.getCustomerEmail(), order
-				 .getResponseSubject(), order
-				 .getMessageText(), session, null);
+				if(order != null) {
+					order.setEmail(email);
+					orderProcessor.processOrder();
+					sendMail(order.getCustomerEmail(), order
+					  .getResponseSubject(), order
+											  .getMessageText() + "",
+					 credentials
+					  .getSession(),
+					 null);
+					String recommendPr = recommendProducts(3, order.orderId);
+					sendMail(order.getCustomerEmail(),
+					 "We thought you might like these!",
+					 recommendPr + "", credentials.getSession(),
+					 null);
+				}
 				
 				currentMessage.setFlag(Flags.Flag.DELETED, true);
-			} catch(Exception e) {
+			}
+			catch(Exception e) {
 				System.out.println(e.getMessage());
+				System.out.println(e.getStackTrace());
 				// Todo: this email is in an improper format
 			} // End try-catch
 		} // End for
@@ -241,11 +283,48 @@ public class Emailer {
 		 reportFile == null ?
 		  prepareMessage(messageSubject, messageContent, emailSession,
 		   credentials.getEmail(), recipientAddress)
-		  : prepareAttachedMessage(emailSession, 
-		credentials.getEmail(), recipientAddress, reportFile, messageSubject);
+		  : prepareAttachedMessage(emailSession,
+		  credentials.getEmail(), recipientAddress, reportFile,
+		  messageSubject);
 		
 		assert message != null;
 		Transport.send(message);
 		System.out.println();
 	} // End processEmails
+	
+	/**
+	 * Returning a statement for recommendations that will be sent
+	 * in a email after an order has been confirmed
+	 *
+	 * @param limit
+	 *  max of suggestive products
+	 * @param orderId
+	 *  to find matching recommendations against the current order
+	 *
+	 * @return a string for the message body
+	 *
+	 * @throws SQLException if a parameter of the query is wrong or
+	 * the connection is interrupted
+	 */
+	@NotNull private String recommendProducts(int limit, String orderId)
+	throws SQLException {
+		String query =
+		 " SELECT product_id as 'We thought you might also like:' " +
+		 " FROM statused_sales " +
+		 " WHERE order_id IN (SELECT order_id FROM statused_sales" +
+		 " WHERE  product_id IN(SELECT product_id FROM statused_sales " +
+		 " WHERE order_id = '" + orderId + "')" +
+		 " AND order_id NOT LIKE '" + orderId + "')" +
+		 " GROUP BY product_id " +
+		 " ORDER BY sum(product_quantity)" +
+		 " DESC LIMIT " + limit;
+		Crud crud = credentials.getCrud();
+		ResultSet rs = crud.query(query);
+		StringBuilder out =
+		 new StringBuilder(rs.getMetaData().getColumnLabel(1) + "\n");
+		while(rs.next()) {
+			out.append(rs.getString(1)).append("\n");
+		}
+		return out.toString();
+	}
 } // End Emailer
