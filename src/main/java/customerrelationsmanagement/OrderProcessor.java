@@ -211,21 +211,9 @@ class OrderProcessor {
 				Integer inventoryQuantity = quantityMap.get(productId);
 				Integer requestedQuantity = product.getQuantity();
 				if(inventoryQuantity < requestedQuantity) {
-					// Todo Adam refactor the code below by introducing
-					//  an int variable (from the nextInt() call)
-					//  check this link for instructions on completing this action
-					// https://www.jetbrains.com/help/idea/extract-variable.html
-					quantityMap.put(productId, requestedQuantity 
-					+ new Random().nextInt(450) + 50);
-					//Todo Adam the productId to get the appropriate 
-					// supplierId from a supplierMap 
-					// use the date, supplierId, and 
-					
-					// Todo Adam add a new Object[] to supplier with:
-					//  the supplierId 
-					//  the productId
-					//  the int variable you introduced,
-					//  the time "order" was ordered (look in Order.java for the appropriate getter method)
+					int restockQuantity = new Random().nextInt(450);
+					quantityMap.put(productId, requestedQuantity
+											   + restockQuantity + 50);
 					
 					String supplierId = supplierMap.get(productId);
 					
