@@ -1,13 +1,12 @@
 package customerrelationsmanagement;
 
+import org.joda.time.DateTime;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.LocalDate;
 import java.util.*;
 
 class OrderProcessor {
@@ -88,7 +87,7 @@ class OrderProcessor {
 		} // End while
 	} // End Constructor
 	
-	private void analyzeOrders() throws SQLException {
+	private void analyzeOrders() {
 		
 		dailyAnalytics.add(new DailyStats().toArray());
 		recordCount += 1;
@@ -104,7 +103,7 @@ class OrderProcessor {
 	private Boolean canProcessOrder() {
 		
 		ArrayList<Boolean> canFulfillProducts = new ArrayList<>();
-		boolean isSale = nextOrder.isSale();
+		boolean isSale = nextOrder.eventType() == EventType.BUYER;
 		
 		for(Iterator<Product> productIter = nextOrder.productIterator();
 			productIter.hasNext(); ) {
@@ -134,10 +133,10 @@ class OrderProcessor {
 		boolean canProcessOrder = !canFulfillProducts.contains(false);
 		
 		if(canProcessOrder || !isSale) {
-			nextOrder.setStatus(Order.PROCESSED);
+			nextOrder.setStatus(Status.PROCESSED);
 			changeQuantities();
 		} else {
-			nextOrder.setStatus(Order.QUANTITY_SHORTAGE);
+			nextOrder.setStatus(Status.QUANTITY_SHORTAGE);
 		} // End if
 		ArrayList<Object[]> records = nextOrder.toArray();
 		if(records != null) {
@@ -163,7 +162,8 @@ class OrderProcessor {
 			if(prod.isProcessable()) {
 				Integer nextQuantity = quantityMap.get(productId);
 				int eventQuantity =
-				 prod.getQuantity() * (nextOrder.isSale() ? -1 : 1);
+				 prod.getQuantity() *
+				 (nextOrder.eventType() == EventType.BUYER ? -1 : 1);
 				int newQuantity = nextQuantity + eventQuantity;
 				quantityMap.put(productId, newQuantity);
 			} // End if
@@ -178,11 +178,7 @@ class OrderProcessor {
 	 *  .iterator()</code>
 	 *  can be processed. Otherwise, false.
 	 */
-	public boolean processOrder() throws SQLException {
-		
-		if(nextOrder.isProcessed()) {
-			return canProcessOrder();
-		} // End if.
+	public boolean processOrder() {
 		
 		boolean canProcessOrder = canProcessOrder();
 		assert nextOrder != null;
@@ -201,7 +197,7 @@ class OrderProcessor {
 		if(canProcessOrder) {
 			responsePrefix += "The following products have been processed: ";
 			responseSuffix = "Thank you for using our service.";
-			nextOrder.setStatus(Order.PROCESSED);
+			nextOrder.setStatus(Status.PROCESSED);
 			for(Iterator<Product> it = nextOrder.productIterator();
 				it.hasNext(); ) {
 				Product product = it.next();
@@ -243,7 +239,7 @@ class OrderProcessor {
 			}
 			responsePrefix += "The following products could not be processed:";
 			responseSuffix = "We are currently unable to fulfill this order.";
-			nextOrder.setStatus(Order.CANCELLED);
+			nextOrder.setStatus(Status.CANCELLED);
 		} // End if.
 		
 		nextOrder.setText(responsePrefix + "\n\n"
@@ -276,17 +272,16 @@ class OrderProcessor {
 		String[] line = scanner.nextLine().split(",");
 		
 		Order order = new Order(
-		 Timestamp.valueOf(LocalDate.parse(line[0]).atStartOfDay()),
-		 true,
+		 DateTime.parse(line[0]),
+		 EventType.BUYER,
 		 line[2]
 		);
 		
 		order.setEmail(line[1]);
 		this.setCurrentOrder(order);
 		int i = 2;
-		while(line != null && !line[0].equals("")) {
-			Timestamp nextTime =
-			 Timestamp.valueOf(LocalDate.parse(line[0]).atStartOfDay());
+		while(line != null && !line[0].trim().equals("")) {
+			DateTime nextTime = DateTime.parse(line[0]);
 			String nextEmail = line[1];
 			String nextLocation = line[2];
 			String nextProductId = line[3];
@@ -295,7 +290,7 @@ class OrderProcessor {
 			Product nextProduct = new Product(
 			 nextProductId, nextRequestedQuantity);
 			
-			boolean isNewDate = order.getTimeOrdered().before(nextTime);
+			boolean isNewDate = order.getTimeOrdered().isBefore(nextTime);
 			boolean isNewEmail =
 			 !order.getCustomerEmail().equals(nextEmail);
 			boolean isNewLocation =
@@ -312,23 +307,19 @@ class OrderProcessor {
 				} // End if
 				
 				processOrder();
-				if(dailyOrderStack.isEmpty()) {
-					dailyOrderStack.push(order);
-				} else {
-					Timestamp lastOrderTime =
+				if(!dailyOrderStack.isEmpty()) {
+					DateTime lastOrderTime =
 					 dailyOrderStack.peek().getTimeOrdered();
-					Timestamp nextOrderTime = order.getTimeOrdered();
-					if(lastOrderTime.compareTo(nextOrderTime) == 0) {
-						dailyOrderStack.push(order);
-					} else {
+					DateTime nextOrderTime = order.getTimeOrdered();
+					if(lastOrderTime.isBefore(nextOrderTime)) {
 						analyzeOrders();
 						dailyOrderStack.clear();
-						dailyOrderStack.push(order);
 					}
 				}
+				dailyOrderStack.push(order);
 				order = new Order(
-				 Timestamp.valueOf(LocalDate.parse(line[0]).atStartOfDay()),
-				 true,
+				 DateTime.parse(line[0]),
+				 EventType.BUYER,
 				 nextLocation
 				);
 				
@@ -437,16 +428,16 @@ class OrderProcessor {
 	} // End updateAndClose
 	
 	private class DailyStats {
-		Date fiscalDate;
+		DateTime fiscalDate;
 		BigDecimal incomeTotal;
 		BigDecimal revenueTotal;
 		Object[][] topCustomers;
 		Object[][] topProducts;
 		
 		public DailyStats() {
+			fiscalDate = dailyOrderStack
+			 .peek().getTimeOrdered().withTime(0, 0, 0, 0);
 			
-			this.fiscalDate =
-			 new Date(dailyOrderStack.peek().getTimeOrdered().getTime());
 			calculateRevenueTotal();
 			this.topCustomers = calculateTopCustomers();
 			this.topProducts = calculateTopProducts();
@@ -457,7 +448,9 @@ class OrderProcessor {
 			revenueTotal = BigDecimal.ZERO;
 			incomeTotal = BigDecimal.ZERO;
 			for(Order order: dailyOrderStack) {
-				if(order.getStatus() <= Order.UNPROCESSED) { continue; }
+				if(order.getStatus().compareTo(Status.UNPROCESSED) < 0) {
+					continue;
+				}
 				var it = order.productIterator();
 				while(it.hasNext()) {
 					Product product = it.next();
@@ -477,7 +470,9 @@ class OrderProcessor {
 			
 			HashMap<String, BigDecimal> dailyCustomers = new HashMap<>();
 			for(Order order: dailyOrderStack) {
-				if(!(order.getStatus() > Order.UNPROCESSED)) { continue; }
+				if(!(order.getStatus().compareTo(Status.UNPROCESSED) > 0)) {
+					continue;
+				}
 				
 				BigDecimal orderTotal = BigDecimal.ZERO;
 				Iterator<Product> it = order.productIterator();
@@ -508,7 +503,9 @@ class OrderProcessor {
 			
 			HashMap<String, Integer> dailyQuantities = new HashMap<>();
 			for(Order order: dailyOrderStack) {
-				if(!(order.getStatus() > Order.UNPROCESSED)) { continue; }
+				if(!(order.getStatus().compareTo(Status.UNPROCESSED) > 0)) {
+					continue;
+				}
 				Iterator<Product> it = order.productIterator();
 				while(it.hasNext()) {
 					Product product = it.next();
@@ -562,11 +559,13 @@ class OrderProcessor {
 			
 			int dailyProductCount = 0;
 			for(Order order: dailyOrderStack) {
-				if(order.getStatus() <= 0) {continue;}
+				if(order.getStatus().compareTo(Status.UNPROCESSED) <= 0) {
+					continue;
+				}
 				dailyProductCount += order.size();
 			}
 			return new Object[] {
-			 fiscalDate,              // "fiscal_date", 
+			 Order.dtf.print(fiscalDate),// "fiscal_date", 
 			 assetTotal,              // "asset_total", 
 			 incomeTotal,             // "daily_income",
 			 revenueTotal,            // "daily_revenue", 
@@ -578,14 +577,3 @@ class OrderProcessor {
 		}
 	}
 } // End SalesProcessor
-	
-	
-	  
-	  
-	  
-	  
-	  
-	  
-	  
-	  
-	

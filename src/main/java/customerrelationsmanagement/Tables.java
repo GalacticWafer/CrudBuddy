@@ -111,12 +111,12 @@ public enum Tables {
 				return new String[] {
 				 "VARCHAR(12)", 
 				 "VARCHAR(100)", 
-				 "VARCHAR(5)", 
+				 "VARCHAR(6)", 
 				 "VARCHAR(12)", 
 				 "int(8)",
 				 "DATETIME", 
 				 "DATETIME NULL DEFAULT NULL", 
-				 "int(2)"
+				 "VARCHAR(20)"
 				};
 			}
 			case ANALYTICS -> {
