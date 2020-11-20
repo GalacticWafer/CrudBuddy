@@ -2,6 +2,7 @@ package customerrelationsmanagement;
 
 import org.jfree.chart.*;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.NumberTickUnit;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
@@ -56,9 +57,7 @@ public class ChartMaker {
 			String[] datum = strArray[i].split(" ");
 			labels[i] = datum[0];
 			
-			values[i] = /*type == ChartType.TOP_CUSTOMERS ?
-			 Integer.parseInt(datum[1]) / 1.0 :*/
-			 Double.parseDouble(datum[1]);
+			values[i] = Double.parseDouble(datum[1]);
 		}
 		
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
@@ -82,6 +81,34 @@ public class ChartMaker {
 		return barChart;
 	}
 	
+	public JFreeChart getBarChart(BigDecimal[] ratios, int[] labels) {
+		DefaultCategoryDataset dataSet = new DefaultCategoryDataset();
+		
+		for(int i = 0; i < ratios.length; i++) {
+			dataSet.addValue(ratios[i], labels[i], labels[i]);
+		}
+		
+		JFreeChart barChart = ChartFactory.createBarChart(
+		 "System Performance", "Number of files", "Files Per Second", dataSet,
+		 PlotOrientation.VERTICAL, true, true, false);
+		
+		((BarRenderer)barChart.getCategoryPlot().getRenderer())
+		 .setItemMargin(-ratios.length / BAR_THICCKNESS);
+		
+		((NumberAxis) barChart.getCategoryPlot().getRangeAxis()).setTickUnit(new NumberTickUnit(1));
+		
+		((NumberAxis)barChart.getCategoryPlot().getRangeAxis()).
+		 setNumberFormatOverride(NumberFormat.getNumberInstance());;
+		
+		/*
+		CategoryPlot plot = (CategoryPlot) barChart.getPlot();
+		NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
+		rangeAxis.setRange(0, 100);
+		 */
+		
+		return barChart;
+	}
+	
 	public JFreeChart getChart(String time, ChartType type)
 	throws SQLException {
 		
@@ -93,14 +120,15 @@ public class ChartMaker {
 			case DAILY_ASSETS, DAILY_ORDER_COUNTS, DAILY_INCOME, DAILY_REVENUE -> {
 				return getTimeSeriesChart(time, type);
 			}
-			
 		}
 		throw new IllegalArgumentException();
 	}
-	public JFreeChart getChart(String time, ChartType type, long[] intervals, int[] numberOfLines, int count){
+	
+	public JFreeChart getChart(String time, ChartType type, long[] intervals,
+							   int[] numberOfLines, int count) {
 		int maxNumberOfFiles = 0;
 		final TimeSeries series = new TimeSeries(type.toString());
-		for(int i = 0; i < count; i++){
+		for(int i = 0; i < count; i++) {
 			maxNumberOfFiles = Math.max(maxNumberOfFiles, numberOfLines[i]);
 			LocalDateTime t = (new Timestamp(intervals[i])).toLocalDateTime();
 			int minute = t.getMinute();
@@ -108,20 +136,23 @@ public class ChartMaker {
 			int day = t.getDayOfMonth();
 			int month = t.getMonthValue();
 			int year = t.getYear();
-				try {
-					series.add(new Minute(minute, hour, day, month, year),
-					 BigInteger.valueOf(numberOfLines[i]));
-				} catch ( SeriesException e ) {
-					System.err.println("Error adding to series");
-				}
+			try {
+				series.add(
+				 new Minute(minute, hour, day, month, year),
+				 BigInteger.valueOf(numberOfLines[i]));
 			}
+			catch(SeriesException e) {
+				System.err.println("Error adding to series");
+			}
+		}
 		return
+		 
 		 ChartFactory.createTimeSeriesChart(
-		  type.toString(), "Date", "Total",
+		  type.toString(), "Date", "Total Orders",
 		  new TimeSeriesCollection(series),
 		  false, false, false);
-		
 	}
+	
 	private JFreeChart getTimeSeriesChart(String time, ChartType type)
 	throws SQLException {
 		
@@ -145,7 +176,8 @@ public class ChartMaker {
 				 ((Integer)datum[1])
 				);
 				
-				case DAILY_ASSETS, DAILY_INCOME, DAILY_REVENUE, TOP_CUSTOMERS, TOP_PRODUCTS -> series
+				case DAILY_ASSETS, DAILY_INCOME, DAILY_REVENUE, TOP_CUSTOMERS,
+				 TOP_PRODUCTS -> series
 				 .add(
 				  new Minute(minute, hour, day, month, year),
 				  ((BigDecimal)datum[1]).round(context)

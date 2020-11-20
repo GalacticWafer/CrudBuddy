@@ -38,7 +38,7 @@ public enum ChartType {
 	
 	public String getXAxis() {
 		switch(this) {
-			case SPEED_TEST -> {return "N amount";}
+			case SPEED_TEST -> {return "N Orders";}
 			default -> {return "Year-to-date";}
 		}
 	}
