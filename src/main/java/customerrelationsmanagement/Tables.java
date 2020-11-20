@@ -8,10 +8,10 @@ public enum Tables {
 	STATUSED,
 	ANALYTICS,
 	SUPPLIER
-	//TODO: Adam, add a new enum for the new supplier table
 	;
 	
 	public String[] columns() {
+		
 		switch(this) {
 			case INVENTORY -> {
 				return new String[] {
@@ -55,13 +55,20 @@ public enum Tables {
 				 "product_count"
 				};
 			}
-			//Todo Adam return the string array of columns instead of null
-			case SUPPLIER -> {return null;} 
+			case SUPPLIER -> {
+				return new String[] {
+				 "supplier_id",
+				 "product_id",
+				 "restock_quantity",
+				 "time_accepted"
+				};
+			}
 		}
 		throw new InputMismatchException();
 	}
 	
 	public String creationString() {
+		
 		String[] types = this.typesArray();
 		String[] names = this.columns();
 		StringBuilder builder =
@@ -76,6 +83,7 @@ public enum Tables {
 	}
 	
 	@Override public String toString() {
+		
 		switch(this) {
 			case INVENTORY -> {return "inventory";}
 			case UNSTATUSED -> {return "unstatused_sales";}
@@ -88,6 +96,7 @@ public enum Tables {
 	}
 	
 	private String[] typesArray() {
+		
 		switch(this) {
 			case INVENTORY -> {
 				return new String[] {
@@ -109,13 +118,13 @@ public enum Tables {
 			}
 			case STATUSED -> {
 				return new String[] {
-				 "VARCHAR(12)", 
-				 "VARCHAR(100)", 
-				 "VARCHAR(5)", 
-				 "VARCHAR(12)", 
+				 "VARCHAR(12)",
+				 "VARCHAR(100)",
+				 "VARCHAR(5)",
+				 "VARCHAR(12)",
 				 "int(8)",
-				 "DATETIME", 
-				 "DATETIME", 
+				 "DATETIME",
+				 "DATETIME",
 				 "int(2)"
 				};
 			}

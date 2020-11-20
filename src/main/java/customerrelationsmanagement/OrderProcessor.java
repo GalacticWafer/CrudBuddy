@@ -59,7 +59,7 @@ class OrderProcessor {
 		wholesaleMap = new HashMap<>(size); // map from product_id -> quantity
 		salePriceMap = new HashMap<>(size); // map from product_id -> quantity
 		acceptedOrders = new ArrayList<>(size); // list of Object[]'s for
-		supplierEvents = new ArrayList<>(); // list of all supplier events
+		supplierEvents = new ArrayList<String>(); // list of all supplier events
 		dailyOrderStack = new Stack<>(); // list of rows with matching date_ordered
 		dailyAnalytics = new ArrayList<>(); //list of analytics created from dailyOrderStack's contents
 		supplierMap = new HashMap<>(); // map of <product_id, supplier_id> 
@@ -70,6 +70,7 @@ class OrderProcessor {
 			String productId = rs.getString(3);
 			BigDecimal wholesaleCost = rs.getBigDecimal(4);
 			BigDecimal salePrice = rs.getBigDecimal(5);
+			String supplierID = rs.getString(6);
 			
 			quantityMap.put(productId, quantity);
 			wholesaleMap.put(productId, wholesaleCost);
@@ -77,7 +78,8 @@ class OrderProcessor {
 			indexMap.put(idx, productId);
 			idxList.add(idx);
 			assetTotal = assetTotal.add(salePrice.multiply(BigDecimal.valueOf(quantity)));
-			//Todo Adam, add the product id and the key as the value in supplierMap
+			supplierMap.put(productId, supplierID);
+			
 		} // End while
 	} // End Constructor
 	
@@ -201,23 +203,23 @@ class OrderProcessor {
 				Integer inventoryQuantity = quantityMap.get(productId);
 				Integer requestedQuantity = product.getQuantity();
 				if(inventoryQuantity < requestedQuantity) {
-					// Todo Adam refactor the code below by introducing
-					//  an int variable (from the nextInt() call)
-					//  check this link for instructions on completing this action
-					// https://www.jetbrains.com/help/idea/extract-variable.html
-					quantityMap.put(productId, requestedQuantity 
-					+ new Random().nextInt(450) + 50);
-					//Todo Adam the productId to get the appropriate 
-					// supplierId from a supplierMap 
-					// use the date, supplierId, and 
 					
-					// Todo Adam add a new Object[] to supplier with:
-					//  the supplierId 
-					//  the productId
-					//  the int variable you introduced,
-					//  the time "order" was ordered (look in Order.java for the appropriate getter method)
+					int restockQuantity = requestedQuantity 
+										  + new Random().nextInt(450) + 50;
 					
-				}
+					quantityMap.put(productId, requestedQuantity);
+					
+					String supplierId = supplierMap.get(productId);
+					
+					Object[] currentObjs = new Object[]{
+					 supplierId,
+					 productId,
+					 restockQuantity, 
+					 nextOrder.getTimeAccepted()
+					};
+					
+					supplierEvents.add(currentObjs);
+				} // End if
 			}
 			responsePrefix += "The following products could not be processed:";
 			responseSuffix = "We are currently unable to fulfill this order.";
@@ -361,15 +363,21 @@ class OrderProcessor {
 			 acceptedOrders.iterator(), acceptedOrders.size());
 		} // End if
 		
+		
+		/* Completed*/
+		// Todo Adam set the working table to your new suppler table, 
+		//  and insert the records exactly the same way it was done 
+		//  immediately above this comment
+		
 		crud.setWorkingTable(Tables.ANALYTICS.toString());
 		if(dailyAnalytics.size() > 0) {
 			crud.insertRecords(Tables.ANALYTICS.columns(),
 			 dailyAnalytics.iterator(), dailyAnalytics.size());
 		} // End if
 		
-		// Todo Adam aet the working table to your new suppler table, 
-		//  and insert the records exactly the same way it was done 
-		//  immediately above this comment
+		
+		
+		
 		
 		// update the inventory table to effectively close the processor.
 		StringBuilder builder = new StringBuilder();
