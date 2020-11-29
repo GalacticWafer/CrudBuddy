@@ -105,7 +105,6 @@ public class ChartMaker {
 		for(int i = 0; i < ratios.length; i++) {
 			dataSet.addValue(ratios[i], labels[i], labels[i]);
 		}
-		int x = ratios.length;
 		JFreeChart barChart = ChartFactory.createBarChart(
 		 "System Performance", "Number of Orders", "Orders Per Second", dataSet,
 		 PlotOrientation.VERTICAL, true, true, false);
