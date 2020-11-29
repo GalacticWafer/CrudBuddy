@@ -8,6 +8,7 @@ import javax.swing.text.Position;
 import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.util.concurrent.TimeUnit;
 
 public class SystemPerformance {
 	Crud crud;
@@ -35,6 +36,7 @@ public class SystemPerformance {
 			OrderProcessor.runFileOrders(crud, fileNames[i]);
 			long end = System.nanoTime();
 			long timeInterval = end - start;
+			long convertedInterval = TimeUnit.SECONDS.convert(timeInterval, TimeUnit.NANOSECONDS);
 			System.out
 			 .printf("%.2f seconds to process and insert %d new records\n", (
 			   timeInterval /
@@ -45,7 +47,7 @@ public class SystemPerformance {
 			  (Integer.parseInt(crud
 			   .getRecords("select count(*) from " + Tables.ANALYTICS)[0][0]
 			   .toString())));
-			timeValues[i] = timeInterval;
+			timeValues[i] = convertedInterval;
 		}
 		JFrame frame = new JFrame("Speed Test");
 		ChartMaker maker = new ChartMaker(crud);

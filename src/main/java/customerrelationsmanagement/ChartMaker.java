@@ -3,6 +3,7 @@ package customerrelationsmanagement;
 import org.jfree.chart.*;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.NumberTickUnit;
+import org.jfree.chart.axis.TickUnits;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
@@ -10,11 +11,14 @@ import org.jfree.data.general.SeriesException;
 import org.jfree.data.time.*;
 import org.jfree.data.xy.XYDataset;
 
+import java.awt.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
+import java.math.RoundingMode;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
 
@@ -83,7 +87,6 @@ public class ChartMaker {
 	
 	public JFreeChart getBarChart(BigDecimal[] ratios, int[] labels) {
 		DefaultCategoryDataset dataSet = new DefaultCategoryDataset();
-		
 		for(int i = 0; i < ratios.length; i++) {
 			dataSet.addValue(ratios[i], labels[i], labels[i]);
 		}
@@ -95,17 +98,11 @@ public class ChartMaker {
 		((BarRenderer)barChart.getCategoryPlot().getRenderer())
 		 .setItemMargin(-ratios.length / BAR_THICCKNESS);
 		
-		((NumberAxis) barChart.getCategoryPlot().getRangeAxis()).setTickUnit(new NumberTickUnit(1));
-		
+		NumberAxis range = (NumberAxis) barChart.getCategoryPlot().getRangeAxis();
+		range.setRange(0,2000);
+		range.setTickUnit(new NumberTickUnit(100));
 		((NumberAxis)barChart.getCategoryPlot().getRangeAxis()).
-		 setNumberFormatOverride(NumberFormat.getNumberInstance());;
-		
-		/*
-		CategoryPlot plot = (CategoryPlot) barChart.getPlot();
-		NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
-		rangeAxis.setRange(0, 100);
-		 */
-		
+		 setNumberFormatOverride(NumberFormat.getInstance());
 		return barChart;
 	}
 	
@@ -195,4 +192,5 @@ public class ChartMaker {
 		
 		return timeSeriesChart;
 	}
+	
 }
