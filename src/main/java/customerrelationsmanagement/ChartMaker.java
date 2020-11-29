@@ -100,6 +100,12 @@ public class ChartMaker {
 		((NumberAxis)barChart.getCategoryPlot().getRangeAxis()).
 		 setNumberFormatOverride(NumberFormat.getNumberInstance());;
 		
+		/*
+		CategoryPlot plot = (CategoryPlot) barChart.getPlot();
+		NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
+		rangeAxis.setRange(0, 100);
+		 */
+		
 		return barChart;
 	}
 	
