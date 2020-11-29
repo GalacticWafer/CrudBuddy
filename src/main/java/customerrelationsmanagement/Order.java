@@ -28,18 +28,10 @@ public class Order {
 	private static final String DATA_FOR_RANDOM_STRING =
 	 CHAR_LOWER + CHAR_UPPER + NUMBER;
 	public static final String[] ORDER_FILE_COLUMNS =
-	 new String[] {"date", "cust_email", "cust_location", "product_id", 
-				   "product_quantity"};
-	public static final String[] SALES_COLUMNS = new String[] {
-	 "order_id", // date_ordered
-	 "cust_email", // cust_email
-	 "cust_location", // cust_location
-	 "product_id", // product_id
-	 "product_quantity", // product_quantity
-	 "date_ordered", // order_status
-	 "date_accepted", // date_accepted
-	 "order_status", // order_id
-	};
+	 new String[] {
+	  "date", "cust_email", "cust_location", "product_id",
+	  "product_quantity"
+	 };
 	private String email;
 	private boolean isSale;
 	private final String location;
@@ -75,12 +67,14 @@ public class Order {
 		return status == UNPROCESSED;
 	} // End canProcess
 	
-	/** Cancel the order and return true if the order can be cancelled.
-	 * Otherwise, return false. */
+	/**
+	 * Cancel the order and return true if the order can be cancelled.
+	 * Otherwise, return false.
+	 */
 	public boolean cancel() {
 		
 		DateTime dateOneHourBack = DateTime.now().minusHours(1);
-		if(dateOneHourBack.isAfter(DateTime.parse(getTimeAccepted() + ""))){
+		if(dateOneHourBack.isAfter(DateTime.parse(getTimeAccepted() + ""))) {
 			return false;
 		}
 		setStatus(CANCELLED);
@@ -200,21 +194,20 @@ public class Order {
 	 */
 	public ArrayList<Object[]> toArray() {
 		
+		if(timeAccepted == null) {return null;}
 		ArrayList<Object[]> array = new ArrayList<>();
 		for(Iterator<Product> it = productIterator(); it.hasNext(); ) {
 			Product p = it.next();
 			array
-			 .add(new Object[] {  // public static final String[] 
-			  // SALES_COLUMNS =
-								  getId(),                 // "order_id",
-								  getCustomerEmail(),      // "cust_email",
-								  getLocation(),           // "cust_location",
-								  p.getId(),               // "product_id",
-								  p.getQuantity(),         // 
-								  // "product_quantity",
-								  timeOrdered.toString(),  // "date_ordered",
-								  timeAccepted.toString(), // "date_accepted",
-								  status,                  // "status",
+			 .add(new Object[] {
+			  getId(),                 // "order_id",
+			  getCustomerEmail(),      // "cust_email",
+			  getLocation(),           // "cust_location",
+			  p.getId(),               // "product_id",
+			  p.getQuantity(),         // "product_quantity",
+			  timeOrdered.toString(),  // "date_ordered",
+			  timeAccepted.toString(), // "date_accepted",
+			  status,                  // "status",
 			 });
 		} // End for
 		return array;

@@ -76,41 +76,9 @@ public class Restoration {
 	
 	private void rebuildTables(Crud crud) throws SQLException {
 		
-		crud.update("CREATE TABLE IF NOT EXISTS inventory(" +
-					"idx INT(16)    	NOT NULL AUTO_INCREMENT," +
-					"product_id     	VARCHAR(12)," +
-					"quantity       	INT(16)," +
-					"wholesale_cost 	DECIMAL(13, 2)," +
-					"sale_price     	DECIMAL(13, 2)," +
-					"supplier_id    	VARCHAR(32)," +
-					"PRIMARY KEY 		(idx))");
-		crud.update("CREATE TABLE IF NOT EXISTS statused_sales(" +
-					"idx int(16) 		NOT NULL AUTO_INCREMENT," +
-					"order_id 			VARCHAR(10)," +
-					"cust_email 		VARCHAR(60)," +
-					"cust_location 		VARCHAR(100)," +
-					"product_id     	VARCHAR(12)," +
-					"product_quantity   INT(16)," +
-					"date_ordered 		DATETIME," +
-					"date_accepted 		DATETIME," +
-					"order_status 		int(1)," +
-					"PRIMARY KEY 		(idx))");
-		crud.update("CREATE TABLE IF NOT EXISTS unstatused_sales(" +
-					"idx              	INT(16) NOT NULL AUTO_INCREMENT," +
-					"date_ordered     	DATETIME," +
-					"cust_email       	VARCHAR(100)," +
-					"cust_location    	VARCHAR(200)," +
-					"product_id       	Varchar(12)," +
-					"product_quantity 	int(8)," +
-					"PRIMARY KEY (idx))");
-		crud.update("create table if not exists daily_analysis(" +
-					"fiscal_date  		DATETIME," +
-					"asset_total  		DECIMAL(13, 2)," +
-					"daily_income 		DECIMAL(13, 2)," +
-					"daily_revenue 		DECIMAL(13, 2)," +
-					"top_customers		VARCHAR(1000)," +
-					"top_products 		VARCHAR(1000)," +
-					"order_count  		INT(6)," +
-					"product_count		INT(6))");
+		for(Tables table: Tables.values()) {
+			if(table == Tables.SUPPLIER) {continue;}
+			crud.update(table.creationString());
+		}
 	}
 }
