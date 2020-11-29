@@ -104,6 +104,7 @@ public class ChartMaker {
 		CategoryPlot plot = (CategoryPlot) barChart.getPlot();
 		NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
 		rangeAxis.setRange(0, 100);
+		if revert worked , you should still be able to see this comment block
 		 */
 		
 		return barChart;
