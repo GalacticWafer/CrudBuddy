@@ -140,6 +140,9 @@ public class Credentials {
 				} catch(IOException | ParseException ioException) {
 					ioException.printStackTrace();
 				}
+				catch(MessagingException messagingException) {
+					messagingException.printStackTrace();
+				}
 			});
 		}
 	}

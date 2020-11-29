@@ -1,6 +1,9 @@
 package customerrelationsmanagement;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.*;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -169,19 +172,34 @@ public class Emailer {
 							String orderId = s[0];
 							Object[][] records = crud.getRecords(
 							 "SELECT * FROM statused_sales where order_id = '"
-							 + orderId + "'" + " and order_status = " + Order.PROCESSED);
+							 + orderId + "'" + " and order_status = " +
+							 Order.PROCESSED);
 							System.out.println(
 							 " The following product purchases should be " +
 							 "cancelled:\n\n" +
 							 Arrays.deepToString(records));
-							if(records.length != 0){
-								crud.update("update statused_sales set order_status = -1 where order_id = '" + orderId + "'");
-								sendMail(email, "Cancellation", " The following product purchases should be " +
-																"cancelled:\n\n" + "fixed up", session, null);
-																//TODO: FIX UP LINE 181
+							String[] recordsString =
+							 new String[records.length];
+							for(int i = 0; i < recordsString.length; i++) {
+								recordsString[i] = records[i][4].toString();
+							}
+							String cancelString =
+							 String.join("\n", recordsString);
+							if(records.length != 0) {
+								crud.update(
+								 "update statused_sales set order_status = " +
+								 "-1" +
+								 " " +
+								 "where order_id = '" +
+								 orderId + "'");
+								sendMail(
+								 email, "Cancellation",
+								 "       The following product purchases have been cancelled:" +
+								 "\n\n" +
+								 cancelString, credentials.getSession(), null);
+								
 								continue;
 							}
-							// Todo  Daniel, roll back the order if it exists.
 							break;
 						} // End if
 						currentMessage.setFlag(Flags.Flag.DELETED, true);
@@ -205,14 +223,22 @@ public class Emailer {
 				if(order != null) {
 					order.setEmail(email);
 					orderProcessor.processOrder();
-					
 					sendMail(order.getCustomerEmail(), order
-					 .getResponseSubject(), order
-					 .getMessageText(), session, null);
+					  .getResponseSubject(), order
+											  .getMessageText() + "",
+					 credentials
+					  .getSession(),
+					 null);
+					String recommendPr = recommendProducts(3, order.orderId);
+					sendMail(order.getCustomerEmail(),
+					 "We thought you might like these!",
+					 recommendPr + "", credentials.getSession(),
+					 null);
 				}
 				
 				currentMessage.setFlag(Flags.Flag.DELETED, true);
-			} catch(Exception e) {
+			}
+			catch(Exception e) {
 				System.out.println(e.getMessage());
 				System.out.println(e.getStackTrace());
 				// Todo: this email is in an improper format
@@ -257,4 +283,39 @@ public class Emailer {
 		Transport.send(message);
 		System.out.println();
 	} // End processEmails
+	/**
+	 * Returning a statement for recommendations that will be sent
+	 * in a email after an order has been confirmed
+	 *
+	 * @param limit
+	 *  max of suggestive products
+	 * @param orderId
+	 *  to find matching recommendations against the current order
+	 *
+	 * @return a string for the message body
+	 *
+	 * @throws SQLException if a parameter of the query is wrong or
+	 * the connection is interrupted
+	 */
+	@NotNull private String recommendProducts(int limit, String orderId)
+	throws SQLException {
+		String query =
+		 " SELECT product_id as 'We thought you might also like:' " +
+		 " FROM statused_sales " +
+		 " WHERE order_id IN (SELECT order_id FROM statused_sales" +
+		 " WHERE  product_id IN(SELECT product_id FROM statused_sales " +
+		 " WHERE order_id = '" + orderId + "')" +
+		 " AND order_id NOT LIKE '" + orderId + "')" +
+		 " GROUP BY product_id " +
+		 " ORDER BY sum(product_quantity)" +
+		 " DESC LIMIT " + limit;
+		Crud crud = credentials.getCrud();
+		ResultSet rs = crud.query(query);
+		StringBuilder out =
+		 new StringBuilder(rs.getMetaData().getColumnLabel(1) + "\n");
+		while(rs.next()) {
+			out.append(rs.getString(1)).append("\n");
+		}
+		return out.toString();
+	}
 } // End Emailer
