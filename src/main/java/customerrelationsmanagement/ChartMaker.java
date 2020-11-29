@@ -113,8 +113,8 @@ public class ChartMaker {
 		 .setItemMargin(-ratios.length / BAR_THICCKNESS);
 		
 		NumberAxis range = (NumberAxis) barChart.getCategoryPlot().getRangeAxis();
-		range.setRange(0,1000);
-		range.setTickUnit(new NumberTickUnit(50));
+		range.setAutoRangeIncludesZero(true);
+		range.setTickUnit(new NumberTickUnit(100));
 		((NumberAxis)barChart.getCategoryPlot().getRangeAxis()).
 		 setNumberFormatOverride(NumberFormat.getInstance());
 		return barChart;
