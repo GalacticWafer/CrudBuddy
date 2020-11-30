@@ -16,7 +16,12 @@ import java.math.MathContext;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.NumberFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Date;
 
 public class ChartMaker {
 	public static final double BAR_THICCKNESS = 4.0;
@@ -29,13 +34,10 @@ public class ChartMaker {
 		this.crud = crud;
 	}
 	
-	private boolean checkValidity(String time) {
-		
-		/* TODO: Daniel, check the validity
-		    check if time is valid
-		    check if row exists for the "time"
-		 */
-		return true;
+	private boolean checkValidity(String time)
+	throws SQLException {
+		crud.setWorkingTable("daily_analysis");
+		return crud.exists("fiscal_date", time);
 	}
 	
 	private JFreeChart getBarChart
@@ -111,7 +113,7 @@ public class ChartMaker {
 	}
 	
 	public JFreeChart getChart(String time, ChartType type)
-	throws SQLException {
+	throws SQLException, ParseException {
 		
 		if(!checkValidity(time)) { return null; }
 		switch(type) {

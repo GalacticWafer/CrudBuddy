@@ -148,7 +148,7 @@ public class GUI {
 		try {
 			chartPanel = new ChartPanel(chartMaker
 			 .getChart(dateString, chartType));
-		} catch(SQLException throwables) {
+		} catch(SQLException | ParseException throwables) {
 			throwables.printStackTrace();
 		}
 		analyticsFrame = new JFrame();

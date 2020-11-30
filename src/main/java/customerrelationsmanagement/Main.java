@@ -17,11 +17,11 @@ public class Main {
 	//public static final String ORDERS_PATH = "customer_orders_A_team4.csv";
 	public static final String ORDERS_PATH = "";
 	
-	//public static final boolean START_GUI = true;
-	public static final boolean START_GUI = false;
+	public static final boolean START_GUI = true;
+	//public static final boolean START_GUI = false;
 	
-	//public static final boolean START_MAIL = false;
-	public static final boolean START_MAIL = true;
+	public static final boolean START_MAIL = false;
+	//public static final boolean START_MAIL = true;
 	
 	private static Credentials credentials;
 	private static Crud crud;
@@ -55,7 +55,7 @@ public class Main {
 				int i = 0;
 				@Override public void run() {
 					try {
-						System.out.println("Check #" + i++);
+						//System.out.println("Check #" + i++); Shows how many times it's looped
 						mailer.processEmails(crud);
 					} catch(MessagingException | SQLException | IOException e) {
 						e.printStackTrace();
