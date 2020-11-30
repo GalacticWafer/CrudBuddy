@@ -3,18 +3,22 @@ package customerrelationsmanagement;
 import org.jfree.chart.*;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.NumberTickUnit;
+import org.jfree.chart.axis.TickUnits;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.SeriesException;
 import org.jfree.data.time.*;
+import org.jfree.data.xy.XYDataset;
 
-
+import java.awt.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
+import java.math.RoundingMode;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
 
@@ -37,16 +41,6 @@ public class ChartMaker {
 		 */
 		return true;
 	}
-	
-	/**
-	 * generates a new bar chart with default settings, can
-	 * be used in multiple settings with different data and
-	 * type specified
-	 * @param time time value to be passed in to be analyzed
-	 * @param type type of chart to be generated
-	 * @return a bar chart instance
-	 * @throws SQLException
-	 */
 	
 	private JFreeChart getBarChart
 	 (String time, ChartType type)
@@ -91,15 +85,6 @@ public class ChartMaker {
 		return barChart;
 	}
 	
-	/**
-	 * generates a new bar chart for system performance
-	 * takes in an arrray of ratios and graphs them
-	 * accordingly
-	 * @param ratios the ratio of file size to a time interval
-	 * @param labels necessary x and legend labels
-	 * @return a bar chart instance with specific bounds
-	 */
-	
 	public JFreeChart getBarChart(BigDecimal[] ratios, int[] labels) {
 		DefaultCategoryDataset dataSet = new DefaultCategoryDataset();
 		for(int i = 0; i < ratios.length; i++) {
@@ -121,13 +106,6 @@ public class ChartMaker {
 		return barChart;
 	}
 	
-	/**
-	 * generates a specific chart depeding on what analysis is chosen
-	 * @param time a time to be passed in, most likely a query
-	 * @param type chooses the chart type
-	 * @return a chart instance depending on type chosen
-	 * @throws SQLException
-	 */
 	public JFreeChart getChart(String time, ChartType type)
 	throws SQLException {
 		
@@ -143,17 +121,6 @@ public class ChartMaker {
 		throw new IllegalArgumentException();
 	}
 	
-	/**
-	 * generates a line plot
-	 * used mostly for time complexity analysis
-	 * throws excpetion if bad data added
-	 * @param time a time value, can be a query
-	 * @param type the chart type to be made
-	 * @param intervals a time interval
-	 * @param numberOfLines the total file size
-	 * @param count limits how much is added to dataset
-	 * @return returns a line plot instance
-	 */
 	public JFreeChart getChart(String time, ChartType type, long[] intervals,
 							   int[] numberOfLines, int count) {
 		int maxNumberOfFiles = 0;
@@ -183,15 +150,6 @@ public class ChartMaker {
 		  false, false, false);
 	}
 	
-	/**
-	 * generates a time series chart based on what data'
-	 * is selected, shows a comparison of records to
-	 * finance over time
-	 * @param time a time value to be analyzed
-	 * @param type specifies chart type
-	 * @return a time series chart instance
-	 * @throws SQLException if query incorrect or time out happens
-	 */
 	private JFreeChart getTimeSeriesChart(String time, ChartType type)
 	throws SQLException {
 		

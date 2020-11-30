@@ -4,6 +4,7 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 
 import javax.swing.*;
+import javax.swing.text.Position;
 import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.sql.SQLException;
@@ -26,13 +27,6 @@ public class SystemPerformance {
 		fileLengths = new int[]{1455,7275, 10185, 1048576};
 	}
 	
-	/**
-	 * @param fullTest
-	 * @throws SQLException
-	 * @throws FileNotFoundException
-	 * runs either a full test with all file lengths or
-	 * a smaller test with less files in OrderProcessor
-	 */
 	public void runTest(boolean fullTest) throws SQLException, FileNotFoundException {
 		int count = fullTest ? fileNames.length : fileNames.length - 2;
 		long[] timeValues = new long[fileNames.length];
@@ -59,6 +53,7 @@ public class SystemPerformance {
 		ChartMaker maker = new ChartMaker(crud);
 		
 		BigDecimal[] ratios = new BigDecimal[i];
+		//long[] labels = new String[i];
 		for(i = 0; i < ratios.length; i ++) {
 			ratios[i] = BigDecimal.valueOf(fileLengths[i])
 				.multiply(BigDecimal.valueOf(1.0 / timeValues[i]));
