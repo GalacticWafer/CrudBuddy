@@ -8,8 +8,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class Main {
-	//public static final String INVENTORY_PATH = "inventory_team4.csv";
-	public static final String INVENTORY_PATH = null;
+	public static final String INVENTORY_PATH = "inventory_team4.csv";
+	//public static final String INVENTORY_PATH = null;
 	
 	//public static final String analyticsDir = "analytics";
 	public static final String analyticsDir = null;
