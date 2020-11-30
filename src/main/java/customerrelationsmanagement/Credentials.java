@@ -131,7 +131,7 @@ public class Credentials {
 					emailAddress = emailAddressField.getText();
 					emailPassword =
 					 String.valueOf(emailPasswordField.getPassword());
-					new Main(credentials);
+					new Main(credentials,crud);
 				} catch(SQLException | ClassNotFoundException | FileNotFoundException throwables) {
 					throwables.printStackTrace();
 					crud = null;
