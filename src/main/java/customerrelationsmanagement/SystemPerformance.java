@@ -4,9 +4,7 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 
 import javax.swing.*;
-import javax.swing.text.Position;
 import java.io.FileNotFoundException;
-import java.math.BigDecimal;
 import java.sql.SQLException;
 
 public class SystemPerformance {
@@ -23,19 +21,19 @@ public class SystemPerformance {
 		 "customer_orders_A_team4_x7.csv",
 		 "customer_orders_A_team4_1000x.csv"
 		};
-		fileLengths = new int[]{1455,7275, 10185, 1048576};
+		fileLengths = new int[]{1455, 7275, 10185, 1048576};
 	}
 	
 	public void runTest(boolean fullTest) throws SQLException, FileNotFoundException {
 		int count = fullTest ? fileNames.length : fileNames.length - 2;
 		long[] timeValues = new long[fileNames.length];
-		int i = 0;
-		for(; i < count; i++) {
+		for(int i = 0; i < count; i++) {
 			long start = System.nanoTime();
 			OrderProcessor.runFileOrders(crud, fileNames[i]);
 			long end = System.nanoTime();
 			long timeInterval = end - start;
 			System.out
+			 
 			 .printf("%.2f seconds to process and insert %d new records\n", (
 			   timeInterval /
 			   1000000000.0),
@@ -49,21 +47,14 @@ public class SystemPerformance {
 		}
 		JFrame frame = new JFrame("Speed Test");
 		ChartMaker maker = new ChartMaker(crud);
-		
-		BigDecimal[] ratios = new BigDecimal[i];
-		//long[] labels = new String[i];
-		for(i = 0; i < ratios.length; i ++) {
-			ratios[i] = BigDecimal.valueOf(fileLengths[i])
-				.multiply(BigDecimal.valueOf(1.0 / timeValues[i]));
-		}
 		JFreeChart chart =
-		 maker.getBarChart(ratios,fileLengths);
+		 maker.getChart("string", ChartType.SPEED_TEST, timeValues,fileLengths,
+		  count);
 		ChartPanel cp = new ChartPanel(chart);
 		frame.getContentPane().add(cp);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setLocationRelativeTo(null);
 		frame.pack();
 		frame.setVisible(true);
-		System.out.println("done");
 	}
 }
