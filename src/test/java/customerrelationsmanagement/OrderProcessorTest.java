@@ -34,7 +34,7 @@ public class OrderProcessorTest {
 	public void assertRestock() {
 		
 		Order sellerEventOrder =
-		 new Order(date, false, location);
+		 new Order(date, EventType.isSale(true), location);
 		sellerEventOrder.setEmail("some_supplier@somewhere.com");
 		simulateOrder("little_inventory.csv", sellerQuantities,
 		 sellerEventOrder);
@@ -44,7 +44,7 @@ public class OrderProcessorTest {
 	public void assertSold() {
 		
 		Order buyerEventOrder =
-		 new Order(date, true, location);
+		 new Order(date, EventType.isSale(true), location);
 		buyerEventOrder.setEmail("some_buyer@somewhere.com");
 		simulateOrder("little_inventory.csv", buyerQuantities,
 		 buyerEventOrder);
