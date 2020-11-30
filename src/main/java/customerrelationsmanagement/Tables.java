@@ -90,7 +90,7 @@ public enum Tables {
 			case STATUSED -> {return "statused_sales";}
 			case ANALYTICS -> {return "daily_analysis";}
 			//Todo Adam return the name of your new table instead of null
-			case SUPPLIER -> {return null;}
+			case SUPPLIER -> {return "supplier_events";}
 		}
 		throw new InputMismatchException();
 	}
@@ -125,7 +125,7 @@ public enum Tables {
 				 "int(8)",
 				 "DATETIME",
 				 "DATETIME",
-				 "int(2)"
+				 "VARCHAR(100)"
 				};
 			}
 			case ANALYTICS -> {
@@ -140,9 +140,14 @@ public enum Tables {
 				 "INT(6)"
 				};
 			}
-			// Todo Adam return the string array of mysql types 
-			//  for each column in your new table instead of null
-			case SUPPLIER -> {return null;}
+			case SUPPLIER -> {
+				return new String[] {
+				 "VARCHAR(10)",
+				 "VARCHAR(12)",
+				 "INT(6)",	
+				 "DATETIME"
+				};
+			}
 		}
 		throw new InputMismatchException();
 	}

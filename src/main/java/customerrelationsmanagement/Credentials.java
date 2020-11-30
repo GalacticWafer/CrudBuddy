@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import javax.mail.*;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Properties;
 
 public class Credentials {
@@ -47,6 +48,8 @@ public class Credentials {
 			inbox.open(Folder.READ_WRITE);
 			return inbox.getMessages();
 		} catch(MessagingException e) {
+			System.out.println(e.getMessage());
+			System.out.println(Arrays.toString(e.getStackTrace()));
 			throw new MessagingException();
 		}
 	}

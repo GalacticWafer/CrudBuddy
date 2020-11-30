@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 class OrderProcessor {
@@ -49,7 +50,7 @@ class OrderProcessor {
 		crud.setWorkingTable("inventory");
 		
 		ResultSet rs = crud.query(
-		 "SELECT quantity,idx,product_id,wholesale_cost,sale_price FROM " +
+		 "SELECT quantity,idx,product_id,wholesale_cost,sale_price,supplier_id  FROM " +
 		 "inventory");
 		
 		int size = crud.size();
@@ -79,7 +80,7 @@ class OrderProcessor {
 			indexMap.put(idx, productId);
 			idxList.add(idx);
 			assetTotal = assetTotal.add(salePrice.multiply(BigDecimal.valueOf(quantity)));
-			//Todo Adam, add the product id and the key as the value in supplierMap
+			supplierMap.put(productId, supplierID);
 		} // End while
 	} // End Constructor
 	
@@ -217,12 +218,42 @@ class OrderProcessor {
 					
 					String supplierId = supplierMap.get(productId);
 					
+					
+					
+					Date currentDate = new Date();
+					SimpleDateFormat simpDate = new SimpleDateFormat("dd:MM:yy");
 					Object[] currentObjs = new Object[]{
 					 supplierId,
 					 productId,
 					 restockQuantity, 
-					 nextOrder.getTimeAccepted()
-					};
+					 
+					 //Todo figure out how to format DateTime in gui
+					 //Thoughts:
+					 // -> This was tricky, I was unable to make significant 
+					 // progress with this goal as the gui is tricky -  
+					 // nay, impossible - to work with. My thoughts then 
+					 // shifted to DateTime.java as there are 3 DateTime.now()
+					 // functions present in said class. However, the null 
+					 // method didn't format anything, while both argument 
+					 // methods have trouble taking in arguments. This might
+					 // also be where our problem lies.
+					 // -> Tried creating localdatetime object as shown here:
+					 // https://stackoverflow.com/questions/20615288/how-to-use-datetimezone-in-java
+					 //  to try and pass into DateTime.now() - failed.
+					 // -> Tried using Date currentDate only - failed
+					 // -> Tried using SimpleDateFormat simpDate as shown 
+					 // before object array - failed.
+					 // -> Since so many output methods have been tried, and all 
+					 // of which have failed, this leaves me to believe that 
+					 // this is a problem with the either printing to the gui,
+					 // or the gui itself.
+					 
+					 
+					 // FAILED TESTS
+					 //simpDate.format(currentDate)
+					 //currentDate
+					 //DateTime.now() <- Original test
+					}; // End currentObjs array 
 					
 					supplierEvents.add(currentObjs);
 				} // End if
@@ -360,7 +391,11 @@ class OrderProcessor {
 			crud.insertRecords(Tables.STATUSED.columns(),
 			 acceptedOrders.iterator(), acceptedOrders.size());
 		} // End if
-		
+		crud.setWorkingTable(Tables.SUPPLIER.toString());
+		if(acceptedOrders.size() > 0) {
+			crud.insertRecords(Tables.SUPPLIER.columns(),
+			 supplierEvents.iterator(), supplierEvents.size());
+		} // End if
 		crud.setWorkingTable(Tables.ANALYTICS.toString());
 		if(dailyAnalytics.size() > 0) {
 			crud.insertRecords(Tables.ANALYTICS.columns(),
@@ -372,11 +407,7 @@ class OrderProcessor {
 	
 	/** Update all the tables after orders have been processed. */
 	public void updateAndClose() throws SQLException {
-		
-		// Todo Adam aet the working table to your new suppler table, 
-		//  and insert the records exactly the same way it was done 
-		//  immediately above this comment
-		
+		update();
 		// update the inventory table to effectively close the processor.
 		StringBuilder builder = new StringBuilder();
 		Iterator<Integer> idxItr = idxList.iterator();

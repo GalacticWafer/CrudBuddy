@@ -13,5 +13,11 @@
       <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://45.79.55.190:3306/GalacticWafer</jdbc-url>
     </data-source>
+    <data-source source="LOCAL" name="Adam_Prieto@45.79.55.190" uuid="8efb1332-7900-4819-94e3-6757faf79afc">
+      <driver-ref>mysql.8</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://45.79.55.190:3306/Adam_Prieto</jdbc-url>
+    </data-source>
   </component>
 </project>

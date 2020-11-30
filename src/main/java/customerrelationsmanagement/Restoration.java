@@ -77,7 +77,6 @@ public class Restoration {
 	private void rebuildTables(Crud crud) throws SQLException {
 		
 		for(Tables table: Tables.values()) {
-			if(table == Tables.SUPPLIER) {continue;}
 			crud.update(table.creationString());
 		}
 	}
