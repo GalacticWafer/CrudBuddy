@@ -35,7 +35,7 @@ public class Main {
 	private static OrderProcessor orderProcessor;
 	private static Restoration rest;
 	
-	public Main(Credentials credentials, Crud queryMaker)
+	public Main(Credentials credentials)
 	throws IOException, SQLException, ParseException {
 		startServices(credentials);
 	}

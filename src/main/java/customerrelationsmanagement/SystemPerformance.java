@@ -23,7 +23,7 @@ public class SystemPerformance {
 		 "customer_orders_A_team4_x7.csv",
 		 "customer_orders_A_team4_1000x.csv"
 		};
-		fileLengths = new int[]{1455,7275, 10185, 1048576};
+		fileLengths = new int[]{1455,4365,7275,10185,1048576};
 	}
 	
 	/**
@@ -34,7 +34,7 @@ public class SystemPerformance {
 	 * a smaller test with less files in OrderProcessor
 	 */
 	public void runTest(boolean fullTest) throws SQLException, FileNotFoundException {
-		int count = fullTest ? fileNames.length : fileNames.length - 2;
+		int count = fullTest ? fileNames.length : fileNames.length - 1;
 		long[] timeValues = new long[fileNames.length];
 		int i = 0;
 		for(; i < count; i++) {
