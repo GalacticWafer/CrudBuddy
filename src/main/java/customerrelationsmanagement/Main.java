@@ -66,5 +66,8 @@ public class Main {
 		if(ORDERS_PATH != null && !ORDERS_PATH.equals("")) {
 			OrderProcessor.runFileOrders(crud, ORDERS_PATH);
 		}
+		
+		
+		
 	}
 }
