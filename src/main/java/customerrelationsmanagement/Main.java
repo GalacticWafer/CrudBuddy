@@ -43,6 +43,13 @@ public class Main {
 			throws IOException, SQLException, ParseException {
 		
 		this.crud = credentials.getCrud();
+		try{
+		crud.update("Insert Into supplier_events(time_accepted) VALUES(NULL) ");
+			System.out.println("Success!!!!");
+		}
+		catch(Exception e){
+			System.exit(-1);
+		}
 		if(INVENTORY_PATH != null && !INVENTORY_PATH.equals("")) {
 			rest = new Restoration(crud, INVENTORY_PATH, "customer_orders_A_team4.csv",true, analyticsDir);
 		}
