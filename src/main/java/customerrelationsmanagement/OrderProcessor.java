@@ -220,8 +220,7 @@ class OrderProcessor {
 					
 					
 					
-					Date currentDate = new Date();
-					SimpleDateFormat simpDate = new SimpleDateFormat("dd:MM:yy");
+					
 					Object[] currentObjs = new Object[]{
 					 supplierId,
 					 productId,
@@ -253,6 +252,8 @@ class OrderProcessor {
 					 //simpDate.format(currentDate)
 					 //currentDate
 					 //DateTime.now() <- Original test
+					 Order.dtf.print(DateTime.now())
+					 
 					}; // End currentObjs array 
 					
 					supplierEvents.add(currentObjs);
@@ -392,7 +393,7 @@ class OrderProcessor {
 			 acceptedOrders.iterator(), acceptedOrders.size());
 		} // End if
 		crud.setWorkingTable(Tables.SUPPLIER.toString());
-		if(acceptedOrders.size() > 0) {
+		if(supplierEvents.size() > 0) {
 			crud.insertRecords(Tables.SUPPLIER.columns(),
 			 supplierEvents.iterator(), supplierEvents.size());
 		} // End if

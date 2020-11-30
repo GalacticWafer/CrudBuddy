@@ -14,7 +14,7 @@ public class Main {
 	//public static final String analyticsDir = "analytics";
 	public static final String analyticsDir = null;
 	
-	public static final String ORDERS_PATH = "customer_orders_A_team4.csv";
+	public static final String ORDERS_PATH = "PrietoTest_SupplierEvents.csv";
 	//public static final String ORDERS_PATH = "";
 	
 	public static final boolean START_GUI = true;
