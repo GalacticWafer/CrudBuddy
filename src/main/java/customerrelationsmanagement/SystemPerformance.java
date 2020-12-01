@@ -14,16 +14,17 @@ public class SystemPerformance {
 	String[] fileNames;
 	int[] fileLengths;
 	
+	
 	public SystemPerformance(Crud crud) {
 		this.crud = crud;
-		fileNames = new String[] {
-		 "customer_orders_A_team4.csv",
-		 "customer_orders_A_team4_x3.csv",
-		 "customer_orders_A_team4_x5.csv",
-		 "customer_orders_A_team4_x7.csv",
-		 "customer_orders_A_team4_1000x.csv"
+		fileNames =  new String[] {
+		 "customer_orders_final_team4.csv" ,
+		 "customer_orders_final_team4x5.csv",
+		 "customer_orders_final_team4x15.csv",
+		 "customer_orders_final_team4x50.csv",
+		 "customer_orders_final_team4x200.csv"
 		};
-		fileLengths = new int[]{1455,4365,7275,10185,1048576};
+		fileLengths = new int[]{6295,31475,94425,314750,1259000};
 	}
 	
 	/**

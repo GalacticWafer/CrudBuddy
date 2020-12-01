@@ -85,7 +85,7 @@ public class Main {
 		}
 		if(runSpeedTest) {
 			SystemPerformance sp = new SystemPerformance(crud);
-			sp.runTest(false);
+			sp.runTest(true);
 		}
 	}
 }
