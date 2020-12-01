@@ -294,7 +294,9 @@ class OrderProcessor {
 		String[] line = scanner.nextLine().split(",");
 		
 		Order order = new Order(
+
 		 DateTime.parse(line[0]),
+
 		 EventType.BUYER,
 		 line[2]
 		);
@@ -340,7 +342,10 @@ class OrderProcessor {
 				}
 				dailyOrderStack.push(order);
 				order = new Order(
+
 				 DateTime.parse(line[0]),
+
+
 				 EventType.BUYER,
 				 nextLocation
 				);

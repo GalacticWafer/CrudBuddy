@@ -6,7 +6,8 @@ public enum ChartType {
 	DAILY_INCOME,
 	DAILY_REVENUE,
 	TOP_CUSTOMERS,
-	TOP_PRODUCTS;
+	TOP_PRODUCTS,
+	SPEED_TEST;
 	
 	/**
 	 * get the proper enum based on its index from ChartType.values()
@@ -21,6 +22,7 @@ public enum ChartType {
 			case 3 -> {return DAILY_REVENUE;}
 			case 4 -> {return TOP_CUSTOMERS;}
 			case 5 -> {return TOP_PRODUCTS;}
+			case 6 -> {return SPEED_TEST;}
 		}
 		throw new IndexOutOfBoundsException();
 	}
@@ -37,6 +39,7 @@ public enum ChartType {
 			case DAILY_REVENUE -> { return "daily_revenue";}
 			case TOP_CUSTOMERS -> { return "top_customers";}
 			case TOP_PRODUCTS -> { return "top_products";}
+			case SPEED_TEST -> { return "";}
 		}
 		return "";
 	}
@@ -45,8 +48,10 @@ public enum ChartType {
 	 * @return the label for the x axis of this ChartType
 	 */
 	public String getXAxis() {
-		
-		return "Year-to-date";
+		switch(this) {
+			case SPEED_TEST -> {return "N amount";}
+			default -> {return "Year-to-date";}
+		}
 	}
 	
 	/**
@@ -54,7 +59,10 @@ public enum ChartType {
 	 */
 	public String getYAxis() {
 		
-		return "Dollar Amount";
+		switch(this) {
+			case SPEED_TEST -> {return "Number of Rows";}
+			default -> {return "Dollar Amount";}
+		}
 	}
 	
 	/**
@@ -77,6 +85,7 @@ public enum ChartType {
 			case DAILY_REVENUE -> { return "Revenue Per Day";}
 			case TOP_CUSTOMERS -> { return "Customers of the Day";}
 			case TOP_PRODUCTS -> { return "Products of the Day";}
+			case SPEED_TEST -> { return "Results";}
 		}
 		return "";
 	}

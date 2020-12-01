@@ -5,9 +5,12 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.general.SeriesException;
 import org.jfree.data.time.*;
+import org.jfree.data.xy.XYDataset;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.MathContext;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -90,10 +93,35 @@ public class ChartMaker {
 			case DAILY_ASSETS, DAILY_ORDER_COUNTS, DAILY_INCOME, DAILY_REVENUE -> {
 				return getTimeSeriesChart(time, type);
 			}
+			
 		}
 		throw new IllegalArgumentException();
 	}
-	
+	public JFreeChart getChart(String time, ChartType type, long[] intervals, int[] numberOfLines, int count){
+		int maxNumberOfFiles = 0;
+		final TimeSeries series = new TimeSeries(type.toString());
+		for(int i = 0; i < count; i++){
+			maxNumberOfFiles = Math.max(maxNumberOfFiles, numberOfLines[i]);
+			LocalDateTime t = (new Timestamp(intervals[i])).toLocalDateTime();
+			int minute = t.getMinute();
+			int hour = t.getHour();
+			int day = t.getDayOfMonth();
+			int month = t.getMonthValue();
+			int year = t.getYear();
+				try {
+					series.add(new Minute(minute, hour, day, month, year),
+					 BigInteger.valueOf(numberOfLines[i]));
+				} catch ( SeriesException e ) {
+					System.err.println("Error adding to series");
+				}
+			}
+		return
+		 ChartFactory.createTimeSeriesChart(
+		  type.toString(), "Date", "Total",
+		  new TimeSeriesCollection(series),
+		  false, false, false);
+		
+	}
 	private JFreeChart getTimeSeriesChart(String time, ChartType type)
 	throws SQLException {
 		

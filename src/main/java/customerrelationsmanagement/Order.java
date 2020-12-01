@@ -40,7 +40,9 @@ public class Order {
 	private DateTime timeAccepted;
 	private final DateTime timeOrdered;
 	
+
 	public Order(DateTime date,
+
 				 EventType eventType, String location) {
 		
 		timeOrdered = date;

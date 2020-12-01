@@ -1,8 +1,10 @@
 package customerrelationsmanagement;
 
+
 /**
  * Defines whether the transaction is a buyer or seller event.
  */
+
 public enum EventType {
 	BUYER,
 	SELLER,
