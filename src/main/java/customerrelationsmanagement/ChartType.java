@@ -9,6 +9,11 @@ public enum ChartType {
 	TOP_PRODUCTS,
 	SPEED_TEST;
 	
+	/**
+	 * get the proper enum based on its index from ChartType.values()
+	 * @param i the index when iterating through these enums
+	 * @return the proper enum at that position
+	 */
 	public ChartType get(int i) {
 		switch(i) {
 			case 0 -> {return DAILY_ASSETS;}
@@ -22,6 +27,9 @@ public enum ChartType {
 		throw new IndexOutOfBoundsException();
 	}
 	
+	/**
+	 * @return the column needed to create data for a specific ChartType
+	 */
 	public String getColumn() {
 		
 		switch(this) {
@@ -36,6 +44,9 @@ public enum ChartType {
 		return "";
 	}
 	
+	/**
+	 * @return the label for the x axis of this ChartType
+	 */
 	public String getXAxis() {
 		switch(this) {
 			case SPEED_TEST -> {return "N amount";}
@@ -43,6 +54,9 @@ public enum ChartType {
 		}
 	}
 	
+	/**
+	 * @return the label for the y axis of this ChartType
+	 */
 	public String getYAxis() {
 		
 		switch(this) {
@@ -51,11 +65,17 @@ public enum ChartType {
 		}
 	}
 	
+	/**
+	 * @return the number of ChartTypes available
+	 */
 	public static int size() {
 		
 		return values().length;
 	}
 	
+	/**
+	 * @return the name of title of a ChartType
+	 */
 	@Override public String toString() {
 		
 		switch(this) {

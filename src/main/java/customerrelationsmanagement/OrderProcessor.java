@@ -1,32 +1,30 @@
 package customerrelationsmanagement;
 
+import org.joda.time.DateTime;
+
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.LocalDate;
 import java.util.*;
 
 class OrderProcessor {
-	private final ArrayList<Object[]> acceptedOrders;
-	private BigDecimal assetTotal;
 	private final Crud crud;
-	private final ArrayList<Object[]> dailyAnalytics;
+	private int recordCount;
+	private Order nextOrder;
+	private BigDecimal assetTotal;
 	private final Stack<Order> dailyOrderStack;
 	private final Queue<Integer> idxList;
 	private final HashMap<Integer, String> indexMap;
-	private Order nextOrder;
-	/* Change relevant quantities from a given order,
-	 and put all items into the acceptedSales list.*/
 	private final HashMap<String, Integer> quantityMap;
-	private int recordCount;
-	private final HashMap<String, BigDecimal> salePriceMap;
-	private final ArrayList<Object[]> supplierEvents;
-	private final HashMap<String, String> supplierMap;
 	private final HashMap<String, BigDecimal> wholesaleMap;
+	private final HashMap<String, BigDecimal> salePriceMap;
+	private final HashMap<String, String> supplierMap;
+	private final ArrayList<Object[]> supplierEvents;
+	private final ArrayList<Object[]> acceptedOrders;
+	private final ArrayList<Object[]> dailyAnalytics;
 	
 	/**
 	 * OrderProcessor uses an in-memory copy of three inventory columns.
@@ -50,10 +48,10 @@ class OrderProcessor {
 		crud.setWorkingTable("inventory");
 		
 		ResultSet rs = crud.query(
-		 "SELECT quantity,idx,product_id,wholesale_cost,sale_price FROM " +
+		 "SELECT quantity,idx,product_id,wholesale_cost,sale_price,supplier_id  FROM " +
 		 "inventory");
 		
-		int size = crud.size();
+		int size = crud.size(); // number of products in the inventory
 		idxList = new ArrayDeque<>(size); // ordered list of idx's
 		indexMap = new HashMap<>(size); // map from idx -> product_id
 		quantityMap = new HashMap<>(size); // map from product_id -> quantity
@@ -61,11 +59,8 @@ class OrderProcessor {
 		salePriceMap = new HashMap<>(size); // map from product_id -> quantity
 		acceptedOrders = new ArrayList<>(size); // list of Object[]'s for
 		supplierEvents = new ArrayList<>(); // list of all supplier events
-		dailyOrderStack =
-		 new Stack<>(); // list of rows with matching date_ordered
-		dailyAnalytics =
-		 new ArrayList<>(); //list of analytics created from dailyOrderStack's
-		// contents
+		dailyOrderStack = new Stack<>(); // list of rows with matching date_ordered
+		dailyAnalytics = new ArrayList<>(); //list of analytics created from dailyOrderStack's contents
 		supplierMap = new HashMap<>(); // map of <product_id, supplier_id> 
 		assetTotal = BigDecimal.ZERO;
 		recordCount = 0;
@@ -75,16 +70,15 @@ class OrderProcessor {
 			String productId = rs.getString(3);
 			BigDecimal wholesaleCost = rs.getBigDecimal(4);
 			BigDecimal salePrice = rs.getBigDecimal(5);
+			String supplierID = rs.getString(6);
 			
 			quantityMap.put(productId, quantity);
 			wholesaleMap.put(productId, wholesaleCost);
 			salePriceMap.put(productId, salePrice);
 			indexMap.put(idx, productId);
 			idxList.add(idx);
-			assetTotal =
-			 assetTotal.add(salePrice.multiply(BigDecimal.valueOf(quantity)));
-			//Todo Adam, add the product id and the key as the value in 
-			// supplierMap
+			assetTotal = assetTotal.add(salePrice.multiply(BigDecimal.valueOf(quantity)));
+			supplierMap.put(productId, supplierID);
 		} // End while
 	} // End Constructor
 	
@@ -171,6 +165,28 @@ class OrderProcessor {
 		} // End while
 	} // End changeQuantities
 	
+	public static void checkUnstatusedSales(Crud crud)
+	throws SQLException, FileNotFoundException {
+		Object[][] unstatusedSales = crud.getRecords(
+		 "Select "+ String.join(",", Tables.UNSTATUSED.columns()) +" from unstatused_sales");
+		if(unstatusedSales.length == 0) { return; }
+		String pathname = "temp_order_file.csv";
+		File tempOrderFile = new File(pathname);
+		PrintWriter pw = new PrintWriter(tempOrderFile);
+		pw.println(Arrays.toString(Tables.UNSTATUSED.columns()));
+		for(Object[] unstatusedSale: unstatusedSales) {
+			for(int i = 0; i < unstatusedSale.length; i++) {
+				pw.print(unstatusedSale[i] + (i == unstatusedSale.length - 1 ? "" : ","));
+			}
+			pw.println();
+		}
+		pw.close();
+		OrderProcessor.runFileOrders(crud, pathname);
+		crud.update("delete from unstatused_sales");
+		System.out.println("inserted " + unstatusedSales.length + " rows into statused_sales table");
+		tempOrderFile.deleteOnExit();
+	}
+	
 	/**
 	 * Processes the <code>nextOrder</code> to set its fields according to
 	 * all Products it contains.
@@ -180,11 +196,6 @@ class OrderProcessor {
 	 *  can be processed. Otherwise, false.
 	 */
 	public boolean processOrder() {
-		
-		if(nextOrder.getStatus() != Status.PROCESSED
-		   && nextOrder.getStatus() != Status.QUANTITY_SHORTAGE) {
-			return canProcessOrder();
-		} // End if.
 		
 		boolean canProcessOrder = canProcessOrder();
 		assert nextOrder != null;
@@ -213,7 +224,6 @@ class OrderProcessor {
 				  BigDecimal.valueOf(product.getQuantity())));
 			}
 		} else {
-			
 			for(Iterator<Product> it = nextOrder.productIterator();
 				it.hasNext(); ) {
 				Product product = it.next();
@@ -221,28 +231,19 @@ class OrderProcessor {
 				Integer inventoryQuantity = quantityMap.get(productId);
 				Integer requestedQuantity = product.getQuantity();
 				if(inventoryQuantity < requestedQuantity) {
-					// Todo Adam refactor the code below by introducing
-					//  an int variable (from the nextInt() call)
-					//  check this link for instructions on completing this 
-					//  action
-					// https://www.jetbrains.com/help/idea/extract-variable
-					// .html
+					int restockQuantity = new Random().nextInt(450);
+					
 					quantityMap.put(productId, requestedQuantity
-											   + new Random().nextInt(450) +
-											   50);
-					//Todo Adam the productId to get the appropriate 
-					// supplierId from a supplierMap 
-					// use the date, supplierId, and 
+											   + restockQuantity + 50);
 					
-					// Todo Adam add a new Object[] to supplier with:
-					//  the supplierId 
-					//  the productId
-					//  the int variable you introduced,
-					//  the time "order" was ordered (look in Order.java for 
-					//  the appropriate getter method)
-					
-				}
-			}
+					supplierEvents.add(new Object[]{
+					 supplierMap.get(productId),
+					 productId,
+					 restockQuantity,
+					 Order.dateTimeFormat.print(DateTime.now())
+					});
+				} // End if
+			} // End for
 			responsePrefix += "The following products could not be processed:";
 			responseSuffix = "We are currently unable to fulfill this order.";
 			nextOrder.setStatus(Status.CANCELLED);
@@ -278,7 +279,9 @@ class OrderProcessor {
 		String[] line = scanner.nextLine().split(",");
 		
 		Order order = new Order(
-		 Timestamp.valueOf(LocalDate.parse(line[0]).atStartOfDay()),
+
+		 DateTime.parse(line[0].split(" ")[0]),
+
 		 EventType.BUYER,
 		 line[2]
 		);
@@ -286,9 +289,8 @@ class OrderProcessor {
 		order.setEmail(line[1]);
 		this.setCurrentOrder(order);
 		int i = 2;
-		while(line != null && !line[0].equals("")) {
-			Timestamp nextTime =
-			 Timestamp.valueOf(LocalDate.parse(line[0]).atStartOfDay());
+		while(line != null && !line[0].trim().equals("")) {
+			DateTime nextTime = DateTime.parse(line[0].split(" ")[0]);
 			String nextEmail = line[1];
 			String nextLocation = line[2];
 			String nextProductId = line[3];
@@ -297,7 +299,7 @@ class OrderProcessor {
 			Product nextProduct = new Product(
 			 nextProductId, nextRequestedQuantity);
 			
-			boolean isNewDate = order.getTimeOrdered().before(nextTime);
+			boolean isNewDate = order.getTimeOrdered().isBefore(nextTime);
 			boolean isNewEmail =
 			 !order.getCustomerEmail().equals(nextEmail);
 			boolean isNewLocation =
@@ -314,22 +316,21 @@ class OrderProcessor {
 				} // End if
 				
 				processOrder();
-				if(dailyOrderStack.isEmpty()) {
-					dailyOrderStack.push(order);
-				} else {
-					Timestamp lastOrderTime =
+				if(!dailyOrderStack.isEmpty()) {
+					DateTime lastOrderTime =
 					 dailyOrderStack.peek().getTimeOrdered();
-					Timestamp nextOrderTime = order.getTimeOrdered();
-					if(lastOrderTime.compareTo(nextOrderTime) == 0) {
-						dailyOrderStack.push(order);
-					} else {
+					DateTime nextOrderTime = order.getTimeOrdered();
+					if(lastOrderTime.isBefore(nextOrderTime)) {
 						analyzeOrders();
 						dailyOrderStack.clear();
-						dailyOrderStack.push(order);
 					}
 				}
+				dailyOrderStack.push(order);
 				order = new Order(
-				 Timestamp.valueOf(LocalDate.parse(line[0]).atStartOfDay()),
+
+				 DateTime.parse(line[0].split(" ")[0]),
+
+
 				 EventType.BUYER,
 				 nextLocation
 				);
@@ -381,7 +382,11 @@ class OrderProcessor {
 			crud.insertRecords(Tables.STATUSED.columns(),
 			 acceptedOrders.iterator(), acceptedOrders.size());
 		} // End if
-		acceptedOrders.clear();
+		crud.setWorkingTable(Tables.SUPPLIER.toString());
+		if(supplierEvents.size() > 0) {
+			crud.insertRecords(Tables.SUPPLIER.columns(),
+			 supplierEvents.iterator(), supplierEvents.size());
+		} // End if
 		crud.setWorkingTable(Tables.ANALYTICS.toString());
 		if(dailyAnalytics.size() > 0) {
 			crud.insertRecords(Tables.ANALYTICS.columns(),
@@ -393,10 +398,6 @@ class OrderProcessor {
 	
 	/** Update all the tables after orders have been processed. */
 	public void updateAndClose() throws SQLException {
-		
-		// Todo Adam aet the working table to your new suppler table, 
-		//  and insert the records exactly the same way it was done 
-		//  immediately above this comment
 		update();
 		// update the inventory table to effectively close the processor.
 		StringBuilder builder = new StringBuilder();
@@ -439,16 +440,16 @@ class OrderProcessor {
 	} // End updateAndClose
 	
 	private class DailyStats {
-		Date fiscalDate;
+		DateTime fiscalDate;
 		BigDecimal incomeTotal;
 		BigDecimal revenueTotal;
 		Object[][] topCustomers;
 		Object[][] topProducts;
 		
 		public DailyStats() {
+			fiscalDate = dailyOrderStack
+			 .peek().getTimeOrdered().withTime(0, 0, 0, 0);
 			
-			this.fiscalDate =
-			 new Date(dailyOrderStack.peek().getTimeOrdered().getTime());
 			calculateRevenueTotal();
 			this.topCustomers = calculateTopCustomers();
 			this.topProducts = calculateTopProducts();
@@ -576,7 +577,7 @@ class OrderProcessor {
 				dailyProductCount += order.size();
 			}
 			return new Object[] {
-			 fiscalDate,              // "fiscal_date", 
+			 Order.dateTimeFormat.print(fiscalDate),// "fiscal_date", 
 			 assetTotal,              // "asset_total", 
 			 incomeTotal,             // "daily_income",
 			 revenueTotal,            // "daily_revenue", 
@@ -587,15 +588,4 @@ class OrderProcessor {
 			};
 		}
 	}
-} // End SalesProcessor
-	
-	
-	  
-	  
-	  
-	  
-	  
-	  
-	  
-	  
-	
+} // End OrderProcessor
