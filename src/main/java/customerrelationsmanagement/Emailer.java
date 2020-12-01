@@ -1,12 +1,11 @@
 package customerrelationsmanagement;
 
 import org.jetbrains.annotations.NotNull;
+import org.joda.time.DateTime;
 
 import java.io.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -152,10 +151,8 @@ public class Emailer {
 	throws MessagingException, IOException, SQLException {
 		
 		crud.setWorkingTable("statused_sales");
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 		OrderProcessor orderProcessor = new OrderProcessor(crud);
 		Message[] messages = credentials.getMessages(credentials.getSession());
-		String reccommend1 = null;
 		
 		for(Message currentMessage: messages) {
 			Order order = null;
@@ -163,8 +160,8 @@ public class Emailer {
 			String[] messageText =
 			 getTextFromMessage(currentMessage).trim().split("\n");
 			
-			Timestamp timestamp =
-			 new Timestamp(currentMessage.getSentDate().getTime());
+			DateTime time =
+			 new DateTime(currentMessage.getSentDate().getTime());
 			
 			Matcher m = Order.EMAIL_PATTERN.matcher(
 			 currentMessage.getFrom()[0].toString());
@@ -181,7 +178,7 @@ public class Emailer {
 							Object[][] records = crud.getRecords(
 							 "SELECT * FROM statused_sales where order_id = '"
 							 + orderId + "'" + " and order_status = " +
-							 Order.PROCESSED);
+							 Status.PROCESSED);
 							System.out.println(
 							 " The following product purchases should be " +
 							 "cancelled:\n\n" +
@@ -222,7 +219,7 @@ public class Emailer {
 					String location = s[3].trim();
 					
 					if(order == null) {
-						order = new Order(timestamp, isSale, location);
+						order = new Order(time, isSale, location);
 						orderProcessor.setCurrentOrder(order);
 					} // End if
 					

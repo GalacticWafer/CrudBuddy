@@ -1,15 +1,12 @@
 package customerrelationsmanagement;
 
 import org.jetbrains.annotations.NotNull;
+import org.joda.time.DateTime;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Scanner;
 
@@ -18,7 +15,7 @@ import static org.junit.Assert.*;
 public class OrderProcessorTest {
 	int[] buyerQuantities = new int[] {2, 1, 1, 2};
 	private static Crud crud;
-	private final Timestamp date = Timestamp.valueOf("2020-01-02");
+	private final DateTime date = DateTime.parse("2020-01-02");
 	private final String location = "27934";
 	String[] productIds = new String[] {
 	 "3R8YXZCS820Y",
@@ -28,7 +25,7 @@ public class OrderProcessorTest {
 	};
 	private Restoration rest;
 	int[] sellerQuantities = new int[] {90, 400, 760, 25};
-	OrderProcessorTest() throws SQLException, ClassNotFoundException {}
+	OrderProcessorTest() {}
 
 	@Test
 	public void assertRestock() {

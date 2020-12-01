@@ -317,6 +317,7 @@ public class Crud {
 	static String quoteWrap(Object columnValue) {
 		
 		if(columnValue instanceof String
+		   && !((String)columnValue).toUpperCase().equals("NULL")
 		   || columnValue instanceof Date) {
 			return "'" + columnValue + "'";
 		} // End if

@@ -1,5 +1,10 @@
 package customerrelationsmanagement;
 
+
+/**
+ * Reflects the current state of an order.
+ */
+
 public enum Status {
 	INVALID,
 	CANCELLED, 
@@ -8,5 +13,5 @@ public enum Status {
 	PROCESSED,
 	SUGGESTED_EMAIL,
 	FULFILLED;
-	
+
 }
