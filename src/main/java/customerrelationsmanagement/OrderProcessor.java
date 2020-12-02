@@ -168,6 +168,22 @@ class OrderProcessor {
 		} // End while
 	} // End changeQuantities
 	
+	public static void checkUnstatusedSales(Crud crud)
+	throws SQLException, FileNotFoundException {
+		
+		ResultSet tableCheck = crud.query("select * from unstatused_sales");
+		int count = crud.rowCountResults(tableCheck);
+		if(count == 0) { return; }
+		File tempUnprocessed = crud.writeToFile("temp_unprocessed.csv", Tables.UNSTATUSED.columns(), tableCheck);
+		OrderProcessor.runFileOrders(crud, "temp_unprocessed.csv");
+		crud.update("Delete from unstatused_sales");
+		if(tempUnprocessed.delete()){
+			System.out.println("deleted the file, processed " + count + " records from unstatused_sales.");
+		} else {
+			System.out.println("I hate everything");
+		}
+	}
+	
 	/**
 	 * Processes the <code>nextOrder</code> to set its fields according to
 	 * all Products it contains.
@@ -275,7 +291,7 @@ class OrderProcessor {
 		
 		Order order = new Order(
 
-		 DateTime.parse(line[0]),
+		 DateTime.parse(line[0].split(" ")[0]),
 
 		 EventType.BUYER,
 		 line[2]
@@ -285,7 +301,7 @@ class OrderProcessor {
 		this.setCurrentOrder(order);
 		int i = 2;
 		while(line != null && !line[0].trim().equals("")) {
-			DateTime nextTime = DateTime.parse(line[0]);
+			DateTime nextTime = DateTime.parse(line[0].split(" ")[0]);
 			String nextEmail = line[1];
 			String nextLocation = line[2];
 			String nextProductId = line[3];
@@ -323,7 +339,7 @@ class OrderProcessor {
 				dailyOrderStack.push(order);
 				order = new Order(
 
-				 DateTime.parse(line[0]),
+				 DateTime.parse(line[0].split(" ")[0]),
 
 
 				 EventType.BUYER,

@@ -61,8 +61,9 @@ public class Main {
 			timer.schedule(new TimerTask() {
 				@Override public void run() {
 					try {
-						//System.out.println("Check #" + i++); Shows how many times it's looped
+						System.out.println("Check");// Shows how many times it's looped
 						mailer.processEmails(crud);
+						OrderProcessor.checkUnstatusedSales(crud);
 					} catch(MessagingException | SQLException | IOException e) {
 						e.printStackTrace();
 					}

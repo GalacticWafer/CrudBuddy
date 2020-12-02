@@ -267,7 +267,6 @@ public class Emailer {
 			catch(Exception e) {
 				System.out.println(e.getMessage());
 				System.out.println(e.getStackTrace());
-				// Todo: this email is in an improper format
 			} // End try-catch
 		} // End for
 		
