@@ -101,13 +101,13 @@ class OrderProcessor {
 		
 		ArrayList<Boolean> canFulfillProducts = new ArrayList<>();
 		boolean isSale = nextOrder.eventType() == EventType.BUYER;
-		
+		int i = 0;
 		for(Iterator<Product> productIter = nextOrder.productIterator();
-			productIter.hasNext(); ) {
+			productIter.hasNext(); i++) {
 			
 			Product product = productIter.next();
 			String productId = product.getId();
-			Integer inventoryQuantity = quantityMap.get(product.getId());
+			Integer inventoryQuantity = quantityMap.get(product.getId().trim());
 			int requestedQuantity = product.getQuantity();
 			boolean validQuantity = product.getQuantity() > 0;
 			boolean productNotNull = productId != null;
@@ -126,7 +126,9 @@ class OrderProcessor {
 			product.setIsProcessable(
 			 canFulfillCurrentProduct, inventoryQuantity);
 		} // End for
-		
+		if(i < 1) { 
+			return false; 
+		}
 		boolean canProcessOrder = !canFulfillProducts.contains(false);
 		
 		if(canProcessOrder || !isSale) {
@@ -304,6 +306,10 @@ class OrderProcessor {
 			String nextEmail = line[1];
 			String nextLocation = line[2];
 			String nextProductId = line[3];
+			if(nextProductId.length() != 12 || !nextProductId.matches("^[a-zA-Z0-9]*$")) {
+				System.out.println("The product id " + nextProductId + " is invalid. This process will terminate");
+				return;
+			}
 			int nextRequestedQuantity = Integer.parseInt(line[4]);
 			
 			Product nextProduct = new Product(

@@ -23,11 +23,6 @@ public class Order {
 	private static final String NUMBER = "0123456789";
 	private static final String DATA_FOR_RANDOM_STRING =
 	 CHAR_LOWER + CHAR_UPPER + NUMBER;
-	public static final String[] ORDER_FILE_COLUMNS =
-	 new String[] {
-	  "date", "cust_email", "cust_location", "product_id",
-	  "product_quantity"
-	 };
 	private String email;
 	private EventType eventType;
 	private final String location;
@@ -53,7 +48,9 @@ public class Order {
 	
 	/** Add an item to this order. */
 	public void addProduct(Product item) {
-		
+		if(item.getId().length() != 12 || !item.getId().matches("^[a-zA-Z0-9]*$")) { 
+			return; 
+		}
 		products.add(item);
 	} // End addProduct
 	

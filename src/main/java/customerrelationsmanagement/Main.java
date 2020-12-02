@@ -17,8 +17,10 @@ public class Main {
 	//null;
 	
 	public static final String ORDERS_PATH =
+	 //"bad_orders.csv";
 	//"customer_orders_A_team4.csv";
-		null;
+	//"customer_orders_final_team4.csv";
+	null;
 	
 	public static final boolean START_GUI =
 	 true;
@@ -54,6 +56,16 @@ public class Main {
 		if(INVENTORY_PATH != null && !INVENTORY_PATH.equals("")) {
 			rest = new Restoration(crud, INVENTORY_PATH, "customer_orders_A_team4.csv",true, analyticsDir);
 		}
+		if(START_GUI) {
+			new GUI(crud);
+		}
+		if(ORDERS_PATH != null && !ORDERS_PATH.equals("")) {
+			OrderProcessor.runFileOrders(crud, ORDERS_PATH);
+		}
+		if(runSpeedTest) {
+			SystemPerformance sp = new SystemPerformance(crud);
+			sp.runTest(true);
+		}
 		if(START_MAIL) {
 			mailer = new Emailer(credentials);
 			Timer timer = new Timer();
@@ -71,17 +83,7 @@ public class Main {
 						e.printStackTrace();
 					}
 				}
-			}, 50, 1000);
-		}
-		if(START_GUI) {
-			new GUI(crud);
-		}
-		if(ORDERS_PATH != null && !ORDERS_PATH.equals("")) {
-			OrderProcessor.runFileOrders(crud, ORDERS_PATH);
-		}
-		if(runSpeedTest) {
-			SystemPerformance sp = new SystemPerformance(crud);
-			sp.runTest(true);
+			}, 50, 5000);
 		}
 	}
 }
