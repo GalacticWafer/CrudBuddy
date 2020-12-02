@@ -2,6 +2,7 @@ package customerrelationsmanagement;
 
 import org.jfree.chart.*;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.NumberTickUnit;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
@@ -15,7 +16,12 @@ import java.math.MathContext;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.NumberFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Date;
 
 public class ChartMaker {
 	public static final double BAR_THICCKNESS = 4.0;
@@ -28,13 +34,10 @@ public class ChartMaker {
 		this.crud = crud;
 	}
 	
-	private boolean checkValidity(String time) {
-		
-		/* TODO: Daniel, check the validity
-		    check if time is valid
-		    check if row exists for the "time"
-		 */
-		return true;
+	private boolean checkValidity(String time)
+	throws SQLException {
+		crud.setWorkingTable("daily_analysis");
+		return crud.exists("fiscal_date", time);
 	}
 	
 	private JFreeChart getBarChart
@@ -56,9 +59,7 @@ public class ChartMaker {
 			String[] datum = strArray[i].split(" ");
 			labels[i] = datum[0];
 			
-			values[i] = /*type == ChartType.TOP_CUSTOMERS ?
-			 Integer.parseInt(datum[1]) / 1.0 :*/
-			 Double.parseDouble(datum[1]);
+			values[i] = Double.parseDouble(datum[1]);
 		}
 		
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
@@ -82,8 +83,37 @@ public class ChartMaker {
 		return barChart;
 	}
 	
+	public JFreeChart getBarChart(BigDecimal[] ratios, int[] labels) {
+		DefaultCategoryDataset dataSet = new DefaultCategoryDataset();
+		
+		for(int i = 0; i < ratios.length; i++) {
+			dataSet.addValue(ratios[i], labels[i], labels[i]);
+		}
+		
+		JFreeChart barChart = ChartFactory.createBarChart(
+		 "System Performance", "Number of files", "Files Per Second", dataSet,
+		 PlotOrientation.VERTICAL, true, true, false);
+		
+		((BarRenderer)barChart.getCategoryPlot().getRenderer())
+		 .setItemMargin(-ratios.length / BAR_THICCKNESS);
+		
+		((NumberAxis) barChart.getCategoryPlot().getRangeAxis()).setTickUnit(new NumberTickUnit(1));
+		
+		((NumberAxis)barChart.getCategoryPlot().getRangeAxis()).
+		 setNumberFormatOverride(NumberFormat.getNumberInstance());;
+		
+		/*
+		CategoryPlot plot = (CategoryPlot) barChart.getPlot();
+		NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
+		rangeAxis.setRange(0, 100);
+		if revert worked , you should still be able to see this comment block
+		 */
+		
+		return barChart;
+	}
+	
 	public JFreeChart getChart(String time, ChartType type)
-	throws SQLException {
+	throws SQLException, ParseException {
 		
 		if(!checkValidity(time)) { return null; }
 		switch(type) {
@@ -93,7 +123,6 @@ public class ChartMaker {
 			case DAILY_ASSETS, DAILY_ORDER_COUNTS, DAILY_INCOME, DAILY_REVENUE -> {
 				return getTimeSeriesChart(time, type);
 			}
-			
 		}
 		throw new IllegalArgumentException();
 	}

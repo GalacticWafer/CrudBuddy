@@ -1,12 +1,15 @@
 package customerrelationsmanagement;
 
 import org.jetbrains.annotations.NotNull;
-import org.joda.time.DateTime;
 
 import java.io.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -21,6 +24,7 @@ import javax.mail.internet.MimeMultipart;
 
 public class Emailer {
 	Credentials credentials;
+	private Session session;
 	
 	/**
 	 * Can be used to access the inbox folder to process emails/orders
@@ -31,6 +35,7 @@ public class Emailer {
 	public Emailer(
 	 Credentials credentials) {
 		this.credentials = credentials;
+		session = credentials.getSession();
 	}
 	
 	private Message createNewMessage
@@ -150,9 +155,25 @@ public class Emailer {
 	public void processEmails(Crud crud)
 	throws MessagingException, IOException, SQLException {
 		
+		/*
+		String[][] test = { new String[]{"RHPXPHGBJS1P,900,true,29384","17TXG621YHM0,1,true,29384"},
+							new String[]{"MC8QH9N14OC6,1,true,29384", "3DG9X9C79GR5,1,true,29384" },
+							new String[]{"7GBS3ZBYMVEL,1,true,29384", "9F1BBF77YJ7Y,1,true,29384" },
+							new String[]{"8FNQ9Q99UAU8,1,true,29384", "S7PTXR74PM50,1,true,29384" },
+							new String[]{"T7LV3UP0N991,1,true,29384", "G0L5248Q2Z3F,1,true,29384" }};
+		
+		for(int i = 0; i < test.length; i++) {
+			sendMail(credentials.getEmail(), "", String.join("\n", test[i]),credentials.getSession(),null);
+		}
+		
+		 */
+		
 		crud.setWorkingTable("statused_sales");
 		OrderProcessor orderProcessor = new OrderProcessor(crud);
-		Message[] messages = credentials.getMessages(credentials.getSession());
+		Message[] messages = credentials.getMessages(session);
+		
+		
+		HashMap<String, String> emailsNOrder = new HashMap<>();
 		
 		for(Message currentMessage: messages) {
 			Order order = null;
@@ -166,7 +187,7 @@ public class Emailer {
 			Matcher m = Order.EMAIL_PATTERN.matcher(
 			 currentMessage.getFrom()[0].toString());
 			
-			String email = m.find() ? m.group("email") : "";
+			String email = m.find() ? m.group("email") : credentials.getEmail();
 			
 			try {
 				for(String textLine: messageText) {
@@ -178,7 +199,7 @@ public class Emailer {
 							Object[][] records = crud.getRecords(
 							 "SELECT * FROM statused_sales where order_id = '"
 							 + orderId + "'" + " and order_status = " +
-							 Status.PROCESSED);
+							 Order.PROCESSED);
 							System.out.println(
 							 " The following product purchases should be " +
 							 "cancelled:\n\n" +
@@ -199,14 +220,12 @@ public class Emailer {
 								 orderId + "'");
 								sendMail(
 								 email, "Cancellation",
-								 " The following product purchases have been cancelled:" +
-								 " " +
-								 "cancelled:\n\n" +
+								 "       The following product purchases have been cancelled:" +
+								 "\n\n" +
 								 cancelString, credentials.getSession(), null);
 								
 								continue;
 							}
-							
 							break;
 						} // End if
 						currentMessage.setFlag(Flags.Flag.DELETED, true);
@@ -215,11 +234,11 @@ public class Emailer {
 					
 					String productId = s[0].trim();
 					int requestedQuantity = Integer.parseInt(s[1].trim());
-					EventType isSale = EventType.parse(s[2].trim());
+					boolean isSale = Boolean.parseBoolean(s[2].trim());
 					String location = s[3].trim();
 					
 					if(order == null) {
-						order = new Order(time, isSale, location);
+						order = new Order(timestamp, isSale, location);
 						orderProcessor.setCurrentOrder(order);
 					} // End if
 					
@@ -228,19 +247,18 @@ public class Emailer {
 					 requestedQuantity));
 				} // End for
 				if(order != null) {
+	
 					order.setEmail(email);
 					orderProcessor.processOrder();
+					
 					sendMail(order.getCustomerEmail(), order
-					  .getResponseSubject(), order
-											  .getMessageText() + "",
-					 credentials
-					  .getSession(),
-					 null);
-					String recommendPr = recommendProducts(3, order.orderId);
-					sendMail(order.getCustomerEmail(),
-					 "We thought you might like these!",
-					 recommendPr + "", credentials.getSession(),
-					 null);
+					  .getResponseSubject(), order.getMessageText() + "",
+					 credentials.getSession(), null);
+			
+					
+					if(order.getResponseSubject().toUpperCase().contains("PROCESSED")){
+						emailsNOrder.put(order.orderId,order.getCustomerEmail());
+					}
 				}
 				
 				currentMessage.setFlag(Flags.Flag.DELETED, true);
@@ -251,7 +269,23 @@ public class Emailer {
 				// Todo: this email is in an improper format
 			} // End try-catch
 		} // End for
+		
 		orderProcessor.updateAndClose();
+		for(Map.Entry<String, String> entry : emailsNOrder.entrySet()){
+			
+			String orderIdR = entry.getKey();
+			String orderEmail = entry.getValue();
+
+			String recommendPr = recommendProducts(3, orderIdR);
+			if(recommendPr.length() != 0) {
+				sendMail(orderEmail,
+				 "We thought you might like these!",
+				 recommendPr + "", credentials.getSession(),
+				 null);
+			}
+			
+		}
+		
 	}
 	
 	/**
@@ -283,15 +317,13 @@ public class Emailer {
 		 reportFile == null ?
 		  prepareMessage(messageSubject, messageContent, emailSession,
 		   credentials.getEmail(), recipientAddress)
-		  : prepareAttachedMessage(emailSession,
-		  credentials.getEmail(), recipientAddress, reportFile,
-		  messageSubject);
+		  : prepareAttachedMessage(emailSession, 
+		credentials.getEmail(), recipientAddress, reportFile, messageSubject);
 		
 		assert message != null;
 		Transport.send(message);
 		System.out.println();
 	} // End processEmails
-	
 	/**
 	 * Returning a statement for recommendations that will be sent
 	 * in a email after an order has been confirmed
@@ -308,20 +340,30 @@ public class Emailer {
 	 */
 	@NotNull private String recommendProducts(int limit, String orderId)
 	throws SQLException {
+		
 		String query =
 		 " SELECT product_id as 'We thought you might also like:' " +
 		 " FROM statused_sales " +
 		 " WHERE order_id IN (SELECT order_id FROM statused_sales" +
 		 " WHERE  product_id IN(SELECT product_id FROM statused_sales " +
 		 " WHERE order_id = '" + orderId + "')" +
-		 " AND order_id NOT LIKE '" + orderId + "')" +
+		 " AND order_id NOT LIKE '" + orderId + "') " +
+		 "and product_id not IN (select product_id from statused_sales where order_id = '" + orderId + "')" +
 		 " GROUP BY product_id " +
 		 " ORDER BY sum(product_quantity)" +
 		 " DESC LIMIT " + limit;
+		
 		Crud crud = credentials.getCrud();
 		ResultSet rs = crud.query(query);
+		
+		if(crud.rowCountResults(rs) == 0){
+			rs = crud.query("select product_id from statused_sales where product_id not in " +
+							"(select product_id from statused_sales where order_id = '" + orderId +  "') " +
+							"order by product_quantity DESC limit " + limit);
+		}
+		
 		StringBuilder out =
-		 new StringBuilder(rs.getMetaData().getColumnLabel(1) + "\n");
+		 new StringBuilder("Check out our hottest products!\n\n");
 		while(rs.next()) {
 			out.append(rs.getString(1)).append("\n");
 		}

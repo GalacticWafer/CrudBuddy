@@ -13,11 +13,14 @@ import java.util.Date;
 public class Crud {
 	private static String DB_NAME;
 	private static String HOST_IP;
+	public static final String[] INVENTORY_COLUMNS = new String[]
+	 {"product_id", "wholesale_cost", "sale_price", "supplier_id", "quantity"};
 	private static String PORT;
 	public static String PRIMARY_K = "idx";
 	public static String PRIMARY_V = "int(16)";
 	private static Connection connection;
-	private String currentTable;
+	private String currentTable = "inventory";
+	public static TreeSet<String> temporaryTables = new TreeSet<>();
 	
 	/**
 	 * Class that facilitates a connection to a database, and carries out CRUD
@@ -33,7 +36,7 @@ public class Crud {
 		DB_NAME = schema;
 		Class.forName("com.mysql.cj.jdbc.Driver");
 		connection = DriverManager.getConnection(getURL(), userName, passWord);
-		setWorkingTable(Tables.INVENTORY.toString());
+		setWorkingTable("inventory");
 		update("USE " + DB_NAME);
 	} // End constructor
 	
@@ -68,6 +71,85 @@ public class Crud {
 		 "DELETE FROM " + currentTable + " WHERE " + columnName + " = " +
 		 quoteWrap(columnValue));
 	} // End deleteRecord
+	
+	/**
+	 * Check if a record exists with the specified criteria.
+	 *
+	 * @param columnName
+	 *  name of the column to match.
+	 * @param columnValue
+	 *  value to match in the column.
+	 *
+	 * @return true if a record matches the criteria. Otherwise false.
+	 *
+	 * @throws SQLException
+	 *  if there is an issue with the sql command or connection.
+	 */
+	public boolean exists(String columnName, Object columnValue)
+	throws SQLException {
+		
+		String sql =
+		 "SELECT EXISTS(SELECT * FROM " + currentTable + " WHERE " +
+		 columnName + " = " + quoteWrap(columnValue) + ")";
+		
+		ResultSet rs = query(sql);
+		rs.next();
+		return rs.getInt(1) == 1;
+	} // End exits
+	
+	/**
+	 * TODO: David & Uriel
+	 *
+	 * @param onDate TODO: David & Uriel
+	 *
+	 * @return TODO: David & Uriel
+	 *
+	 * @throws SQLException
+	 *  if there is an issue with the sql command or connection.
+	 */
+	public Object[][] getAssetTotal(String onDate)
+			throws SQLException {
+
+		String query = (onDate == null) ?
+				"SELECT SUM(quantity * (sale_price - wholesale_cost))" +
+						"as assets from inventory" :
+				"SELECT date_accepted, SUM(sales.product_quantity * " +
+						"(sale_price - wholesale_cost)) \n" +
+						"        as assets from sales\n" +
+						"INNER JOIN inventory on sales.product_id = inventory.product_id\n" +
+						"WHERE date_accepted = '" + onDate + "' GROUP BY date_accepted";
+
+		ResultSet rs = query(query);
+		rs.next();
+
+		return getRecords(rs);
+	} // End getAssetTotal
+	
+	/**
+	 * Gets the number of columns in a table.
+	 *
+	 * @param tableName
+	 *  the table to check
+	 *
+	 * @return the number of columns in the table if it exists. Otherwise, -1.
+	 *
+	 * @throws SQLException
+	 *  if there is an issue with the sql command or connection.
+	 */
+	public int getColumnCount(String tableName) throws SQLException {
+		
+		setWorkingTable(tableName);
+		
+		ResultSet rs = query("SELECT count(*) AS " + tableName +
+							 "FROM information_schema.columns WHERE" +
+							 " table_name = " + quoteWrap(tableName));
+		
+		if(rs.next()) {
+			return rs.getInt(1);
+		} // End if
+		
+		return -1;
+	} // End setWorkingTable
 	
 	/**
 	 * @return an array with the column names from the the
@@ -289,6 +371,46 @@ public class Crud {
 	/**
 	 * TODO: David & Uriel
 	 *
+	 * @param limit TODO: David & Uriel
+	 *
+	 * @return TODO: David & Uriel
+	 *
+	 * @throws SQLException
+	 *  if there is an issue with the sql command or connection.
+	 */
+	public Object[][] mostOrderedProducts(int limit)
+	throws SQLException {
+		
+		String query =
+		 "select product_id, sum(product_quantity) as totalQuantity from sales " +
+		 " group by \nproduct_id order by sum(product_quantity) desc limit " + limit;
+		return getRecords(query(query));
+	} // End mostOrderedProducts
+	
+	/**
+	 * TODO: David & Uriel
+	 *
+	 * @param rowResultLimit TODO: David & Uriel
+	 *
+	 * @return TODO: David & Uriel
+	 *
+	 * @throws SQLException
+	 *  if there is an issue with the sql command or connection.
+	 */
+	public Object[][] mostValuableCustomers(int rowResultLimit) throws SQLException {
+		
+		String query =
+		 "SELECT cust_email , SUM(sales.product_quantity * sale_price - " +
+		 "wholesale_cost) AS revenue FROM sales\n" +
+		 "    INNER JOIN\n" +
+		 "    inventory i ON sales.product_id = i.product_id\n" +
+		 "GROUP BY cust_email ORDER BY revenue DESC LIMIT " + rowResultLimit;
+		return getRecords(query(query));
+	} // End mostValuableCustomers
+	
+	/**
+	 * TODO: David & Uriel
+	 *
 	 * @param query TODO: David & Uriel
 	 *
 	 * @return TODO: David & Uriel
@@ -350,7 +472,7 @@ public class Crud {
 	 * @throws SQLException
 	 *  if there is an issue with the sql command or connection.
 	 */
-	int rowCountResults(ResultSet resultSet) throws SQLException {
+	public int rowCountResults(ResultSet resultSet) throws SQLException {
 		
 		resultSet.last();
 		int count = resultSet.getRow();
@@ -375,7 +497,7 @@ public class Crud {
 	 * @throws SQLException
 	 *  if there is an issue with the sql command or connection.
 	 */
-	int size() throws SQLException {
+	public int size() throws SQLException {
 		
 		ResultSet rs = query("SELECT COUNT(*) FROM " + currentTable);
 		rs.next();
@@ -444,11 +566,120 @@ public class Crud {
 		return sb.toString();
 	} // End toValueTuple
 	
+	/**
+	 * TODO: David & Uriel
+	 *
+	 * @param date TODO: David & Uriel
+	 * @param limit TODO: David & Uriel
+	 * @param isDescending TODO: David & Uriel
+	 * @param gui TODO: David & Uriel
+	 *
+	 * @return TODO: David & Uriel
+	 *
+	 * @throws SQLException
+	 *  if there is an issue with the sql command or connection.
+	 */
+	public String topNByCustomer
+	(String date, int limit, boolean isDescending, GUI gui)
+	throws SQLException {
+		
+		setWorkingTable("customers");
+		update(" DROP TABLE IF EXISTS top_customers");
+		String newTableName = "Top_" + limit + "_Customers";
+		
+		String dateClause;
+		if(date != null) {
+			dateClause = "WHERE date_accepted = '" + date + "'";
+		} else {
+			dateClause = "";
+		} // End if
+		
+		String sql =
+		 " CREATE TEMPORARY TABLE IF NOT EXISTS " + newTableName +
+		 " AS (SELECT customer_email, SUM(sales.product_quantity * " +
+		 "(sale_price - wholesale_cost)) AS revenue " +
+		 " FROM sales " +
+		 
+		 dateClause +
+		 
+		 " INNER JOIN customers _customers on sales.customer_email" +
+		 " = _customers.email " +
+		 " INNER JOIN inventory i on sales.product_id = i" +
+		 ".product_id " +
+		 " GROUP BY customer_email " +
+		 " ORDER BY revenue " + (isDescending ? " DESC" : "ASC") +
+		 " LIMIT " + limit + ")";
+		
+		update(sql);
+		temporaryTables.add(newTableName);
+		gui.addTable(newTableName);
+		return newTableName;
+	} // End topNByCustomer 
+	
+	/**
+	 * TODO: David & Uriel
+	 *
+	 * @param date
+	 *  that date you want to produce the analysis for
+	 * @param columnName
+	 *  the column name that identifies the data to analyze
+	 * @param limit
+	 *  where limit is the number of rows you want (i.e., top 5? 10? 1000?)
+	 * @param isDescending
+	 *  top- to bottom if true, bottom to top if false
+	 * @param orderArg
+	 *  if you want to order these results by a specific column,
+	 *  include it here (i.e., "quantity" -> higher quantities will
+	 *  be on the top of the results
+	 *
+	 * @return 2d array of all the results
+	 *
+	 * @throws SQLException
+	 *  if the query was an incorrect string, according to sql syntax
+	 */
+	public Object[][] topNByDate(String date, String columnName,
+								 int limit, boolean isDescending,
+								 String orderArg) throws SQLException {
+		
+		return getRecords(query(
+		 "SELECT * FROM sales WHERE " + columnName + " = '" + date +
+		 "' ORDER BY " + orderArg + (isDescending ? " DESC" : "ASC") +
+		 " LIMIT " + limit));
+	} // End topNByDate
+	
 	public int update(String sql) throws SQLException {
 		
 		Statement st = connection.createStatement();
 		return st.executeUpdate(sql);
 	} // End update
+	
+	/**
+	 * Update a row where some column name = some value 
+	 * @param columns The columns to be updated
+	 * @param values The values to update into the specified columns in a parallel array.
+	 * @param identifyingColumn The column to identify which rows should be updated.
+	 * @param identifyingValue The value in the identifying column to indicate which rows should be updated.
+	 * @throws SQLException
+	 *  if there is an issue with the sql command or connection.
+	 */
+	public void updateRow
+	(String[] columns, Object[] values, Object identifyingColumn, String identifyingValue)
+	throws SQLException {
+		
+		setWorkingTable(currentTable);
+		StringBuilder builder = new StringBuilder(
+		 "UPDATE " + currentTable + " SET ");
+		
+		for(int i = 0; i < columns.length; i++) {
+			String str = columns[i] + "=" + quoteWrap(values[i]) +
+						 (i < columns.length - 1 ? "," : "");
+			builder.append(str);
+		} // End for
+		
+		builder.append(" WHERE ").append(identifyingColumn).append("=")
+			   .append(quoteWrap(identifyingValue));
+		update(builder + "");
+	} // End updateRow
 	
 	/**
 	 * Write a table from the database to a csv file 
