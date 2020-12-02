@@ -1,6 +1,7 @@
 package customerrelationsmanagement;
 
 import org.jetbrains.annotations.NotNull;
+import org.joda.time.DateTime;
 
 import java.io.*;
 import java.sql.ResultSet;
@@ -199,7 +200,7 @@ public class Emailer {
 							Object[][] records = crud.getRecords(
 							 "SELECT * FROM statused_sales where order_id = '"
 							 + orderId + "'" + " and order_status = " +
-							 Order.PROCESSED);
+							 "'" + Status.PROCESSED + "'");
 							System.out.println(
 							 " The following product purchases should be " +
 							 "cancelled:\n\n" +
@@ -234,11 +235,11 @@ public class Emailer {
 					
 					String productId = s[0].trim();
 					int requestedQuantity = Integer.parseInt(s[1].trim());
-					boolean isSale = Boolean.parseBoolean(s[2].trim());
+					EventType isSale = EventType.parse(s[2].trim());
 					String location = s[3].trim();
 					
 					if(order == null) {
-						order = new Order(timestamp, isSale, location);
+						order = new Order(time, isSale, location);
 						orderProcessor.setCurrentOrder(order);
 					} // End if
 					
@@ -266,7 +267,6 @@ public class Emailer {
 			catch(Exception e) {
 				System.out.println(e.getMessage());
 				System.out.println(e.getStackTrace());
-				// Todo: this email is in an improper format
 			} // End try-catch
 		} // End for
 		

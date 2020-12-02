@@ -40,9 +40,7 @@ public class Order {
 	private DateTime timeAccepted;
 	private final DateTime timeOrdered;
 	
-
 	public Order(DateTime date,
-
 				 EventType eventType, String location) {
 		
 		timeOrdered = date;
@@ -89,7 +87,7 @@ public class Order {
 			sb.append((randomChar + "").toUpperCase());
 		}
 		return sb.toString();
-	} // End generateId 
+	} // End generateId
 	
 	public String getCustomerEmail() {return email;} // End getCustomerEmail
 	
@@ -99,15 +97,15 @@ public class Order {
 	
 	public String getLocation() {return location;} // End getLocation
 	
-	public String getMessageText() { return messageText; } // End 
+	public String getMessageText() { return messageText; } // End
 	
-	public String getResponseSubject() { return subject; } // End 
+	public String getResponseSubject() { return subject; } // End
 	
 	public Status getStatus() {
 		
 		return status;
 	} // End getStatus
-	// getMessageText 
+	// getMessageText
 	
 	@NotNull public String getStatusString() {
 		
@@ -123,10 +121,10 @@ public class Order {
 		return timeAccepted;
 	} // End getTimeAccepted
 	
-	public DateTime getTimeOrdered() {return timeOrdered;} // End 
+	public DateTime getTimeOrdered() {return timeOrdered;} // End
 	// getResponseSubject
 	
-	private boolean isCancelled() { return status == Status.CANCELLED; } // 
+	private boolean isCancelled() { return status == Status.CANCELLED; } //
 	// isCancelled
 	
 	public boolean isProcessed() {
@@ -166,7 +164,7 @@ public class Order {
 	public void setText(String s) {
 		
 		this.messageText = s;
-	} // End setText 
+	} // End setText
 	
 	public void setTimeAccepted(DateTime today) {
 		this.timeAccepted = today;

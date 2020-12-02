@@ -4,27 +4,30 @@ import org.joda.time.DateTime;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 class OrderProcessor {
-	private final Crud crud;
-	private int recordCount;
-	private Order nextOrder;
+	private final ArrayList<Object[]> acceptedOrders;
 	private BigDecimal assetTotal;
+	private final Crud crud;
+	private final ArrayList<Object[]> dailyAnalytics;
 	private final Stack<Order> dailyOrderStack;
 	private final Queue<Integer> idxList;
 	private final HashMap<Integer, String> indexMap;
+	private Order nextOrder;
+	/* Change relevant quantities from a given order,
+	 and put all items into the acceptedSales list.*/
 	private final HashMap<String, Integer> quantityMap;
-	private final HashMap<String, BigDecimal> wholesaleMap;
+	private int recordCount;
 	private final HashMap<String, BigDecimal> salePriceMap;
-	private final HashMap<String, String> supplierMap;
 	private final ArrayList<Object[]> supplierEvents;
-	private final ArrayList<Object[]> acceptedOrders;
-	private final ArrayList<Object[]> dailyAnalytics;
+	private final HashMap<String, String> supplierMap;
+	private final HashMap<String, BigDecimal> wholesaleMap;
+	public static final int MAX_ROWS = 150000;
 	
 	/**
 	 * OrderProcessor uses an in-memory copy of three inventory columns.
@@ -51,7 +54,7 @@ class OrderProcessor {
 		 "SELECT quantity,idx,product_id,wholesale_cost,sale_price,supplier_id  FROM " +
 		 "inventory");
 		
-		int size = crud.size(); // number of products in the inventory
+		int size = crud.size();
 		idxList = new ArrayDeque<>(size); // ordered list of idx's
 		indexMap = new HashMap<>(size); // map from idx -> product_id
 		quantityMap = new HashMap<>(size); // map from product_id -> quantity
@@ -86,7 +89,7 @@ class OrderProcessor {
 		
 		dailyAnalytics.add(new DailyStats().toArray());
 		recordCount += 1;
-		if(recordCount > 150000) {
+		if(recordCount > MAX_ROWS) {
 			update();
 		}
 		dailyOrderStack.clear();
@@ -167,24 +170,18 @@ class OrderProcessor {
 	
 	public static void checkUnstatusedSales(Crud crud)
 	throws SQLException, FileNotFoundException {
-		Object[][] unstatusedSales = crud.getRecords(
-		 "Select "+ String.join(",", Tables.UNSTATUSED.columns()) +" from unstatused_sales");
-		if(unstatusedSales.length == 0) { return; }
-		String pathname = "temp_order_file.csv";
-		File tempOrderFile = new File(pathname);
-		PrintWriter pw = new PrintWriter(tempOrderFile);
-		pw.println(Arrays.toString(Tables.UNSTATUSED.columns()));
-		for(Object[] unstatusedSale: unstatusedSales) {
-			for(int i = 0; i < unstatusedSale.length; i++) {
-				pw.print(unstatusedSale[i] + (i == unstatusedSale.length - 1 ? "" : ","));
-			}
-			pw.println();
+		
+		ResultSet tableCheck = crud.query("select * from unstatused_sales");
+		int count = crud.rowCountResults(tableCheck);
+		if(count == 0) { return; }
+		File tempUnprocessed = crud.writeToFile("temp_unprocessed.csv", Tables.UNSTATUSED.columns(), tableCheck);
+		OrderProcessor.runFileOrders(crud, "temp_unprocessed.csv");
+		crud.update("Delete from unstatused_sales");
+		if(tempUnprocessed.delete()){
+			System.out.println("deleted the file, processed " + count + " records from unstatused_sales.");
+		} else {
+			System.out.println("I hate everything");
 		}
-		pw.close();
-		OrderProcessor.runFileOrders(crud, pathname);
-		crud.update("delete from unstatused_sales");
-		System.out.println("inserted " + unstatusedSales.length + " rows into statused_sales table");
-		tempOrderFile.deleteOnExit();
 	}
 	
 	/**
@@ -224,6 +221,7 @@ class OrderProcessor {
 				  BigDecimal.valueOf(product.getQuantity())));
 			}
 		} else {
+			
 			for(Iterator<Product> it = nextOrder.productIterator();
 				it.hasNext(); ) {
 				Product product = it.next();
@@ -232,18 +230,31 @@ class OrderProcessor {
 				Integer requestedQuantity = product.getQuantity();
 				if(inventoryQuantity < requestedQuantity) {
 					int restockQuantity = new Random().nextInt(450);
-					
 					quantityMap.put(productId, requestedQuantity
 											   + restockQuantity + 50);
 					
-					supplierEvents.add(new Object[]{
-					 supplierMap.get(productId),
+					String supplierId = supplierMap.get(productId);
+					
+					
+					
+					
+					Object[] currentObjs = new Object[]{
+					 supplierId,
 					 productId,
 					 restockQuantity,
-					 Order.dateTimeFormat.print(DateTime.now())
-					});
+					 
+					 
+					 // FAILED TESTS
+					 //simpDate.format(currentDate)
+					 //currentDate
+					 //DateTime.now() <- Original test
+					 Order.dtf.print(DateTime.now())
+					 
+					}; // End currentObjs array 
+					
+					supplierEvents.add(currentObjs);
 				} // End if
-			} // End for
+			}
 			responsePrefix += "The following products could not be processed:";
 			responseSuffix = "We are currently unable to fulfill this order.";
 			nextOrder.setStatus(Status.CANCELLED);
@@ -437,6 +448,7 @@ class OrderProcessor {
 		);
 		crud.update("DROP TABLE inventory");
 		crud.update("ALTER TABLE temp2 RENAME TO inventory");
+		crud.update("DROP TABLE temp_table");
 	} // End updateAndClose
 	
 	private class DailyStats {
@@ -577,7 +589,7 @@ class OrderProcessor {
 				dailyProductCount += order.size();
 			}
 			return new Object[] {
-			 Order.dateTimeFormat.print(fiscalDate),// "fiscal_date", 
+			 Order.dtf.print(fiscalDate),// "fiscal_date", 
 			 assetTotal,              // "asset_total", 
 			 incomeTotal,             // "daily_income",
 			 revenueTotal,            // "daily_revenue", 
@@ -588,4 +600,4 @@ class OrderProcessor {
 			};
 		}
 	}
-} // End OrderProcessor
+} // End SalesProcessor
