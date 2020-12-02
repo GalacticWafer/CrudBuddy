@@ -28,6 +28,7 @@ class OrderProcessor {
 	private final HashMap<String, String> supplierMap;
 	private final HashMap<String, BigDecimal> wholesaleMap;
 	public static final int MAX_ROWS = 150000;
+	public boolean online;
 	
 	/**
 	 * OrderProcessor uses an in-memory copy of three inventory columns.
@@ -47,7 +48,7 @@ class OrderProcessor {
 	public OrderProcessor(Crud crud) throws SQLException {
 		
 		this.crud = crud;
-		
+		this.online = false;
 		crud.setWorkingTable("inventory");
 		
 		ResultSet rs = crud.query(
@@ -91,6 +92,9 @@ class OrderProcessor {
 		recordCount += 1;
 		if(recordCount > MAX_ROWS) {
 			update();
+		}
+		if(dailyOrderStack.size() == 1 && online) {
+			acceptedOrders.addAll(dailyOrderStack.peek().toArray());
 		}
 		dailyOrderStack.clear();
 	}
@@ -167,7 +171,8 @@ class OrderProcessor {
 			} // End if
 		} // End while
 	} // End changeQuantities
-	
+
+	public void setOnline(boolean b) { online = b; }
 	public static void checkUnstatusedSales(Crud crud)
 	throws SQLException, FileNotFoundException {
 		
@@ -175,7 +180,9 @@ class OrderProcessor {
 		int count = crud.rowCountResults(tableCheck);
 		if(count == 0) { return; }
 		File tempUnprocessed = crud.writeToFile("temp_unprocessed.csv", Tables.UNSTATUSED.columns(), tableCheck);
-		OrderProcessor.runFileOrders(crud, "temp_unprocessed.csv");
+		OrderProcessor op = new OrderProcessor(crud);
+		op.setOnline(true);
+		op.runFileOrders("temp_unprocessed.csv");
 		crud.update("Delete from unstatused_sales");
 		if(tempUnprocessed.delete()){
 			System.out.println("deleted the file, processed " + count + " records from unstatused_sales.");
