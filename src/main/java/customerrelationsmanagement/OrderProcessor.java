@@ -192,7 +192,7 @@ class OrderProcessor {
 		String responseSuffix;
 		
 		if(canProcessOrder) {
-			responsePrefix += "The following products have been processed: ";
+			responsePrefix += "\nThe following products have been processed: ";
 			responseSuffix = "Thank you for using our service.";
 			nextOrder.setStatus(Status.PROCESSED);
 			for(Iterator<Product> it = nextOrder.productIterator();

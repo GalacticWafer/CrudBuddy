@@ -8,29 +8,29 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class Main {
-	public static final String INVENTORY_PATH = "inventory_team4.csv";
-	//public static final String INVENTORY_PATH = null;
+	//public static final String INVENTORY_PATH = "inventory_team4.csv";
+	public static final String INVENTORY_PATH = null;
 	
 	//public static final String analyticsDir = "analytics";
 	public static final String analyticsDir = null;
 	
-	public static final String ORDERS_PATH = "PrietoTest_SupplierEvents.csv";
-	//public static final String ORDERS_PATH = "";
+	//public static final String ORDERS_PATH = "customer_orders_A_team4.csv";
+	public static final String ORDERS_PATH = "";
 	
-	public static final boolean START_GUI = true;
-	//public static final boolean START_GUI = false;
+	//public static final boolean START_GUI = true;
+	public static final boolean START_GUI = false;
 	
-	//public static final boolean START_MAIL = true;
+	//public static final boolean START_MAIL = false;
 	public static final boolean START_MAIL = true;
-
+	
 	private static Credentials credentials;
 	private static Crud crud;
 	private static Emailer mailer;
 	private static OrderProcessor orderProcessor;
 	private static Restoration rest;
 	
-	public Main(Credentials credentials)
-			throws IOException, SQLException, ParseException {
+	public Main(Credentials credentials, Crud queryMaker)
+	throws IOException, SQLException, ParseException, MessagingException {
 		startServices(credentials);
 	}
 	
@@ -40,10 +40,11 @@ public class Main {
 	
 	
 	public void startServices(Credentials credentials)
-			throws IOException, SQLException, ParseException {
+	throws IOException, SQLException, ParseException, MessagingException {
+		
+		
 		
 		this.crud = credentials.getCrud();
-		
 		if(INVENTORY_PATH != null && !INVENTORY_PATH.equals("")) {
 			rest = new Restoration(crud, INVENTORY_PATH, "customer_orders_A_team4.csv",true, analyticsDir);
 		}
@@ -53,13 +54,13 @@ public class Main {
 			timer.schedule(new TimerTask() {
 				@Override public void run() {
 					try {
-						System.out.println("running");
+						//System.out.println("Check #" + i++); Shows how many times it's looped
 						mailer.processEmails(crud);
 					} catch(MessagingException | SQLException | IOException e) {
 						e.printStackTrace();
 					}
 				}
-			}, 50);
+			}, 50, 1000);
 		}
 		if(START_GUI) {
 			new GUI(crud);
@@ -67,5 +68,8 @@ public class Main {
 		if(ORDERS_PATH != null && !ORDERS_PATH.equals("")) {
 			OrderProcessor.runFileOrders(crud, ORDERS_PATH);
 		}
+		
+		
+		
 	}
 }

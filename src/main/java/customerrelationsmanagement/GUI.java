@@ -147,8 +147,8 @@ public class GUI {
 
 		try {
 			chartPanel = new ChartPanel(chartMaker
-					.getChart(dateString, chartType));
-		} catch(SQLException throwables) {
+			 .getChart(dateString, chartType));
+		} catch(SQLException | ParseException throwables) {
 			throwables.printStackTrace();
 		}
 		analyticsFrame = new JFrame();
@@ -400,7 +400,7 @@ public class GUI {
 			ytdButtons[i].setVisible(false);
 			c.gridy = i + 7;
 			east.add(ytdButtons[i], c);
-			ytdButtons[i].addActionListener(e -> 
+			ytdButtons[i].addActionListener(e ->
 			 displayChart(queryDate.getText(), type));
 		}
 
