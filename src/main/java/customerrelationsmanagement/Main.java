@@ -13,12 +13,11 @@ public class Main {
 	 false;
 	
 	public static final String INVENTORY_PATH =
-	// "inventory_team4.csv";
-	null;
+	 "inventory_team4.csv";
+	//null;
 	
 	public static final String ORDERS_PATH =
 	//"customer_orders_A_team4.csv";
-	
 		null;
 	
 	public static final boolean START_GUI =
@@ -63,8 +62,12 @@ public class Main {
 					try {
 						System.out.println("Check");// Shows how many times it's looped
 						mailer.processEmails(crud);
-						OrderProcessor.checkUnstatusedSales(crud);
 					} catch(MessagingException | SQLException | IOException e) {
+						e.printStackTrace();
+					}
+					try{
+						OrderProcessor.checkUnstatusedSales(crud);
+					}catch(SQLException | IOException e) {
 						e.printStackTrace();
 					}
 				}

@@ -93,6 +93,11 @@ public class Order {
 	
 	/** @return the unique order ID for all items in this Order. */
 	public String getId() {return orderId;} // End getId
+	
+	public Product getLastProduct() {
+		if(products.size() == 0) { return null; }
+		return products.get(products.size() - 1);
+	}
 	// getTimeOrdered
 	
 	public String getLocation() {return location;} // End getLocation
@@ -190,7 +195,6 @@ public class Order {
 	 */
 	public ArrayList<Object[]> toArray() {
 		
-		if(timeAccepted == null) {return null;}
 		ArrayList<Object[]> array = new ArrayList<>();
 		for(Iterator<Product> it = productIterator(); it.hasNext(); ) {
 			Product p = it.next();
@@ -202,7 +206,7 @@ public class Order {
 			  p.getId(),               // "product_id",
 			  p.getQuantity(),         // "product_quantity",
 			  dateTimeFormat.print(timeOrdered),  // "date_ordered",
-			  dateTimeFormat.print(timeAccepted), // "date_accepted",
+			  timeAccepted == null ? "NULL" : dateTimeFormat.print(timeAccepted), // "date_accepted",
 			  status.toString(),       // "status",
 			 });
 		} // End for

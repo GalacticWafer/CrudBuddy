@@ -53,25 +53,7 @@ public class Restoration {
 			   .append("')").append(scanner.hasNextLine() ? "," : "");
 		}
 		crud.update(sql.toString());
-		
-		if(!ordersPath.equals("")) {
-			scanner = new Scanner(new File(ordersPath));
-			scanner.nextLine();
-			sql = new StringBuilder();
-			str = "INSERT INTO " + crud.getDatabaseName() + ".unstatused_sales (" +
-				  "date_ordered,cust_email,cust_location,product_id,product_quantity)VALUES";
-			sql.append(str);
-			while(scanner.hasNextLine()) {
-				String[] l = scanner.nextLine().split(",");
-				sql.append("('").append(l[0]).append("','")
-				   .append(l[1]).append("','")
-				   .append(l[2]).append("','")
-				   .append(l[3]).append("',")
-				   .append(Integer.parseInt(l[4]))
-				   .append(")").append(scanner.hasNextLine() ? "," : "");
-			}
-			crud.update(sql.toString());
-		}
+
 	}
 	
 	private void rebuildTables(Crud crud) throws SQLException {
