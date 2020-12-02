@@ -1,11 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="OutbreakSource@45.79.55.190" uuid="412a762a-cfa9-4aff-9249-4e4a621ed992">
+    <data-source source="LOCAL" name="ubello@45.79.55.190" uuid="17e772c5-6f8c-4b7b-aab0-6c30b30669e9">
       <driver-ref>mysql.8</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://45.79.55.190:3306/OutbreakSource</jdbc-url>
+    </data-source>
+    <data-source source="LOCAL" name="GalacticWafer@45.79.55.190" uuid="a0ad7f06-420c-4379-ab36-363462eb8ca4">
+      <driver-ref>mysql.8</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://45.79.55.190:3306/GalacticWafer</jdbc-url>
+    </data-source>
+    <data-source source="LOCAL" name="Hamadesigns@45.79.55.190" uuid="02b5f295-ce32-4880-a32e-6b3838ffcf86">
+      <driver-ref>mysql.8</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://45.79.55.190:3306/Hamadesigns</jdbc-url>
     </data-source>
   </component>
 </project>
