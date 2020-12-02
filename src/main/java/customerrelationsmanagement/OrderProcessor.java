@@ -7,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 class OrderProcessor {
@@ -27,8 +26,7 @@ class OrderProcessor {
 	private final ArrayList<Object[]> supplierEvents;
 	private final HashMap<String, String> supplierMap;
 	private final HashMap<String, BigDecimal> wholesaleMap;
-	public static final int MAX_ROWS = 150000;
-	
+
 	/**
 	 * OrderProcessor uses an in-memory copy of three inventory columns.
 	 *
@@ -45,15 +43,15 @@ class OrderProcessor {
 	 *  then updating quantities from the inventory upon closure.
 	 */
 	public OrderProcessor(Crud crud) throws SQLException {
-		
+
 		this.crud = crud;
-		
+
 		crud.setWorkingTable("inventory");
-		
+
 		ResultSet rs = crud.query(
-		 "SELECT quantity,idx,product_id,wholesale_cost,sale_price,supplier_id  FROM " +
-		 "inventory");
-		
+				"SELECT quantity,idx,product_id,wholesale_cost,sale_price FROM " +
+						"inventory");
+
 		int size = crud.size();
 		idxList = new ArrayDeque<>(size); // ordered list of idx's
 		indexMap = new HashMap<>(size); // map from idx -> product_id
@@ -62,9 +60,12 @@ class OrderProcessor {
 		salePriceMap = new HashMap<>(size); // map from product_id -> quantity
 		acceptedOrders = new ArrayList<>(size); // list of Object[]'s for
 		supplierEvents = new ArrayList<>(); // list of all supplier events
-		dailyOrderStack = new Stack<>(); // list of rows with matching date_ordered
-		dailyAnalytics = new ArrayList<>(); //list of analytics created from dailyOrderStack's contents
-		supplierMap = new HashMap<>(); // map of <product_id, supplier_id> 
+		dailyOrderStack =
+				new Stack<>(); // list of rows with matching date_ordered
+		dailyAnalytics =
+				new ArrayList<>(); //list of analytics created from dailyOrderStack's
+		// contents
+		supplierMap = new HashMap<>(); // map of <product_id, supplier_id>
 		assetTotal = BigDecimal.ZERO;
 		recordCount = 0;
 		while(rs.next()) {
@@ -73,39 +74,40 @@ class OrderProcessor {
 			String productId = rs.getString(3);
 			BigDecimal wholesaleCost = rs.getBigDecimal(4);
 			BigDecimal salePrice = rs.getBigDecimal(5);
-			String supplierID = rs.getString(6);
-			
+
 			quantityMap.put(productId, quantity);
 			wholesaleMap.put(productId, wholesaleCost);
 			salePriceMap.put(productId, salePrice);
 			indexMap.put(idx, productId);
 			idxList.add(idx);
-			assetTotal = assetTotal.add(salePrice.multiply(BigDecimal.valueOf(quantity)));
-			supplierMap.put(productId, supplierID);
+			assetTotal =
+					assetTotal.add(salePrice.multiply(BigDecimal.valueOf(quantity)));
+			//Todo Adam, add the product id and the key as the value in
+			// supplierMap
 		} // End while
 	} // End Constructor
-	
+
 	private void analyzeOrders() {
-		
+
 		dailyAnalytics.add(new DailyStats().toArray());
 		recordCount += 1;
-		if(recordCount > MAX_ROWS) {
+		if(recordCount > 150000) {
 			update();
 		}
 		dailyOrderStack.clear();
 	}
-	
+
 	/**
 	 * @return true if the entire order can be fulfilled
 	 */
 	private Boolean canProcessOrder() {
-		
+
 		ArrayList<Boolean> canFulfillProducts = new ArrayList<>();
 		boolean isSale = nextOrder.eventType() == EventType.BUYER;
-		
+
 		for(Iterator<Product> productIter = nextOrder.productIterator();
 			productIter.hasNext(); ) {
-			
+
 			Product product = productIter.next();
 			String productId = product.getId();
 			Integer inventoryQuantity = quantityMap.get(product.getId());
@@ -113,23 +115,23 @@ class OrderProcessor {
 			boolean validQuantity = product.getQuantity() > 0;
 			boolean productNotNull = productId != null;
 			boolean hasSufficientQuantity;
-			
+
 			hasSufficientQuantity =
-			 !isSale || inventoryQuantity >= requestedQuantity;
-			
+					!isSale || inventoryQuantity >= requestedQuantity;
+
 			boolean canFulfillCurrentProduct
-			 = validQuantity
-			   && productNotNull
-			   && hasSufficientQuantity;
-			
+					= validQuantity
+					&& productNotNull
+					&& hasSufficientQuantity;
+
 			canFulfillProducts.add(canFulfillCurrentProduct);
-			
+
 			product.setIsProcessable(
-			 canFulfillCurrentProduct, inventoryQuantity);
+					canFulfillCurrentProduct, inventoryQuantity);
 		} // End for
-		
+
 		boolean canProcessOrder = !canFulfillProducts.contains(false);
-		
+
 		if(canProcessOrder || !isSale) {
 			nextOrder.setStatus(Status.PROCESSED);
 			changeQuantities();
@@ -144,46 +146,30 @@ class OrderProcessor {
 				update();
 			}
 		}
-		
+
 		return canProcessOrder;
 	} // End canProcessOrder
-	
+
 	private void changeQuantities() {
-		
+
 		nextOrder.setTimeAccepted();
 		Iterator<Product> it = nextOrder.productIterator();
-		
+
 		while(it.hasNext()) {
 			Product prod = it.next();
 			String productId = prod.getId();
-			
+
 			if(prod.isProcessable()) {
 				Integer nextQuantity = quantityMap.get(productId);
 				int eventQuantity =
-				 prod.getQuantity() *
-				 (nextOrder.eventType() == EventType.BUYER ? -1 : 1);
+						prod.getQuantity() *
+								(nextOrder.eventType() == EventType.BUYER ? -1 : 1);
 				int newQuantity = nextQuantity + eventQuantity;
 				quantityMap.put(productId, newQuantity);
 			} // End if
 		} // End while
 	} // End changeQuantities
-	
-	public static void checkUnstatusedSales(Crud crud)
-	throws SQLException, FileNotFoundException {
-		
-		ResultSet tableCheck = crud.query("select * from unstatused_sales");
-		int count = crud.rowCountResults(tableCheck);
-		if(count == 0) { return; }
-		File tempUnprocessed = crud.writeToFile("temp_unprocessed.csv", Tables.UNSTATUSED.columns(), tableCheck);
-		OrderProcessor.runFileOrders(crud, "temp_unprocessed.csv");
-		crud.update("Delete from unstatused_sales");
-		if(tempUnprocessed.delete()){
-			System.out.println("deleted the file, processed " + count + " records from unstatused_sales.");
-		} else {
-			System.out.println("I hate everything");
-		}
-	}
-	
+
 	/**
 	 * Processes the <code>nextOrder</code> to set its fields according to
 	 * all Products it contains.
@@ -193,35 +179,35 @@ class OrderProcessor {
 	 *  can be processed. Otherwise, false.
 	 */
 	public boolean processOrder() {
-		
+
 		boolean canProcessOrder = canProcessOrder();
 		assert nextOrder != null;
 		StringBuilder builder = new StringBuilder();
-		
+
 		for(Iterator<Product> it = nextOrder.productIterator();
 			it.hasNext(); ) {
 			builder.append(it.next().toString()).append("\n");
 		} // End for.
-		
+
 		String orderNumber = "Order #" + nextOrder.getId();
-		
+
 		String responsePrefix = orderNumber;
 		String responseSuffix;
-		
+
 		if(canProcessOrder) {
-			responsePrefix += "\nThe following products have been processed: ";
+			responsePrefix += "The following products have been processed: ";
 			responseSuffix = "Thank you for using our service.";
 			nextOrder.setStatus(Status.PROCESSED);
 			for(Iterator<Product> it = nextOrder.productIterator();
 				it.hasNext(); ) {
 				Product product = it.next();
-				
+
 				assetTotal = assetTotal.subtract(
-				 salePriceMap.get(product.getId()).multiply(
-				  BigDecimal.valueOf(product.getQuantity())));
+						salePriceMap.get(product.getId()).multiply(
+								BigDecimal.valueOf(product.getQuantity())));
 			}
 		} else {
-			
+
 			for(Iterator<Product> it = nextOrder.productIterator();
 				it.hasNext(); ) {
 				Product product = it.next();
@@ -229,46 +215,42 @@ class OrderProcessor {
 				Integer inventoryQuantity = quantityMap.get(productId);
 				Integer requestedQuantity = product.getQuantity();
 				if(inventoryQuantity < requestedQuantity) {
-					int restockQuantity = new Random().nextInt(450);
+					// Todo Adam refactor the code below by introducing
+					//  an int variable (from the nextInt() call)
+					//  check this link for instructions on completing this
+					//  action
+					// https://www.jetbrains.com/help/idea/extract-variable
+					// .html
 					quantityMap.put(productId, requestedQuantity
-											   + restockQuantity + 50);
-					
-					String supplierId = supplierMap.get(productId);
-					
-					
-					
-					
-					Object[] currentObjs = new Object[]{
-					 supplierId,
-					 productId,
-					 restockQuantity,
-					 
-					 
-					 // FAILED TESTS
-					 //simpDate.format(currentDate)
-					 //currentDate
-					 //DateTime.now() <- Original test
-					 Order.dtf.print(DateTime.now())
-					 
-					}; // End currentObjs array 
-					
-					supplierEvents.add(currentObjs);
-				} // End if
+							+ new Random().nextInt(450) +
+							50);
+					//Todo Adam the productId to get the appropriate
+					// supplierId from a supplierMap
+					// use the date, supplierId, and
+
+					// Todo Adam add a new Object[] to supplier with:
+					//  the supplierId
+					//  the productId
+					//  the int variable you introduced,
+					//  the time "order" was ordered (look in Order.java for
+					//  the appropriate getter method)
+
+				}
 			}
 			responsePrefix += "The following products could not be processed:";
 			responseSuffix = "We are currently unable to fulfill this order.";
 			nextOrder.setStatus(Status.CANCELLED);
 		} // End if.
-		
+
 		nextOrder.setText(responsePrefix + "\n\n"
-						  + builder.toString()
-						  + "\n" + responseSuffix);
-		
+				+ builder.toString()
+				+ "\n" + responseSuffix);
+
 		nextOrder.setSubject(orderNumber + " "
-							 + nextOrder.getStatusString());
+				+ nextOrder.getStatusString());
 		return canProcessOrder;
 	} // End processOrder
-	
+
 	/**
 	 * Process all orders from a file.
 	 *
@@ -283,53 +265,51 @@ class OrderProcessor {
 	 *  saust@hotmail.com,38813,3R8YXZCS820Y,2
 	 */
 	public void runFileOrders(String pathname)
-	throws SQLException, FileNotFoundException {
-		
+			throws SQLException, FileNotFoundException {
+
 		Scanner scanner = new Scanner(new File(pathname));
 		scanner.nextLine();
 		String[] line = scanner.nextLine().split(",");
-		
+
 		Order order = new Order(
-
-		 DateTime.parse(line[0].split(" ")[0]),
-
-		 EventType.BUYER,
-		 line[2]
+				DateTime.parse(line[0]),
+				EventType.BUYER,
+				line[2]
 		);
-		
+
 		order.setEmail(line[1]);
 		this.setCurrentOrder(order);
 		int i = 2;
 		while(line != null && !line[0].trim().equals("")) {
-			DateTime nextTime = DateTime.parse(line[0].split(" ")[0]);
+			DateTime nextTime = DateTime.parse(line[0]);
 			String nextEmail = line[1];
 			String nextLocation = line[2];
 			String nextProductId = line[3];
 			int nextRequestedQuantity = Integer.parseInt(line[4]);
-			
+
 			Product nextProduct = new Product(
-			 nextProductId, nextRequestedQuantity);
-			
+					nextProductId, nextRequestedQuantity);
+
 			boolean isNewDate = order.getTimeOrdered().isBefore(nextTime);
 			boolean isNewEmail =
-			 !order.getCustomerEmail().equals(nextEmail);
+					!order.getCustomerEmail().equals(nextEmail);
 			boolean isNewLocation =
-			 !order.getLocation().equals(nextLocation);
-			
+					!order.getLocation().equals(nextLocation);
+
 			boolean isNewOrder = isNewEmail
-								 || isNewLocation
-								 || isNewDate;
-			
+					|| isNewLocation
+					|| isNewDate;
+
 			if(isNewOrder || !scanner.hasNextLine()) {
-				
+
 				if(!scanner.hasNextLine() && isNewOrder) {
 					order.addProduct(nextProduct);
 				} // End if
-				
+
 				processOrder();
 				if(!dailyOrderStack.isEmpty()) {
 					DateTime lastOrderTime =
-					 dailyOrderStack.peek().getTimeOrdered();
+							dailyOrderStack.peek().getTimeOrdered();
 					DateTime nextOrderTime = order.getTimeOrdered();
 					if(lastOrderTime.isBefore(nextOrderTime)) {
 						analyzeOrders();
@@ -338,24 +318,21 @@ class OrderProcessor {
 				}
 				dailyOrderStack.push(order);
 				order = new Order(
-
-				 DateTime.parse(line[0].split(" ")[0]),
-
-
-				 EventType.BUYER,
-				 nextLocation
+						DateTime.parse(line[0]),
+						EventType.BUYER,
+						nextLocation
 				);
-				
+
 				order.setEmail(nextEmail);
 				setCurrentOrder(order);
-				
+
 				if(!scanner.hasNextLine()) {
 					break;
 				} // End if
 			} // End if
-			
+
 			order.addProduct(nextProduct);
-			
+
 			if(scanner.hasNextLine()) {
 				line = scanner.nextLine().split(",");
 			} else {
@@ -363,19 +340,19 @@ class OrderProcessor {
 			} // End if
 			i++;
 		} // End while
-		
+
 		if(!dailyOrderStack.isEmpty()) {
 			analyzeOrders();
 		}
 		updateAndClose();
 	} // End runFileOrders
-	
+
 	public static void runFileOrders(Crud crud, String ordersPath)
-	throws SQLException, FileNotFoundException {
-		
+			throws SQLException, FileNotFoundException {
+
 		new OrderProcessor(crud).runFileOrders(ordersPath);
 	}
-	
+
 	/**
 	 * Changes nextOrder to a new Order object which should be processed.
 	 *
@@ -383,92 +360,91 @@ class OrderProcessor {
 	 *  the next order to be processed.
 	 */
 	public void setCurrentOrder(Order order) {
-		
+
 		this.nextOrder = order;
 	} // End seCurrentOrder
-	
+
 	private void update() {
 		crud.setWorkingTable(Tables.STATUSED.toString());
 		if(acceptedOrders.size() > 0) {
 			crud.insertRecords(Tables.STATUSED.columns(),
-			 acceptedOrders.iterator(), acceptedOrders.size());
+					acceptedOrders.iterator(), acceptedOrders.size());
 		} // End if
-		crud.setWorkingTable(Tables.SUPPLIER.toString());
-		if(supplierEvents.size() > 0) {
-			crud.insertRecords(Tables.SUPPLIER.columns(),
-			 supplierEvents.iterator(), supplierEvents.size());
-		} // End if
+		acceptedOrders.clear();
 		crud.setWorkingTable(Tables.ANALYTICS.toString());
 		if(dailyAnalytics.size() > 0) {
 			crud.insertRecords(Tables.ANALYTICS.columns(),
-			 dailyAnalytics.iterator(), dailyAnalytics.size());
+					dailyAnalytics.iterator(), dailyAnalytics.size());
 		} // End if
 		dailyAnalytics.clear();
 		recordCount = 0;
 	}
-	
+
 	/** Update all the tables after orders have been processed. */
 	public void updateAndClose() throws SQLException {
+
+		// Todo Adam aet the working table to your new suppler table,
+		//  and insert the records exactly the same way it was done
+		//  immediately above this comment
 		update();
 		// update the inventory table to effectively close the processor.
 		StringBuilder builder = new StringBuilder();
 		Iterator<Integer> idxItr = idxList.iterator();
-		
+
 		while(idxItr.hasNext()) {
 			Integer idx = idxItr.next();
 			String productId = indexMap.get(idx);
 			Integer quantity = quantityMap.get(productId);
-			
+
 			builder.append("('").append(productId).append("',")
-				   .append(quantity).append(")")
-				   .append(idxItr.hasNext() ? "," : ";");
+					.append(quantity).append(")")
+					.append(idxItr.hasNext() ? "," : ";");
 		} // End while
-		
+
 		crud.update("Drop table if exists temp_table");
 		crud.update("Drop table if exists temp2");
 		crud.update(
-		 "CREATE TEMPORARY TABLE temp_table(" +
-		 "quantity int(16)," +
-		 "product_id varchar(16));");
-		
+				"CREATE TEMPORARY TABLE temp_table(" +
+						"quantity int(16)," +
+						"product_id varchar(16));");
+
 		crud.update(
-		 "INSERT INTO temp_table(product_id,quantity)VALUES" +
-		 builder.toString());
-		
+				"INSERT INTO temp_table(product_id,quantity)VALUES" +
+						builder.toString());
+
 		crud.update(
-		 "CREATE TABLE temp2 SELECT " +
-		 "inventory.product_id," +
-		 "inventory.wholesale_cost," +
-		 "inventory.sale_price," +
-		 "inventory.supplier_id," +
-		 "inventory.idx," +
-		 "temp_table.quantity " +
-		 "FROM inventory INNER JOIN temp_table " +
-		 "ON inventory.product_id = temp_table.product_id"
+				"CREATE TABLE temp2 SELECT " +
+						"inventory.product_id," +
+						"inventory.wholesale_cost," +
+						"inventory.sale_price," +
+						"inventory.supplier_id," +
+						"inventory.idx," +
+						"temp_table.quantity " +
+						"FROM inventory INNER JOIN temp_table " +
+						"ON inventory.product_id = temp_table.product_id"
 		);
 		crud.update("DROP TABLE inventory");
 		crud.update("ALTER TABLE temp2 RENAME TO inventory");
-		crud.update("DROP TABLE temp_table");
 	} // End updateAndClose
-	
+
 	private class DailyStats {
 		DateTime fiscalDate;
 		BigDecimal incomeTotal;
 		BigDecimal revenueTotal;
 		Object[][] topCustomers;
 		Object[][] topProducts;
-		
+
 		public DailyStats() {
 			fiscalDate = dailyOrderStack
-			 .peek().getTimeOrdered().withTime(0, 0, 0, 0);
-			
+					.peek().getTimeOrdered().withTime(0, 0, 0, 0);
+
 			calculateRevenueTotal();
 			this.topCustomers = calculateTopCustomers();
 			this.topProducts = calculateTopProducts();
 		}
-		
+
 		private void calculateRevenueTotal() {
-			
+
 			revenueTotal = BigDecimal.ZERO;
 			incomeTotal = BigDecimal.ZERO;
 			for(Order order: dailyOrderStack) {
@@ -481,39 +457,39 @@ class OrderProcessor {
 					String id = product.getId();
 					BigDecimal salePrice = salePriceMap.get(id);
 					BigDecimal quantity =
-					 new BigDecimal(product.getQuantity());
+							new BigDecimal(product.getQuantity());
 					revenueTotal = revenueTotal
-					 .add((salePrice.subtract(wholesaleMap.get(id)))
-					  .multiply(quantity));
+							.add((salePrice.subtract(wholesaleMap.get(id)))
+									.multiply(quantity));
 					incomeTotal = incomeTotal.add(salePrice);
 				}
 			}
 		}
-		
+
 		private Object[][] calculateTopCustomers() {
-			
+
 			HashMap<String, BigDecimal> dailyCustomers = new HashMap<>();
 			for(Order order: dailyOrderStack) {
 				if(!(order.getStatus().compareTo(Status.UNPROCESSED) > 0)) {
 					continue;
 				}
-				
+
 				BigDecimal orderTotal = BigDecimal.ZERO;
 				Iterator<Product> it = order.productIterator();
 				while(it.hasNext()) {
 					Product product = it.next();
 					BigDecimal salePrice = salePriceMap.get(product.getId());
 					BigDecimal quantity =
-					 BigDecimal.valueOf(product.getQuantity());
+							BigDecimal.valueOf(product.getQuantity());
 					orderTotal = orderTotal.add(salePrice.multiply(quantity));
 				}
 				dailyCustomers.put(order.getCustomerEmail(), orderTotal);
 			}
 			List<Map.Entry<String, BigDecimal>> list =
-			 new LinkedList<>(dailyCustomers.entrySet());
-			// Sort the list 
+					new LinkedList<>(dailyCustomers.entrySet());
+			// Sort the list
 			list.sort(Map.Entry.comparingByValue());
-			
+
 			Object[][] tops = new Object[list.size()][2];
 			Iterator<Map.Entry<String, BigDecimal>> it = list.iterator();
 			for(int i = 0; i < list.size(); i++) {
@@ -522,9 +498,9 @@ class OrderProcessor {
 			}
 			return tops;
 		}
-		
+
 		private Object[][] calculateTopProducts() {
-			
+
 			HashMap<String, Integer> dailyQuantities = new HashMap<>();
 			for(Order order: dailyOrderStack) {
 				if(!(order.getStatus().compareTo(Status.UNPROCESSED) > 0)) {
@@ -534,21 +510,21 @@ class OrderProcessor {
 				while(it.hasNext()) {
 					Product product = it.next();
 					if(dailyQuantities.containsKey(product.getId())) {
-						
+
 						dailyQuantities.put(
-						 product.getId(),
-						 product.getQuantity() +
-						 dailyQuantities.get(product.getId()));
+								product.getId(),
+								product.getQuantity() +
+										dailyQuantities.get(product.getId()));
 					} else {
 						dailyQuantities
-						 .put(product.getId(), product.getQuantity());
+								.put(product.getId(), product.getQuantity());
 					}
 				}
 			}
 			List<Map.Entry<String, Integer>> list =
-			 new LinkedList<>(dailyQuantities.entrySet());
+					new LinkedList<>(dailyQuantities.entrySet());
 			HashMap<String, Integer> temp = new LinkedHashMap<>();
-			// Sort the list 
+			// Sort the list
 			String str = "";
 			Object[][] tops = new Object[list.size()][2];
 			list.sort(Map.Entry.comparingByValue());
@@ -560,27 +536,27 @@ class OrderProcessor {
 			}
 			return tops;
 		}
-		
+
 		private String getTopCustomers() {
-			
+
 			String s = "";
 			for(Object[] topCustomer: topCustomers) {
 				s += topCustomer[0] + " " + topCustomer[1] + "\t";
 			}
 			return s;
 		}
-		
+
 		private String getTopProducts() {
-			
+
 			String s = "";
 			for(Object[] topProduct: topProducts) {
 				s += topProduct[0] + " " + topProduct[1] + "\t";
 			}
 			return s;
 		}
-		
+
 		public Object[] toArray() {
-			
+
 			int dailyProductCount = 0;
 			for(Order order: dailyOrderStack) {
 				if(order.getStatus().compareTo(Status.UNPROCESSED) <= 0) {
@@ -589,14 +565,14 @@ class OrderProcessor {
 				dailyProductCount += order.size();
 			}
 			return new Object[] {
-			 Order.dtf.print(fiscalDate),// "fiscal_date", 
-			 assetTotal,              // "asset_total", 
-			 incomeTotal,             // "daily_income",
-			 revenueTotal,            // "daily_revenue", 
-			 getTopCustomers() + "",  // "top_customers",
-			 getTopProducts() + "",   // "top_products", 
-			 dailyOrderStack.size(),  // "order_count", 
-			 dailyProductCount,       // "product_count"
+					Order.dtf.print(fiscalDate),// "fiscal_date",
+					assetTotal,              // "asset_total",
+					incomeTotal,             // "daily_income",
+					revenueTotal,            // "daily_revenue",
+					getTopCustomers() + "",  // "top_customers",
+					getTopProducts() + "",   // "top_products",
+					dailyOrderStack.size(),  // "order_count",
+					dailyProductCount,       // "product_count"
 			};
 		}
 	}
