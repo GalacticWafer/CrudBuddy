@@ -248,7 +248,7 @@ class OrderProcessor {
 					 //simpDate.format(currentDate)
 					 //currentDate
 					 //DateTime.now() <- Original test
-					 Order.dtf.print(DateTime.now())
+					 Order.dateTimeFormat.print(DateTime.now())
 					 
 					}; // End currentObjs array 
 					
