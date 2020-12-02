@@ -16,7 +16,7 @@ public class Order {
 	 */
 	private static final String CHAR_LOWER = "abcdefghijklmnopqrstuvwxyz";
 	private static final String CHAR_UPPER = CHAR_LOWER.toUpperCase();
-	public static DateTimeFormatter dtf = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
+	public static DateTimeFormatter dateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
 	public static final Pattern EMAIL_PATTERN =
 	 Pattern.compile(".*<(?<email>\\w+@\\w+.\\w+)>");
 	public static final int MAX_WAIT_TIME = 5;
@@ -201,8 +201,8 @@ public class Order {
 			  getLocation(),           // "cust_location",
 			  p.getId(),               // "product_id",
 			  p.getQuantity(),         // "product_quantity",
-			  dtf.print(timeOrdered),  // "date_ordered",
-			  dtf.print(timeAccepted), // "date_accepted",
+			  dateTimeFormat.print(timeOrdered),  // "date_ordered",
+			  dateTimeFormat.print(timeAccepted), // "date_accepted",
 			  status.toString(),       // "status",
 			 });
 		} // End for
