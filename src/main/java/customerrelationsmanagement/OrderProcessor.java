@@ -47,7 +47,6 @@ class OrderProcessor {
 	public OrderProcessor(Crud crud) throws SQLException {
 		
 		this.crud = crud;
-		
 		crud.setWorkingTable("inventory");
 		
 		ResultSet rs = crud.query(
@@ -140,9 +139,11 @@ class OrderProcessor {
 		if(records != null) {
 			acceptedOrders.addAll(records);
 			recordCount += records.size();
-			if(recordCount > 150000) {
+			if(recordCount > MAX_ROWS) {
 				update();
 			}
+		} else {
+			System.out.println("no records");
 		}
 		
 		return canProcessOrder;
@@ -175,12 +176,11 @@ class OrderProcessor {
 		int count = crud.rowCountResults(tableCheck);
 		if(count == 0) { return; }
 		File tempUnprocessed = crud.writeToFile("temp_unprocessed.csv", Tables.UNSTATUSED.columns(), tableCheck);
-		OrderProcessor.runFileOrders(crud, "temp_unprocessed.csv");
+		OrderProcessor op = new OrderProcessor(crud);
+		op.runFileOrders("temp_unprocessed.csv");
 		crud.update("Delete from unstatused_sales");
 		if(tempUnprocessed.delete()){
-			System.out.println("deleted the file, processed " + count + " records from unstatused_sales.");
-		} else {
-			System.out.println("I hate everything");
+			System.out.println("Processed " + count + " online orders.");
 		}
 	}
 	
@@ -288,7 +288,6 @@ class OrderProcessor {
 		Scanner scanner = new Scanner(new File(pathname));
 		scanner.nextLine();
 		String[] line = scanner.nextLine().split(",");
-		
 		Order order = new Order(
 
 		 DateTime.parse(line[0].split(" ")[0]),
@@ -321,10 +320,17 @@ class OrderProcessor {
 								 || isNewDate;
 			
 			if(isNewOrder || !scanner.hasNextLine()) {
-				
 				if(!scanner.hasNextLine() && isNewOrder) {
 					order.addProduct(nextProduct);
-				} // End if
+				} 
+				if(!scanner.hasNextLine()){
+					Product lastProduct = order.getLastProduct();
+					if(lastProduct == null || 
+					   !lastProduct.getId().equals(nextProductId) 
+					   && !isNewOrder) {
+						order.addProduct(nextProduct);
+					}
+				}
 				
 				processOrder();
 				if(!dailyOrderStack.isEmpty()) {
@@ -367,6 +373,7 @@ class OrderProcessor {
 		if(!dailyOrderStack.isEmpty()) {
 			analyzeOrders();
 		}
+		scanner.close();
 		updateAndClose();
 	} // End runFileOrders
 	

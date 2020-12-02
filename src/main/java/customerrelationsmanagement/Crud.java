@@ -1,6 +1,7 @@
 package customerrelationsmanagement;
 
 import org.jetbrains.annotations.NotNull;
+import org.joda.time.DateTime;
 
 import javax.swing.*;
 import java.io.File;
@@ -272,7 +273,7 @@ public class Crud {
 		} // End for
 		
 		try {
-			return update(sb + "");
+			return update((sb + "").replace("'NULL'","NULL"));
 		} catch(Exception e) {
 			System.out.println(e.getMessage());
 			return -1;
@@ -438,12 +439,10 @@ public class Crud {
 	 */
 	static String quoteWrap(Object columnValue) {
 		
-		if(columnValue instanceof String || (columnValue instanceof Status)
-		   && !((String)columnValue).toUpperCase().equals("NULL")
-		   || columnValue instanceof Date) {
+		if(columnValue instanceof String) {
 			return "'" + columnValue + "'";
 		} // End if
-		return columnValue.toString();
+		return columnValue.toString().replace("'NULL'", "NULL");
 	} // End quoteWrap
 	
 	/**
