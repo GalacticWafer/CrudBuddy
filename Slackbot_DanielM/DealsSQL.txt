@@ -1,0 +1,5 @@
+Select * from inventory //Grabbing all from inventory table
+where sale_price <= 20  //looking into all of above^ but the sale_price must equal to or be below than 20
+order by rand()         //Grab random items that were queried and limit by three 
+
+limit 3                 //                                                   ^

@@ -1,0 +1,6 @@
+SELECT product_id, SUM(product_quantity) As MostSold  //Grab product_ids but grouped the quantities of each of them in the sales table and mark as 'MostSold'
+FROM sales 
+Group By product_id
+ORDER BY MostSold  DESC LIMIT 3                       //Output only the top three of the listing created from the commands
+
+Getting most sold products on the sales table

@@ -1,21 +1,34 @@
 package customerrelationsmanagement;
+
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
+
 import org.apache.commons.io.FileUtils;
+
 import java.util.*;
 
 public class Restoration {
-	public Restoration(Crud crud, String filePath, boolean doTableRebuild, String directory)
-			throws IOException, SQLException {
-		rebuild(crud, filePath, doTableRebuild, directory);
+	public Restoration(Crud crud, String inventoryPath, String ordersPath,
+					   boolean doTableRebuild, String directory)
+	throws IOException, SQLException {
+		
+		rebuild(crud, inventoryPath, ordersPath, doTableRebuild, directory);
 	}
-	 private void rebuild(Crud crud, String filePath, boolean doTableRebuild,
-						  String directory)
-			 throws IOException, SQLException {
+	
+	private void deleteDirectory(String pathname) throws IOException {
+		
+		File directory = new File(pathname);
+		if(directory.exists()) {
+			FileUtils.cleanDirectory(directory);
+		}
+	}
+	
+	private void rebuild(Crud crud, String inventoryPath, String ordersPath,
+						 boolean doTableRebuild,
+						 String directory)
+	throws IOException, SQLException {
+		
 		String[] list = crud.getTableNames();
 		for(String tableName: list) {
 			crud.update(" DROP TABLE IF EXISTS " + tableName);
@@ -24,9 +37,9 @@ public class Restoration {
 			rebuildTables(crud);
 		}
 		if(directory != null) {
-			 deleteDirectory(directory);
+			deleteDirectory(directory);
 		}
-		Scanner scanner = new Scanner(new File(filePath));
+		Scanner scanner = new Scanner(new File(inventoryPath));
 		StringBuilder sql = new StringBuilder();
 		String str = "INSERT INTO " + crud.getDatabaseName() + ".inventory ("
 					 + Crud.removeUTF8BOM(scanner.nextLine()) + ")VALUES";
@@ -40,33 +53,13 @@ public class Restoration {
 			   .append("')").append(scanner.hasNextLine() ? "," : "");
 		}
 		crud.update(sql.toString());
+
 	}
 	
 	private void rebuildTables(Crud crud) throws SQLException {
-		crud.update("CREATE TABLE IF NOT EXISTS inventory(" +
-					"idx INT(16)    	NOT NULL AUTO_INCREMENT," +
-					"product_id     	VARCHAR(12)," +
-					"quantity       	INT(16)," +
-					"wholesale_cost 	DECIMAL(13, 2)," +
-					"sale_price     	DECIMAL(13, 2)," +
-					"supplier_id    	VARCHAR(32)," +
-					"PRIMARY KEY 		(idx))");
-		crud.update("CREATE TABLE IF NOT EXISTS sales(" +
-					"idx int(16) 		NOT NULL AUTO_INCREMENT," +
-					"order_id 			VARCHAR(10)," +
-					"cust_email 		VARCHAR(60)," +
-					"cust_location 		VARCHAR(100)," +
-					"product_id     	VARCHAR(12)," +
-					"product_quantity   INT(16)," +
-					"date_ordered 		DATETIME," +
-					"date_accepted 		DATETIME," +
-					"Status		 		int(1)," +
-					"PRIMARY KEY 		(idx))");
-	}
-
-	private void deleteDirectory(String pathname) throws IOException {
-		File directory = new File(pathname);
-		FileUtils.cleanDirectory(directory);
-
+		
+		for(Tables table: Tables.values()) {
+			crud.update(table.creationString());
+		}
 	}
 }

@@ -1,6 +1,7 @@
 package customerrelationsmanagement;
 
 import org.jetbrains.annotations.NotNull;
+import org.joda.time.DateTime;
 
 import javax.swing.*;
 import java.io.File;
@@ -272,7 +273,7 @@ public class Crud {
 		} // End for
 		
 		try {
-			return update(sb + "");
+			return update((sb + "").replace("'NULL'","NULL"));
 		} catch(Exception e) {
 			System.out.println(e.getMessage());
 			return -1;
@@ -281,7 +282,7 @@ public class Crud {
 	
 	/**
 	 * Overloaded version of <code>insertRecords</code> that takes an
-	 * <code>Iterator<Object[]></code> instead of an <code>Object[][]</code>.
+	 * <code>Iterator&lt;Object[]&gt;</code> instead of an <code>Object[][]</code>.
 	 *
 	 * @param columnNames
 	 *  the columns to insert data into.
@@ -438,11 +439,10 @@ public class Crud {
 	 */
 	static String quoteWrap(Object columnValue) {
 		
-		if(columnValue instanceof String
-		   || columnValue instanceof Date) {
+		if(columnValue instanceof String) {
 			return "'" + columnValue + "'";
 		} // End if
-		return columnValue.toString();
+		return columnValue.toString().replace("'NULL'", "NULL");
 	} // End quoteWrap
 	
 	/**
@@ -471,10 +471,12 @@ public class Crud {
 	 * @throws SQLException
 	 *  if there is an issue with the sql command or connection.
 	 */
-	int rowCountResults(ResultSet resultSet) throws SQLException {
+	public int rowCountResults(ResultSet resultSet) throws SQLException {
 		
 		resultSet.last();
-		return resultSet.getRow();
+		int count = resultSet.getRow();
+		resultSet.beforeFirst();
+		return count;
 	} // End rowCountResults
 	
 	/**
@@ -494,7 +496,7 @@ public class Crud {
 	 * @throws SQLException
 	 *  if there is an issue with the sql command or connection.
 	 */
-	int size() throws SQLException {
+	public int size() throws SQLException {
 		
 		ResultSet rs = query("SELECT COUNT(*) FROM " + currentTable);
 		rs.next();
