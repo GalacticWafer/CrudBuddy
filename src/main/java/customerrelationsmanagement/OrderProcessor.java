@@ -589,7 +589,7 @@ class OrderProcessor {
 				dailyProductCount += order.size();
 			}
 			return new Object[] {
-			 Order.dtf.print(fiscalDate),// "fiscal_date", 
+			 Order.dateTimeFormat.print(fiscalDate),// "fiscal_date", 
 			 assetTotal,              // "asset_total", 
 			 incomeTotal,             // "daily_income",
 			 revenueTotal,            // "daily_revenue", 
