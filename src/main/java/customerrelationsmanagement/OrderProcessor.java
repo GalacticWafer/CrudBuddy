@@ -27,6 +27,7 @@ class OrderProcessor {
 	private final ArrayList<Object[]> supplierEvents;
 	private final HashMap<String, String> supplierMap;
 	private final HashMap<String, BigDecimal> wholesaleMap;
+	public static final int MAX_ROWS = 150000;
 	
 	/**
 	 * OrderProcessor uses an in-memory copy of three inventory columns.
@@ -88,7 +89,7 @@ class OrderProcessor {
 		
 		dailyAnalytics.add(new DailyStats().toArray());
 		recordCount += 1;
-		if(recordCount > 150000) {
+		if(recordCount > MAX_ROWS) {
 			update();
 		}
 		dailyOrderStack.clear();
