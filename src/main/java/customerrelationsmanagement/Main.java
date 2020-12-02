@@ -9,23 +9,24 @@ import java.util.TimerTask;
 
 public class Main {
 	public static final boolean runSpeedTest =
-	 true;
-	 //false;
+	 //true;
+	 false;
 	
 	public static final String INVENTORY_PATH =
-	 "inventory_team4.csv";
-	//null
+	// "inventory_team4.csv";
+	null;
 	
 	public static final String ORDERS_PATH =
-	"customer_orders_A_team4.csv";
-	//null;
+	//"customer_orders_A_team4.csv";
+	
+		null;
 	
 	public static final boolean START_GUI =
-	 //true;
-	false;
+	 true;
+	//false;
 	public static final boolean START_MAIL =
-	 // true;
-	 false;
+	  true;
+	 //false;
 	public static final String analyticsDir =
 	 //"analytics";
 	 null;
@@ -36,7 +37,7 @@ public class Main {
 	private static Restoration rest;
 	
 	public Main(Credentials credentials)
-	throws IOException, SQLException, ParseException {
+	throws IOException, SQLException, ParseException, MessagingException {
 		startServices(credentials);
 	}
 	

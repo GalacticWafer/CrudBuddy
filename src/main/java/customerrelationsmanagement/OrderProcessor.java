@@ -225,28 +225,7 @@ class OrderProcessor {
 					Object[] currentObjs = new Object[]{
 					 supplierId,
 					 productId,
-					 restockQuantity, 
-					 
-					 //Todo figure out how to format DateTime in gui
-					 //Thoughts:
-					 // -> This was tricky, I was unable to make significant 
-					 // progress with this goal as the gui is tricky -  
-					 // nay, impossible - to work with. My thoughts then 
-					 // shifted to DateTime.java as there are 3 DateTime.now()
-					 // functions present in said class. However, the null 
-					 // method didn't format anything, while both argument 
-					 // methods have trouble taking in arguments. This might
-					 // also be where our problem lies.
-					 // -> Tried creating localdatetime object as shown here:
-					 // https://stackoverflow.com/questions/20615288/how-to-use-datetimezone-in-java
-					 //  to try and pass into DateTime.now() - failed.
-					 // -> Tried using Date currentDate only - failed
-					 // -> Tried using SimpleDateFormat simpDate as shown 
-					 // before object array - failed.
-					 // -> Since so many output methods have been tried, and all 
-					 // of which have failed, this leaves me to believe that 
-					 // this is a problem with the either printing to the gui,
-					 // or the gui itself.
+					 restockQuantity,
 					 
 					 
 					 // FAILED TESTS
@@ -453,6 +432,7 @@ class OrderProcessor {
 		);
 		crud.update("DROP TABLE inventory");
 		crud.update("ALTER TABLE temp2 RENAME TO inventory");
+		crud.update("DROP TABLE temp_table");
 	} // End updateAndClose
 	
 	private class DailyStats {

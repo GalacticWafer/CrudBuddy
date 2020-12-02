@@ -89,7 +89,6 @@ public enum Tables {
 			case UNSTATUSED -> {return "unstatused_sales";}
 			case STATUSED -> {return "statused_sales";}
 			case ANALYTICS -> {return "daily_analysis";}
-			//Todo Adam return the name of your new table instead of null
 			case SUPPLIER -> {return "supplier_events";}
 		}
 		throw new InputMismatchException();
