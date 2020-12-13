@@ -4,20 +4,14 @@ import About from './About';
 import Home from './home';
 import Shop from './Shop';
 
-
-
-
-
 const Main = () =>
 (
 <main>
     <Switch>
-    <Route exact path ='/' component={Home}/>
-    <Route exact path ='/home' component={Home}/>
-        <Route exact path ='/about' component={About}/>
-        <Route exact path ='/shop' component={Shop}/>
-  
-        
+        <Route path ='/' component={Home}/>
+        <Route path ='/home' component={Home}/>
+        <Route path ='/about' component={About}/>
+        <Route path ='/shop' component={Shop}/>
     </Switch>
 </main>
 

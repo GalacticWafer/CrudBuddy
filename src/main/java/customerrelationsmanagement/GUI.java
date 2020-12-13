@@ -547,7 +547,11 @@ public class GUI {
 				.put("ScrollBar.thumbHighlight", new ColorUIResource(GREY_50x3));
 		UIManager.put("ScrollBar.track", new ColorUIResource(GREY_50x3));
 	}
-
+	
+	public static GUI show(Crud crud) throws SQLException, ParseException {
+		return new GUI(crud);
+	}
+	
 	public static class JTextFieldLimit extends PlainDocument {
 		private final int limit;
 

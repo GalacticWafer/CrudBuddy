@@ -1,4 +1,4 @@
-﻿product_id,quantity,wholesale_cost,sale_price,supplier_id
+﻿product_id,product_name,quantity,wholesale_cost,sale_price,supplier_id
 ZRDATK9CSM23,3628,420.99,596.54,ZJPGZTLM
 J7AXJJFK584N,2436,176.66,295.2,RUEYGNJW
 4MNIIK8374AK,1857,114.44,162.62,MYRCTODR

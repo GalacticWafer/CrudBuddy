@@ -8,7 +8,6 @@ import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.SeriesException;
 import org.jfree.data.time.*;
-import org.jfree.data.xy.XYDataset;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -17,11 +16,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.Date;
 
 public class ChartMaker {
 	public static final double BAR_THICCKNESS = 4.0;

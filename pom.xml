@@ -3,10 +3,10 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>groupId</groupId>
     <artifactId>SemesterProject</artifactId>
     <version>1.0-SNAPSHOT</version>
+
 
     <dependencies>
         <!-- https://mvnrepository.com/artifact/javax.mail/mail -->
@@ -15,7 +15,6 @@
             <artifactId>mail</artifactId>
             <version>1.4</version>
         </dependency>
-
         <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
         <dependency>
             <groupId>mysql</groupId>
@@ -23,8 +22,6 @@
             <version>8.0.21</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
-
-
         <dependency>
             <groupId>com.sun.mail</groupId>
             <artifactId>javax.mail</artifactId>
@@ -64,20 +61,164 @@
             <artifactId>commons-io</artifactId>
             <version>1.4</version>
         </dependency>
-
         <!-- https://mvnrepository.com/artifact/joda-time/joda-time -->
         <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
             <version>2.10.8</version>
         </dependency>
-
     </dependencies>
+
 
     <properties>
         <maven.compiler.source>1.14</maven.compiler.source>
         <maven.compiler.target>1.14</maven.compiler.target>
     </properties>
 
-
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <minimizeJar>true</minimizeJar>
+                            <filters>
+                                <filter>
+                                    <artifact>log4j:log4j</artifact>
+                                    <includes>
+                                        <include>**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>commons-logging:commons-logging</artifact>
+                                    <includes>
+                                        <include>java/awt/**</include>
+                                        <include>java/io/**</include>
+                                        <include>java/io/File</include>
+                                        <include>java/io/FileNotFoundException</include>
+                                        <include>java/io/IOException</include>
+                                        <include>java/io/PrintWriter</include>
+                                        <include>java/math/BigDecimal</include>
+                                        <include>java/sql/**</include>
+                                        <include>java/sql/ResultSet</include>
+                                        <include>java/sql/SQLException</include>
+                                        <include>java/text/ParseException</include>
+                                        <include>java/util/**</include>
+                                        <include>java/util/Arrays</include>
+                                        <include>java/util/Enumeration</include>
+                                        <include>java/util/HashMap</include>
+                                        <include>java/util/InputMismatchException</include>
+                                        <include>java/util/Map</include>
+                                        <include>java/util/Properties</include>
+                                        <include>java/util/Scanner</include>
+                                        <include>java/util/Timer</include>
+                                        <include>java/util/TimerTask</include>
+                                        <include>java/util/concurrent/TimeUnit</include>
+                                        <include>java/util/logging/Level</include>
+                                        <include>java/util/logging/Logger</include>
+                                        <include>java/util/regex/Matcher</include>
+                                        <include>javax/activation/DataHandler</include>
+                                        <include>javax/activation/DataSource</include>
+                                        <include>javax/activation/FileDataSource</include>
+                                        <include>javax/mail/**</include>
+                                        <include>javax/mail/MessagingException</include>
+                                        <include>javax/mail/internet/InternetAddress</include>
+                                        <include>javax/mail/internet/MimeBodyPart</include>
+                                        <include>javax/mail/internet/MimeMessage</include>
+                                        <include>javax/mail/internet/MimeMultipart</include>
+                                        <include>javax/swing/**</include>
+                                        <include>org/apache/commons/io/FileUtils</include>
+                                        <include>org/jetbrains/annotations/NotNull</include>
+                                        <include>org/jfree/chart/**</include>
+                                        <include>org/jfree/chart/ChartPanel</include>
+                                        <include>org/jfree/chart/JFreeChart</include>
+                                        <include>org/jfree/chart/axis/NumberAxis</include>
+                                        <include>org/jfree/chart/axis/NumberTickUnit</include>
+                                        <include>org/jfree/chart/plot/PlotOrientation</include>
+                                        <include>org/jfree/chart/renderer/category/BarRenderer
+                                        </include>
+                                        <include>org/jfree/data/category/DefaultCategoryDataset
+                                        </include>
+                                        <include>org/jfree/data/general/SeriesException</include>
+                                        <include>org/jfree/data/time/**</include>
+                                        <include>org/joda/time/DateTime</include>
+                                        <include>org/joda/time/format/DateTimeFormat</include>
+                                        <include>org/joda/time/format/DateTimeFormatter</include>
+                                        <include>static java/util/Map/entry</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>foo:bar</artifact>
+                                    <excludeDefaults>false</excludeDefaults>
+                                    <includes>
+                                        <include>foo/Bar.class</include>
+                                        <includes>
+                                            <include>java/awt.**</include>
+                                            <include>java/io.**</include>
+                                            <include>java/io.File</include>
+                                            <include>java/io.FileNotFoundException</include>
+                                            <include>java/io.IOException</include>
+                                            <include>java/io.PrintWriter</include>
+                                            <include>java/math.BigDecimal</include>
+                                            <include>java/sql.**</include>
+                                            <include>java/sql.ResultSet</include>
+                                            <include>java/sql.SQLException</include>
+                                            <include>java/text.ParseException</include>
+                                            <include>java/util.**</include>
+                                            <include>java/util.Arrays</include>
+                                            <include>java/util.Enumeration</include>
+                                            <include>java/util.HashMap</include>
+                                            <include>java/util.InputMismatchException</include>
+                                            <include>java/util.Map</include>
+                                            <include>java/util.Properties</include>
+                                            <include>java/util.Scanner</include>
+                                            <include>java/util.Timer</include>
+                                            <include>java/util.TimerTask</include>
+                                            <include>java/util/Map.entry</include>
+                                            <include>java/util/concurrent.TimeUnit</include>
+                                            <include>java/util/logging.Level</include>
+                                            <include>java/util/logging.Logger</include>
+                                            <include>java/util/regex.Matcher</include>
+                                            <include>javax/activation.DataHandler</include>
+                                            <include>javax/activation.DataSource</include>
+                                            <include>javax/activation.FileDataSource</include>
+                                            <include>javax/mail.**</include>
+                                            <include>javax/mail.MessagingException</include>
+                                            <include>javax/mail/internet.InternetAddress</include>
+                                            <include>javax/mail/internet.MimeBodyPart</include>
+                                            <include>javax/mail/internet.MimeMessage</include>
+                                            <include>javax/mail/internet.MimeMultipart</include>
+                                            <include>javax/swing.**</include>
+                                            <include>org/apache/commons/io.FileUtils</include>
+                                            <include>org/jetbrains/annotations.NotNull</include>
+                                            <include>org/jfree/chart.**</include>
+                                            <include>org/jfree/chart.ChartPanel</include>
+                                            <include>org/jfree/chart.JFreeChart</include>
+                                            <include>org/jfree/chart/axis.NumberAxis</include>
+                                            <include>org/jfree/chart/axis.NumberTickUnit</include>
+                                            <include>org/jfree/chart/plot.PlotOrientation</include>
+                                            <include>org/jfree/chart/renderer/category.BarRenderer</include>
+                                            <include>org/jfree/data/category.DefaultCategoryDataset</include>
+                                            <include>org/jfree/data/general.SeriesException</include>
+                                            <include>org/jfree/data/time.**</include>
+                                            <include>org/joda/time.DateTime</include>
+                                            <include>org/joda/time/format.DateTimeFormat</include>
+                                            <include>org/joda/time/format.DateTimeFormatter</include>
+                                        </includes>
+                                    </includes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

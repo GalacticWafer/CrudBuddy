@@ -16,6 +16,7 @@ public enum Tables {
 			case INVENTORY -> {
 				return new String[] {
 				 "product_id",
+				 "product_name",
 				 "wholesale_cost",
 				 "sale_price",
 				 "supplier_id",
@@ -100,6 +101,7 @@ public enum Tables {
 			case INVENTORY -> {
 				return new String[] {
 				 "VARCHAR(12)",
+				 "VARCHAR(200)",
 				 "DECIMAL(13,2)",
 				 "DECIMAL(13,2)",
 				 "VARCHAR(10)",

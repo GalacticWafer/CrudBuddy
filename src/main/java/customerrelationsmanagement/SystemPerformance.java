@@ -1,8 +1,7 @@
-package customerrelationsmanagement;
+/*package customerrelationsmanagement;
 
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-
 import javax.swing.*;
 import java.io.FileNotFoundException;
 import java.math.BigDecimal;
@@ -13,9 +12,9 @@ public class SystemPerformance {
 	Crud crud;
 	String[] fileNames;
 	int[] fileLengths;
+	*/
 	
-	
-	public SystemPerformance(Crud crud) {
+/*	public SystemPerformance(Crud crud) {
 		this.crud = crud;
 		fileNames =  new String[] {
 		 "customer_orders_final_team4.csv" ,
@@ -25,7 +24,7 @@ public class SystemPerformance {
 		 "customer_orders_final_team4x200.csv"
 		};
 		fileLengths = new int[]{6295,31475,94425,314750,1259000};
-	}
+	}*/
 	
 	/**
 	 * @param fullTest
@@ -34,7 +33,7 @@ public class SystemPerformance {
 	 * runs either a full test with all file lengths or
 	 * a smaller test with less files in OrderProcessor
 	 */
-	public void runTest(boolean fullTest) throws SQLException, FileNotFoundException {
+	/*public void runTest(boolean fullTest) throws SQLException, FileNotFoundException {
 		int count = fullTest ? fileNames.length : fileNames.length - 1;
 		long[] timeValues = new long[fileNames.length];
 		int i = 0;
@@ -75,3 +74,4 @@ public class SystemPerformance {
 		System.out.println("done");
 	}
 }
+*/
