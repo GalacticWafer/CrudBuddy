@@ -2,10 +2,8 @@ import React, {Component, useEffect, useState} from 'react';
 import './App.css';
 import Axios from 'axios';
 import Main from './components/main';
-import {Link, BrowserRouter, Route} from 'react-router-dom';
-import About from './components/About';
-import Home from './components/home';
-import Shop from './components/Shop';
+import {Link} from 'react-router-dom';
+
 import
 {
     Collapse,
@@ -59,11 +57,6 @@ class App extends Component {
     render() {
         return (
             <div className="App">
-              <BrowserRouter>
-                <Route path ='/' component={Home}/>
-                <Route path ='/home' component={Home}/>
-                <Route path ='/about' component={About}/>
-                <Route path ='/shop' component={Shop}/>
                 <Navbar id="navbar" font="" height="px;" expand="sm" className="mb-0">
                     <Container>
                         <Link to="/">
@@ -91,7 +84,7 @@ class App extends Component {
                         </Collapse>
                     </Container>
                 </Navbar>
-              </BrowserRouter>
+                <Main/>
             </div>
         );
     }

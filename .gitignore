@@ -27,3 +27,5 @@ src/main/java/Main.java
 src/main/java/Recommendations.java
 credentials.config
 /client_/node_modules/
+/client_/build/
+/client_/coverage/
