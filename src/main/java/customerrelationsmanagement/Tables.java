@@ -16,10 +16,12 @@ public enum Tables {
 			case INVENTORY -> {
 				return new String[] {
 				 "product_id",
+				 "quantity",
 				 "wholesale_cost",
 				 "sale_price",
 				 "supplier_id",
-				 "quantity"
+				 "image_url",
+				 "product_title"
 				};
 			}
 			case UNSTATUSED -> {
@@ -100,10 +102,12 @@ public enum Tables {
 			case INVENTORY -> {
 				return new String[] {
 				 "VARCHAR(12)",
+				 "INT(6)",
 				 "DECIMAL(13,2)",
 				 "DECIMAL(13,2)",
 				 "VARCHAR(10)",
-				 "INT(6)",
+				 "VARCHAR(1000)",
+				 "VARCHAR(300)",
 				 };
 			}
 			case UNSTATUSED -> {

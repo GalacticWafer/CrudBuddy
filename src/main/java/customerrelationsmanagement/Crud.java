@@ -1,15 +1,12 @@
 package customerrelationsmanagement;
 
 import org.jetbrains.annotations.NotNull;
-import org.joda.time.DateTime;
-
 import javax.swing.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.sql.*;
 import java.util.*;
-import java.util.Date;
 
 public class Crud {
 	private static String DB_NAME;

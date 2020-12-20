@@ -3,30 +3,19 @@ package customerrelationsmanagement;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-
 import org.apache.commons.io.FileUtils;
-
 import java.util.*;
 
 public class Restoration {
-	public Restoration(Crud crud, String inventoryPath, String ordersPath,
-					   boolean doTableRebuild, String directory)
+	public Restoration(Crud crud, String inventoryPath,
+					   boolean doTableRebuild)
 	throws IOException, SQLException {
 		
-		rebuild(crud, inventoryPath, ordersPath, doTableRebuild, directory);
+		rebuild(crud, inventoryPath, doTableRebuild);
 	}
 	
-	private void deleteDirectory(String pathname) throws IOException {
-		
-		File directory = new File(pathname);
-		if(directory.exists()) {
-			FileUtils.cleanDirectory(directory);
-		}
-	}
-	
-	private void rebuild(Crud crud, String inventoryPath, String ordersPath,
-						 boolean doTableRebuild,
-						 String directory)
+	private void rebuild(Crud crud, String inventoryPath,
+						 boolean doTableRebuild)
 	throws IOException, SQLException {
 		
 		String[] list = crud.getTableNames();
@@ -36,9 +25,7 @@ public class Restoration {
 		if(doTableRebuild) {
 			rebuildTables(crud);
 		}
-		if(directory != null) {
-			deleteDirectory(directory);
-		}
+
 		Scanner scanner = new Scanner(new File(inventoryPath));
 		StringBuilder sql = new StringBuilder();
 		String str = "INSERT INTO " + crud.getDatabaseName() + ".inventory ("
@@ -46,11 +33,8 @@ public class Restoration {
 		sql.append(str);
 		while(scanner.hasNextLine()) {
 			String[] l = scanner.nextLine().split(",");
-			sql.append("('").append(l[0]).append("',")
-			   .append(Integer.parseInt(l[1])).append(",")
-			   .append(Double.parseDouble(l[2])).append(",")
-			   .append(Double.parseDouble(l[3])).append(",'").append(l[4])
-			   .append("')").append(scanner.hasNextLine() ? "," : "");
+			String line = "('" + l[0] + "'," + l[1] + "," + Double.parseDouble(l[2]) + "," + Double.parseDouble(l[3]) + ",'" + l[4] + "','" + l[5] + "','" + l[6].replace("'", "\\'") + "')" + (scanner.hasNextLine() ? "," : "");
+			sql.append(line);
 		}
 		crud.update(sql.toString());
 

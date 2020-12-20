@@ -2,12 +2,12 @@ package customerrelationsmanagement;
 
 import org.joda.time.DateTime;
 
+import javax.mail.MessagingException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 class OrderProcessor {
@@ -18,12 +18,15 @@ class OrderProcessor {
 	private final Stack<Order> dailyOrderStack;
 	private final Queue<Integer> idxList;
 	private final HashMap<Integer, String> indexMap;
+	private final Emailer mailer;
 	private Order nextOrder;
+	
 	/* Change relevant quantities from a given order,
 	 and put all items into the acceptedSales list.*/
 	private final HashMap<String, Integer> quantityMap;
 	private int recordCount;
 	private final HashMap<String, BigDecimal> salePriceMap;
+	private final ArrayList<String[]> emails;
 	private final ArrayList<Object[]> supplierEvents;
 	private final HashMap<String, String> supplierMap;
 	private final HashMap<String, BigDecimal> wholesaleMap;
@@ -44,8 +47,9 @@ class OrderProcessor {
 	 *  through it,
 	 *  then updating quantities from the inventory upon closure.
 	 */
-	public OrderProcessor(Crud crud) throws SQLException {
+	public OrderProcessor(Crud crud, Emailer mailer) throws SQLException {
 		
+		this.mailer = mailer;
 		this.crud = crud;
 		crud.setWorkingTable("inventory");
 		
@@ -58,6 +62,7 @@ class OrderProcessor {
 		indexMap = new HashMap<>(size); // map from idx -> product_id
 		quantityMap = new HashMap<>(size); // map from product_id -> quantity
 		wholesaleMap = new HashMap<>(size); // map from product_id -> quantity
+		emails = new ArrayList<>(size); // map from product_id -> quantity
 		salePriceMap = new HashMap<>(size); // map from product_id -> quantity
 		acceptedOrders = new ArrayList<>(size); // list of Object[]'s for
 		supplierEvents = new ArrayList<>(); // list of all supplier events
@@ -84,7 +89,8 @@ class OrderProcessor {
 		} // End while
 	} // End Constructor
 	
-	private void analyzeOrders() {
+	
+	private void analyzeOrders() throws MessagingException {
 		
 		dailyAnalytics.add(new DailyStats().toArray());
 		recordCount += 1;
@@ -97,7 +103,7 @@ class OrderProcessor {
 	/**
 	 * @return true if the entire order can be fulfilled
 	 */
-	private Boolean canProcessOrder() {
+	private Boolean canProcessOrder() throws MessagingException {
 		
 		ArrayList<Boolean> canFulfillProducts = new ArrayList<>();
 		boolean isSale = nextOrder.eventType() == EventType.BUYER;
@@ -171,14 +177,15 @@ class OrderProcessor {
 		} // End while
 	} // End changeQuantities
 	
-	public static void checkUnstatusedSales(Crud crud)
-	throws SQLException, FileNotFoundException {
+	public static void checkUnstatusedSales(Crud crud,
+											Emailer mailer)
+	throws SQLException, FileNotFoundException, MessagingException {
 		
 		ResultSet tableCheck = crud.query("select * from unstatused_sales");
 		int count = crud.rowCountResults(tableCheck);
 		if(count == 0) { return; }
 		File tempUnprocessed = crud.writeToFile("temp_unprocessed.csv", Tables.UNSTATUSED.columns(), tableCheck);
-		OrderProcessor op = new OrderProcessor(crud);
+		OrderProcessor op = new OrderProcessor(crud, mailer);
 		op.runFileOrders("temp_unprocessed.csv");
 		crud.update("Delete from unstatused_sales");
 		if(tempUnprocessed.delete()){
@@ -194,7 +201,7 @@ class OrderProcessor {
 	 *  .iterator()</code>
 	 *  can be processed. Otherwise, false.
 	 */
-	public boolean processOrder() {
+	public boolean processOrder() throws MessagingException {
 		
 		boolean canProcessOrder = canProcessOrder();
 		assert nextOrder != null;
@@ -268,6 +275,15 @@ class OrderProcessor {
 		
 		nextOrder.setSubject(orderNumber + " "
 							 + nextOrder.getStatusString());
+		emails.add(new String[]{
+		 nextOrder.getId(),
+		 nextOrder.getCustomerEmail(), 
+		 nextOrder.getResponseSubject(),
+		 nextOrder.getMessageText()
+		 });
+		if(mailer != null){
+			recordCount++;
+		}
 		return canProcessOrder;
 	} // End processOrder
 	
@@ -285,7 +301,7 @@ class OrderProcessor {
 	 *  saust@hotmail.com,38813,3R8YXZCS820Y,2
 	 */
 	public void runFileOrders(String pathname)
-	throws SQLException, FileNotFoundException {
+	throws SQLException, FileNotFoundException, MessagingException {
 		
 		Scanner scanner = new Scanner(new File(pathname));
 		scanner.nextLine();
@@ -383,10 +399,10 @@ class OrderProcessor {
 		updateAndClose();
 	} // End runFileOrders
 	
-	public static void runFileOrders(Crud crud, String ordersPath)
-	throws SQLException, FileNotFoundException {
+	public static void runFileOrders(Crud crud, Emailer emailer, String ordersPath)
+	throws SQLException, FileNotFoundException, MessagingException {
 		
-		new OrderProcessor(crud).runFileOrders(ordersPath);
+		new OrderProcessor(crud, emailer).runFileOrders(ordersPath);
 	}
 	
 	/**
@@ -400,7 +416,12 @@ class OrderProcessor {
 		this.nextOrder = order;
 	} // End seCurrentOrder
 	
-	private void update() {
+	private void update() throws MessagingException {
+		if(mailer != null) {
+			for(String[] array: emails) {
+				mailer.sendMail(array[0], array[1], array[2], null);
+			}
+		}
 		crud.setWorkingTable(Tables.STATUSED.toString());
 		if(acceptedOrders.size() > 0) {
 			crud.insertRecords(Tables.STATUSED.columns(),
@@ -421,7 +442,7 @@ class OrderProcessor {
 	}
 	
 	/** Update all the tables after orders have been processed. */
-	public void updateAndClose() throws SQLException {
+	public void updateAndClose() throws SQLException, MessagingException {
 		update();
 		// update the inventory table to effectively close the processor.
 		StringBuilder builder = new StringBuilder();
@@ -454,6 +475,8 @@ class OrderProcessor {
 		 "inventory.wholesale_cost," +
 		 "inventory.sale_price," +
 		 "inventory.supplier_id," +
+		 "inventory.image_url," +
+		 "inventory.product_title," +
 		 "inventory.idx," +
 		 "temp_table.quantity " +
 		 "FROM inventory INNER JOIN temp_table " +

@@ -33,7 +33,7 @@ public class SystemPerformance {
 	 * @throws FileNotFoundException
 	 * runs either a full test with all file lengths or
 	 * a smaller test with less files in OrderProcessor
-	 */
+	 *//*
 	public void runTest(boolean fullTest) throws SQLException, FileNotFoundException {
 		int count = fullTest ? fileNames.length : fileNames.length - 1;
 		long[] timeValues = new long[fileNames.length];
@@ -73,5 +73,5 @@ public class SystemPerformance {
 		frame.pack();
 		frame.setVisible(true);
 		System.out.println("done");
-	}
+	}*/
 }
