@@ -341,17 +341,29 @@ public class Emailer {
 	@NotNull private String recommendProducts(int limit, String orderId)
 			throws SQLException {
 
+		String orderItemIds =
+				"    SELECT `product_id`\n" +
+				"    FROM `statused_sales`\n" +
+				"    WHERE `order_id` = '" + orderId
+		
+		String otherOrdersWithSameItems = 
+				"    SELECT `order_id` FROM `statused_sales`\n" +
+				"    WHERE  `product_id` IN(\n" +
+				         orderItemIds "'\n" +
+				"    )\n" +
+				"    AND `order_id` NOT LIKE '" + orderId +
 		String query =
-				" SELECT product_id as 'We thought you might also like:' " +
-						" FROM statused_sales " +
-						" WHERE order_id IN (SELECT order_id FROM statused_sales" +
-						" WHERE  product_id IN(SELECT product_id FROM statused_sales " +
-						" WHERE order_id = '" + orderId + "')" +
-						" AND order_id NOT LIKE '" + orderId + "') " +
-						"and product_id not IN (select product_id from statused_sales where order_id = '" + orderId + "')" +
-						" GROUP BY product_id " +
-						" ORDER BY sum(product_quantity)" +
-						" DESC LIMIT " + limit;
+				"SELECT product_id as `We thought you might also like:`\n " +
+				"FROM `statused_sales`\n" +
+				"WHERE `order_id` IN (\n" +
+				    otherOrdersWithSameItems +
+				")\n" +
+				"AND `product_id` NOT IN (\n" +
+				"    " + orderItemIds "'\n" +
+				")\n" +
+				"GROUP BY `product_id` " +
+				"ORDER BY sum(`product_quantity`)" +
+				"DESC LIMIT " + limit;
 
 		Crud crud = credentials.getCrud();
 		ResultSet rs = crud.query(query);
