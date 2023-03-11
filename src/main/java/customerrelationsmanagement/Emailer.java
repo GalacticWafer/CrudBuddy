@@ -344,14 +344,14 @@ public class Emailer {
 		String orderItemIds =
 				"    SELECT `product_id`\n" +
 				"    FROM `statused_sales`\n" +
-				"    WHERE `order_id` = '" + orderId
+				"    WHERE `order_id` = '" + orderId;
 		
 		String otherOrdersWithSameItems = 
 				"    SELECT `order_id` FROM `statused_sales`\n" +
 				"    WHERE  `product_id` IN(\n" +
-				         orderItemIds "'\n" +
+				         orderItemIds + "'\n" +
 				"    )\n" +
-				"    AND `order_id` NOT LIKE '" + orderId +
+				"    AND `order_id` NOT LIKE '" + orderId + "'";
 		String query =
 				"SELECT product_id as `We thought you might also like:`\n " +
 				"FROM `statused_sales`\n" +
@@ -359,7 +359,7 @@ public class Emailer {
 				    otherOrdersWithSameItems +
 				")\n" +
 				"AND `product_id` NOT IN (\n" +
-				"    " + orderItemIds "'\n" +
+				"    " + orderItemIds + "'\n" +
 				")\n" +
 				"GROUP BY `product_id` " +
 				"ORDER BY sum(`product_quantity`)" +
